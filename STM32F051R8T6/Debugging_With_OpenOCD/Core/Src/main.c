@@ -35,7 +35,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-extern initialise_monitor_handles(void);
+extern void initialise_monitor_handles(void);
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
