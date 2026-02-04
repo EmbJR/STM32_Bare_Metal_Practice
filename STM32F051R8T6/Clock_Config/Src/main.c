@@ -27,9 +27,51 @@
 #define RCC_CR_OFFSET		0x00UL
 #define RCC_CFGR_OFFSET		0x04UL
 
-
 #define RCC_CR				(RCC_BASE+RCC_CR_OFFSET)
 #define RCC_CFGR			(RCC_BASE+RCC_CFGR_OFFSET)
+
+//---------------------------- RCC_CFGR -----------------------------------------
+#define RCC_BASE        0x40021000
+#define RCC             ((RCC_TypeDef *) RCC_BASE)
+
+typedef struct {
+    uint32_t SW         : 2;   // [1:0] System clock switch
+    uint32_t SWS        : 2;   // [3:2] System clock switch status
+    uint32_t HPRE       : 4;   // [7:4] AHB prescaler
+    uint32_t PPRE       : 3;   // [10:8] APB prescaler
+    uint32_t           : 1;    // [11] Reserved
+    uint32_t           : 2;    // [12:13] Reserved
+    uint32_t ADCPRE     : 1;   // [14] ADC prescaler
+    uint32_t           : 1;    // [15] Reserved
+    uint32_t PLLSRC0    : 1;   // [16] PLL entry clock source bit 0
+    uint32_t PLLSRC1    : 1;   // [17] PLL entry clock source bit 1
+    uint32_t           : 1;    // [18] Reserved
+    uint32_t PLLXTPRE   : 1;   // [19] HSE divider for PLL entry
+    uint32_t PLLMUL     : 4;   // [23:20] PLL multiplication factor
+    uint32_t           : 2;    // [25:24] Reserved
+    uint32_t MCOPRE     : 3;   // [28:26] MCO prescaler
+    uint32_t MCO        : 3;   // [31:29] Microcontroller clock output
+    uint32_t           : 0;    // Pad to 32 bits
+} RCC_CFGR_Bits;
+
+typedef volatile struct {
+    __IO uint32_t CR;          // 0x00: Clock control register
+    __IO uint32_t CFGR;        // 0x04: Clock configuration register
+    __IO uint32_t CIR;         // 0x08: Clock interrupt register
+    __IO uint32_t APB2RSTR;    // 0x0C: APB2 peripheral reset register
+    __IO uint32_t APB1RSTR;    // 0x10: APB1 peripheral reset register
+    __IO uint32_t AHBENR;      // 0x14: AHB peripheral clock enable register
+    __IO uint32_t APB2ENR;     // 0x18: APB2 peripheral clock enable register
+    __IO uint32_t APB1ENR;     // 0x1C: APB1 peripheral clock enable register
+    __IO uint32_t BDCR;        // 0x20: RTC domain control register
+    __IO uint32_t CSR;         // 0x24: Control/status register
+    __IO uint32_t AHBRSTR;     // 0x28: AHB peripheral reset register
+    __IO uint32_t CFGR2;       // 0x2C: Clock configuration register 2
+    __IO uint32_t CFGR3;       // 0x30: Clock configuration register 3
+    __IO uint32_t CR2;         // 0x34: Clock control register 2
+} RCC_TypeDef;
+
+//------------------------------------------------------------------------------
 
 
 typedef struct
