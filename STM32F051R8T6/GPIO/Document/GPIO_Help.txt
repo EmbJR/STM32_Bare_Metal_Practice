@@ -1,0 +1,16 @@
+For GPIO PORTC PIN8 as GPIO Output with Push-Pull mode and low frequency output.
+-------------------------------------------------------------------------------
+
+RCC_AHBENR->IOPAEN17 = 1;		// Enable clock for GPIOC
+
+
+
+GPIOC_MODER->MODER8_16_17 = 0b01		// General Purpose IO
+GPIOC_OTYPER->OT8 = 0;				// output push-pull
+GPIOC_OSPEEDR->OSPEEDR8_16_17 = 0b01 	// medium speed
+GPIOC_PUPDR->PUPDR8_16_17 = 00			// No PullUp/PullDown
+GPIOx_AFRH->AFSEL8_0_1 = 0b0000			// AF0 mode
+
+
+GPIOx_BSRR->BS != (1<<8)	// Set to 1
+GPIOx_BSRR->BR != ((1<<(8+16)	// Reset to 0
