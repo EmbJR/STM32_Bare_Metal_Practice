@@ -1,0 +1,37 @@
+Hardware interrupt selection
+To configure a line as interrupt source, use the following procedure:
+• Configure the corresponding mask bit in the EXTI_IMR register.
+• Configure the trigger selection bits of the interrupt line (EXTI_RTSR and EXTI_FTSR)
+• Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
+	EXTI so that an interrupt coming from one of the EXTI line can be correctly
+	acknowledged.
+	
+Hardware event selection
+To configure a line as event source, use the following procedure:
+• Configure the corresponding mask bit in the EXTI_EMR register.
+• Configure the Trigger Selection bits of the Event line (EXTI_RTSR and EXTI_FTSR)
+
+Software interrupt/event selection
+Any of the external lines can be configured as software interrupt/event lines. The following is
+the procedure to generate a software interrupt.
+• Configure the corresponding mask bit (EXTI_IMR, EXTI_EMR)
+• Set the required bit of the software interrupt register (EXTI_SWIER)
+
+---------------------------------------------------------------------------------
+>> Below setting example for interrupt code of GPIOA Pin 0 Rising edge trigger.
+
+- GPIOA_MODER->MODER0 = 00; // input mode
+- GPIOA_OTYPER->OT0 = 0;	// Open Drain
+- GPIOA_OSPEEDR->OSPEEDR0[1:0] = 00; // Low speed
+- GPIOx_PUPDR
+
+- EXTI_IMR->IM0 = 1;				// Enable interrupt mask EXTI Line 0
+- EXTI_RTSR->RT0 = 1; 				// enable rising edge trigger for EXTI Line 0
+- EXTI_FTSR->FT0 = 0; 				// Falling trigger disabled for EXTI Line 0
+- EXTI_PR->IPF0						// Clear the trigger request bit for EXTI Line 0
+- SYSCFG_EXTICR2->EXTI0[3:0] = 0	// Enable EXTI configuration bits for PA0
+
+- When served the interrupt, clear the pending bit by
+	- EXTI_PR->IPF0						// Clear the trigger request bit for EXTI Line 0
+	- check if interrupt is pending by YSCFG_ITLINE5->EXTI0 ?
+
