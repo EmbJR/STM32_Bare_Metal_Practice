@@ -1,0 +1,441 @@
+
+Code process:- 
+1> SPIx_CR1
+
+
+
+===================================================================================
+Configuration of SPI
+===================================================================================
+
+The configuration procedure is almost the same for master and slave. For specific mode
+setups, follow the dedicated sections. When a standard communication is to be initialized,
+perform these steps:
+1. Write proper GPIO registers: Configure GPIO for MOSI, MISO and SCK pins.
+2. Write to the SPI_CR1 register:
+	a) Configure the serial clock baud rate using the BR[2:0] bits (Note: 4).
+	b) Configure the CPOL and CPHA bits combination to define one of the four
+		relationships between the data transfer and the serial clock (CPHA must be
+		cleared in NSSP mode). (Note: 2 - except the case when CRC is enabled at TI
+		mode).
+	c) Select simplex or half-duplex mode by configuring RXONLY or BIDIMODE and
+		BIDIOE (RXONLY and BIDIMODE cannot be set at the same time).
+	d) Configure the LSBFIRST bit to define the frame format (Note: 2).
+	e) Configure the CRCL and CRCEN bits if CRC is needed (while SCK clock signal is
+	at idle state).
+	f) Configure SSM and SSI (Notes: 2 & 3).
+	g) Configure the MSTR bit (in multimaster NSS configuration, avoid conflict state on
+		NSS if master is configured to prevent MODF error).
+3. Write to SPI_CR2 register:
+	a) Configure the DS[3:0] bits to select the data length for the transfer.
+	b) Configure SSOE (Notes: 1 & 2 & 3).
+	c) Set the FRF bit if the TI protocol is required (keep NSSP bit cleared in TI mode).
+	d) Set the NSSP bit if the NSS pulse mode between two data units is required (keep
+		CHPA and TI bits cleared in NSSP mode).
+	e) Configure the FRXTH bit. The RXFIFO threshold must be aligned to the read
+		access size for the SPIx_DR register.
+	f) Initialize LDMA_TX and LDMA_RX bits if DMA is used in packed mode.
+4. Write to SPI_CRCPR register: Configure the CRC polynomial if needed.
+5. Write proper DMA registers: Configure DMA streams dedicated for SPI Tx and Rx in
+DMA registers if the DMA streams are used.
+
+(1) Step is not required in slave mode.
+(2) Step is not required in TI mode.
+(3) Step is not required in NSSP mode.
+(4) The step is not required in slave mode except slave working at TI mode
+
+===================================================================================
+Procedure for disabling the SPI
+===================================================================================
+
+- When the master is in any receive only mode, the only way to stop the continuous clock is to
+disable the peripheral by SPE=0.
+
+- To prevent having unread data, ensure that RXFIFO is empty when disabling the SPI, by using the
+correct disabling procedure, or by initializing all the SPI registers with a software reset via
+the control of a specific register dedicated to peripheral reset (see the SPIiRST bits in the
+RCC_APBiRSTR registers).
+
+- Standard disable procedure is based on pulling BSY status together with FTLVL[1:0] to
+check if a transmission session is fully completed. This check can be done in specific cases,
+too, when it is necessary to identify the end of ongoing transactions, for example:
+	• When NSS signal is managed by software and master has to provide proper end of
+		NSS pulse for slave, or
+	• When transactions’ streams from DMA or FIFO are completed while the last data frame
+		or CRC frame transaction is still ongoing in the peripheral bus.
+	
+====	
+The correct disable procedure is (except when receive only mode is used):
+====
+1. Wait until FTLVL[1:0] = 00 (no more data to transmit).
+2. Wait until BSY=0 (the last data frame is processed).
+3. Disable the SPI (SPE=0).
+4. Read data until FRLVL[1:0] = 00 (read all the received data).
+The correct disable procedure for certain receive only modes is:
+1. Interrupt the receive flow by disabling SPI (SPE=0) in the specific time window while
+the last data frame is ongoing.
+2. Wait until BSY=0 (the last data frame is processed).
+3. Read data until FRLVL[1:0] = 00 (read all the received data).
+
+If packing mode is used and an odd number of data frames with a format less than or equal
+to 8 bits (fitting into one byte) has to be received, FRXTH must be set when FRLVL[1:0] =
+01, in order to generate the RXNE event to read the last odd data frame and to keep good
+FIFO pointer alignment
+
+===================================================================================
+Procedure for disabling the SPI
+===================================================================================
+When SPI is disabled, it is mandatory to follow the disable procedures described in this
+paragraph. It is important to do this before the system enters a low-power mode when the
+peripheral clock is stopped. Ongoing transactions can be corrupted in this case. In some
+
+modes the disable procedure is the only way to stop continuous communication running.
+Master in full-duplex or transmit only mode can finish any transaction when it stops
+providing data for transmission. In this case, the clock stops after the last data transaction.
+Special care must be taken in packing mode when an odd number of data frames are
+
+transacted to prevent some dummy byte exchange (refer to Data packing section). Before
+the SPI is disabled in these modes, the user must follow standard disable procedure. When
+the SPI is disabled at the master transmitter while a frame transaction is ongoing or next
+data frame is stored in TXFIFO, the SPI behavior is not guaranteed.
+
+When the master is in any receive only mode, the only way to stop the continuous clock is to
+disable the peripheral by SPE=0. This must occur in specific time window within last data
+frame transaction just between the sampling time of its first bit and before its last bit transfer
+starts (in order to receive a complete number of expected data frames and to prevent any
+additional “dummy” data reading after the last valid data frame). Specific procedure must be
+followed when disabling SPI in this mode.
+
+Data received but not read remains stored in RXFIFO when the SPI is disabled, and must
+be processed the next time the SPI is enabled, before starting a new sequence. To prevent
+having unread data, ensure that RXFIFO is empty when disabling the SPI, by using the
+correct disabling procedure, or by initializing all the SPI registers with a software reset via
+the control of a specific register dedicated to peripheral reset (see the SPIiRST bits in the
+RCC_APBiRSTR registers).
+
+Standard disable procedure is based on pulling BSY status together with FTLVL[1:0] to
+check if a transmission session is fully completed. This check can be done in specific cases,
+too, when it is necessary to identify the end of ongoing transactions, for example:
+• When NSS signal is managed by software and master has to provide proper end of
+	NSS pulse for slave, or
+• When transactions’ streams from DMA or FIFO are completed while the last data frame
+	or CRC frame transaction is still ongoing in the peripheral bus.
+
+The correct disable procedure is (except when receive only mode is used):
+1. Wait until FTLVL[1:0] = 00 (no more data to transmit).
+2. Wait until BSY=0 (the last data frame is processed).
+3. Disable the SPI (SPE=0).
+4. Read data until FRLVL[1:0] = 00 (read all the received data).
+The correct disable procedure for certain receive only modes is:
+1. Interrupt the receive flow by disabling SPI (SPE=0) in the specific time window while
+the last data frame is ongoing.
+2. Wait until BSY=0 (the last data frame is processed).
+3. Read data until FRLVL[1:0] = 00 (read all the received data).
+Note: If packing mode is used and an odd number of data frames with a format less than or equal
+to 8 bits (fitting into one byte) has to be received, FRXTH must be set when FRLVL[1:0] =
+01, in order to generate the RXNE event to read the last odd data frame and to keep good
+FIFO pointer alignment
+
+
+- When the master is in any receive only mode, the only way to stop the continuous clock is to
+disable the peripheral by SPE=0.
+
+- To prevent
+having unread data, ensure that RXFIFO is empty when disabling the SPI, by using the
+correct disabling procedure, or by initializing all the SPI registers with a software reset via
+the control of a specific register dedicated to peripheral reset (see the SPIiRST bits in the
+RCC_APBiRSTR registers).
+
+-----------------------------
+Standard disable procedure is based on pulling BSY status together with FTLVL[1:0] to
+check if a transmission session is fully completed. This check can be done in specific cases,
+too, when it is necessary to identify the end of ongoing transactions, for example:
+• When NSS signal is managed by software and master has to provide proper end of
+NSS pulse for slave, or
+• When transactions’ streams from DMA or FIFO are completed while the last data frame
+or CRC frame transaction is still ongoing in the peripheral bus.
+The correct disable procedure is (except when receive only mode is used):
+1. Wait until FTLVL[1:0] = 00 (no more data to transmit).
+2. Wait until BSY=0 (the last data frame is processed).
+3. Disable the SPI (SPE=0).
+4. Read data until FRLVL[1:0] = 00 (read all the received data).
+The correct disable procedure for certain receive only modes is:
+1. Interrupt the receive flow by disabling SPI (SPE=0) in the specific time window while
+the last data frame is ongoing.
+2. Wait until BSY=0 (the last data frame is processed).
+3. Read data until FRLVL[1:0] = 00 (read all the received data).
+Note: If packing mode is used and an odd number of data frames with a format less than or equal
+to 8 bits (fitting into one byte) has to be received, FRXTH must be set when FRLVL[1:0] =
+01, in order to generate the RXNE event to read the last odd data frame and to keep good
+FIFO pointer alignment.
+
+=========================================================================================
+Data packing
+=========================================================================================
+When the data frame size fits into one byte (less than or equal to 8 bits), data packing is
+used automatically when any read or write 16-bit access is performed on the SPIx_DR
+register. The double data frame pattern is handled in parallel in this case. At first, the SPI
+operates using the pattern stored in the LSB of the accessed word, then with the other half
+stored in the MSB. Figure 282 provides an example of data packing mode sequence
+handling. Two data frames are sent after the single 16-bit access the SPIx_DR register of
+the transmitter. This sequence can generate just one RXNE event in the receiver if the
+RXFIFO threshold is set to 16 bits (FRXTH=0). The receiver then has to access both data
+frames by a single 16-bit read of SPIx_DR as a response to this single RXNE event. The
+RxFIFO threshold setting and the following read access must be always kept aligned at the
+receiver side, as data can be lost if it is not in line
+
+A specific problem appears if an odd number of such “fit into one byte” data frames must be
+handled. On the transmitter side, writing the last data frame of any odd sequence with an 8-
+bit access to SPIx_DR is enough. The receiver has to change the Rx_FIFO threshold level
+for the last data frame received in the odd sequence of frames in order to generate the
+RXNE event
+
+
+=========================================================================================
+Communication using DMA 
+=========================================================================================
+A DMA access is requested when the TXDMAEN or RXDMAEN enable bit in the SPIx_CR2
+register is set. Separate requests must be issued to the Tx and Rx buffers.
+• In transmission, a DMA request is issued each time TXE is set to 1. The DMA then
+writes to the SPIx_DR register.
+• In reception, a DMA request is issued each time RXNE is set to 1. The DMA then reads
+the SPIx_DR register.
+
+- When the SPI is used only to transmit data, it is possible to enable only the SPI Tx DMA
+channel. In this case, the OVR flag is set because the data received is not read.
+
+- In transmission mode, when the DMA has written all the data to be transmitted (the TCIF
+flag is set in the DMA_ISR register), The software must first wait until
+FTLVL[1:0]=00 and then until BSY=0
+
+
+- When starting communication using DMA, to prevent DMA channel management raising
+error events, these steps must be followed in order:
+1. Enable DMA Rx buffer in the RXDMAEN bit in the SPI_CR2 register, if DMA Rx is
+used.
+2. Enable DMA streams for Tx and Rx in DMA registers, if the streams are used.
+3. Enable DMA Tx buffer in the TXDMAEN bit in the SPI_CR2 register, if DMA Tx is used.
+4. Enable the SPI by setting the SPE bit.
+For code example refer to the Appendix sections A.17.5: SPI master configuration with DMA
+code example and A.17.6: SPI slave configuration with DMA code example.
+To close communication it is mandatory to follow these steps in order:
+1. Disable DMA streams for Tx and Rx in the DMA registers, if the streams are used.
+2. Disable the SPI by following the SPI disable procedure.
+3. Disable DMA Tx and Rx buffers by clearing the TXDMAEN and RXDMAEN bits in the
+SPI_CR2 register, if DMA Tx and/or DMA Rx are used.
+
+
+>> Packing with DMA
+If the transfers are managed by DMA (TXDMAEN and RXDMAEN set in the SPIx_CR2
+register) packing mode is enabled/disabled automatically depending on the PSIZE value
+configured for SPI TX and the SPI RX DMA channel. If the DMA channel PSIZE value is
+equal to 16-bit and SPI data size is less than or equal to 8-bit, then packing mode is
+enabled. The DMA then automatically manages the write operations to the SPIx_DR
+register
+
+- If data packing mode is used and the number of data to transfer is not a multiple of two, the
+LDMA_TX/LDMA_RX bits must be set. The SPI then considers only one data for the
+transmission or reception to serve the last DMA transfer (for more details refer to Data
+packing on page 780.)
+
+========================================================================================
+When starting communication using DMA, to prevent DMA channel management raising
+error events, these steps must be followed in order:
+========================================================================================
+1. Enable DMA Rx buffer in the RXDMAEN bit in the SPI_CR2 register, if DMA Rx is
+used.
+2. Enable DMA streams for Tx and Rx in DMA registers, if the streams are used.
+3. Enable DMA Tx buffer in the TXDMAEN bit in the SPI_CR2 register, if DMA Tx is used.
+4. Enable the SPI by setting the SPE bit.
+For code example refer to the Appendix sections A.17.5: SPI master configuration with DMA
+code example and A.17.6: SPI slave configuration with DMA code example.
+To close communication it is mandatory to follow these steps in order:
+1. Disable DMA streams for Tx and Rx in the DMA registers, if the streams are used.
+2. Disable the SPI by following the SPI disable procedure.
+3. Disable DMA Tx and Rx buffers by clearing the TXDMAEN and RXDMAEN bits in the
+SPI_CR2 register, if DMA Tx and/or DMA Rx are used.
+
+
+
+=========================================================================================
+Communication
+=========================================================================================
+The SPI allows the MCU to communicate using different configurations, depending on the
+device targeted and the application requirements. These configurations use 2 or 3 wires
+(with software NSS management) or 3 or 4 wires (with hardware NSS management).
+Communication is always initiated by the master
+
+- The SPI can communicate in half-duplex mode by setting the BIDIMODE bit in the
+SPIx_CR1 register.
+-  transfer
+direction selected reciprocally by both master and slave with the BDIOE bit in their
+SPIx_CR1 registers. In this configuration, the master’s MISO pin and the slave’s MOSI pin
+are free for other application uses and act as GPIOs.
+
+- The SPI can communicate in simplex mode by setting the SPI in transmit-only or in receive-
+only using the RXONLY bit in the SPIx_CR1 register. In this configuration, only one line is
+used for the transfer between the shift registers of the master and slave. The remaining
+MISO and MOSI pins pair is not used for communication and can be used as standard
+GPIOs
+
+- The read access must be always aligned with the RXFIFO
+threshold configured by the FRXTH bit in SPIx_CR2 register. FTLVL[1:0] and FRLVL[1:0]
+bits indicate the current occupancy level of both FIFOs
+
+- A read access to the SPIx_DR register must be managed by the RXNE event. This event is
+triggered when data is stored in RXFIFO and the threshold (defined by FRXTH bit) is
+reached. When RXNE is cleared, RXFIFO is considered to be empty. In a similar way, write
+access of a data frame to be transmitted is managed by the TXE event. This event is
+triggered when the TXFIFO level is less than or equal to half of its capacity. Otherwise TXE
+is cleared and the TXFIFO is considered as full
+
+- The BSY bit being set indicates ongoing transaction of a current data frame. When the clock
+signal runs continuously, the BSY flag stays set between data frames at master but
+becomes low for a minimum duration of one SPI clock at slave between each data frame
+transfer.
+=====================
+•Transmit-only mode (RXONLY=0): The configuration settings are the same as for full-
+duplex. The application has to ignore the information captured on the unused input pin.
+This pin can be used as a standard GPIO.
+• Receive-only mode (RXONLY=1): The application can disable the SPI output function
+by setting the RXONLY bit. In slave configuration, the MISO output is disabled and the
+pin can be used as a GPIO. The slave continues to receive data from the MOSI pin
+while its slave select signal is active (see 28.5.5: Slave select (NSS) pin management).
+Received data events appear depending on the data buffer configuration. In the master
+configuration, the MOSI output is disabled and the pin can be used as a GPIO. The
+clock signal is generated continuously as long as the SPI is enabled. The only way to
+stop the clock is to clear the RXONLY bit or the SPE bit and wait until the incoming
+pattern from the MISO pin is finished and fills the data buffer structure, depending on its
+configuration
+
+=====================
+Multi-master communication
+Unless SPI bus is not designed for a multi-master capability primarily, the user can use build
+in feature which detects a potential conflict between two nodes trying to master the bus at
+the same time. For this detection, NSS pin is used configured at hardware input mode.
+The connection of more than two SPI nodes working at this mode is impossible as only one
+node can apply its output on a common data line at time.
+
+When nodes are non active, both stay at slave mode by default. Once one node wants to
+overtake control on the bus, it switches itself into master mode and applies active level on
+the slave select input of the other node via dedicated GPIO pin. After the session is
+completed, the active slave select signal is released and the node mastering the bus
+temporary returns back to passive slave mode waiting for next session start
+
+If potentially both nodes raised their mastering request at the same time a bus conflict event
+appears (see mode fault MODF event). Then the user can apply some simple arbitration
+process (e.g. to postpone next attempt by predefined different time-outs applied at both
+nodes).
+
+===============================
+In slave mode, the NSS works as a standard “chip select” input and lets the slave
+communicate with the master. In master mode, NSS can be used either as output or input.
+As an input it can prevent multimaster bus collision, and as an output it can drive a slave
+select signal of a single slave.
+
+Hardware or software slave select management can be set using the SSM bit in the
+SPIx_CR1 register:
+• Software NSS management (SSM = 1): in this configuration, slave select information
+is driven internally by the SSI bit value in register SPIx_CR1. The external NSS pin is
+free for other application uses.
+
+• Hardware NSS management (SSM = 0): in this case, there are two possible
+configurations. The configuration used depends on the NSS output configuration
+(SSOE bit in register SPIx_CR1).
+	– NSS output enable (SSM=0,SSOE = 1): this configuration is only used when the
+		MCU is set as master. The NSS pin is managed by the hardware. The NSS signal
+		is driven low as soon as the SPI is enabled in master mode (SPE=1), and is kept
+		low until the SPI is disabled (SPE =0). A pulse can be generated between
+		continuous communications if NSS pulse mode is activated (NSSP=1). The SPI
+		cannot work in multimaster configuration with this NSS setting.
+	– NSS output disable (SSM=0, SSOE = 0): if the microcontroller is acting as the
+		master on the bus, this configuration allows multimaster capability. If the NSS pin
+		is pulled low in this mode, the SPI enters master mode fault state and the device is
+		automatically reconfigured in slave mode. In slave mode, the NSS pin works as a
+		standard “chip select” input and the slave is selected while NSS line is at low level.
+		
+===============================
+Four possible timing relationships may be chosen by software, using the CPOL and CPHA
+bits in the SPIx_CR1 register. The CPOL (clock polarity) bit controls the idle state value of
+the clock when no data is being transferred.
+
+If the CPHA bit is set, the second edge on the SCK pin captures the first data bit transacted
+(falling edge if the CPOL bit is reset, rising edge if the CPOL bit is set). Data are latched on
+each occurrence of this clock transition type. If the CPHA bit is reset, the first edge on the
+SCK pin captures the first data bit transacted (falling edge if the CPOL bit is set, rising edge
+if the CPOL bit is reset). Data are latched on each occurrence of this clock transition type
+
+========================
+The SPI shift register can be set up to shift out MSB-first or LSB-first, depending on the
+value of the LSBFIRST bit. The data frame size is chosen by using the DS bits.
+
+read access to the FIFO must be aligned with the
+FRXTH level.
+
+When the SPIx_DR register is accessed, data frames are always right-aligned
+into either a byte (if the data fits into a byte) or a half-word (see Figure 281). During
+communication, only bits within the data frame are clocked and transferred
+
+=====================================
+- NSS pulse mode
+This mode is activated by the NSSP bit in the SPIx_CR2 register and it takes effect only if
+the SPI interface is configured as Motorola SPI master (FRF=0) with capture on the first
+edge (SPIx_CR1 CPHA = 0, CPOL setting is ignored). 
+
+TI mode
+TI protocol in master mode
+The SPI interface is compatible with the TI protocol. The FRF bit of the SPIx_CR2 register
+can be used to configure the SPI to be compliant with this protocol.
+The clock polarity and phase are forced to conform to the TI protocol requirements whatever
+the values set in the SPIx_CR1 register. NSS management is also specific to the TI protocol
+which makes the configuration of NSS management through the SPIx_CR1 and SPIx_CR2
+registers (SSM, SSI, SSOE) impossible in this case.
+
+If the slave detects a misplaced NSS pulse during a data frame transaction the TIFRE flag is
+set.
+If the data size is equal to 4-bits or 5-bits, the master in full-duplex mode or transmit-only
+mode uses a protocol with one more dummy data bit added after LSB. TI NSS pulse is
+generated above this dummy bit clock cycle instead of the LSB in each period.
+This feature is not available for Motorola SPI communications (FRF bit set to 0)
+
+=========================================================================================
+CRC principle
+=========================================================================================
+CRC calculation is enabled by setting the CRCEN bit in the SPIx_CR1 register before the
+SPI is enabled (SPE = 1). 
+
+- When a mismatch is detected between the CRC calculated internally on the received
+data and the CRC sent by the transmitter, a CRCERR flag is set to indicate a data corruption
+error.
+
+- CRC transfer managed by CPU
+Communication starts and continues normally until the last data frame has to be sent or
+received in the SPIx_DR register. Then CRCNEXT bit has to be set in the SPIx_CR1
+register to indicate that the CRC frame transaction follows after the transaction of the
+currently processed data frame. The CRCNEXT bit must be set before the end of the last
+data frame transaction. CRC calculation is frozen during CRC transaction
+
+- When the last CRC data is received, an automatic check is performed comparing the
+received value and the value in the SPIx_RXCRC register. Software has to check the
+CRCERR flag in the SPIx_SR register to determine if the data transfers were corrupted or
+not. Software clears the CRCERR flag by writing '0' to it
+
+
+- CRC transfer managed by DMA
+When SPI communication is enabled with CRC communication and DMA mode, the
+transmission and reception of the CRC at the end of communication is automatic (with the
+exception of reading CRC data in receive only mode).
+The CRCNEXT bit does not have to
+be handled by the software.
+
+-When the SPI interface is configured as a slave, the NSS internal signal needs to be kept
+low during transaction of the CRC phase once the CRCNEXT signal is released. That is why
+the CRC calculation cannot be used at NSS Pulse mode when NSS hardware mode should
+be applied at slave normally.
+At TI mode, despite the fact that clock phase and clock polarity setting is fixed and
+independent on SPIx_CR1 register, the corresponding setting CPOL=0 CPHA=1 has to be
+kept at the SPIx_CR1 register anyway if CRC is applied. In addition, the CRC calculation
+has to be reset between sessions by SPI disable sequence with re-enable the CRCEN bit
+described above at both master and slave side, else CRC calculation can be corrupted at
+this specific mode
+

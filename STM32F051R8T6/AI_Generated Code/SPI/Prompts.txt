@@ -1,0 +1,59 @@
+------------------------------------------------------------------
+I want to develop the SPI driver for the STM32F051R8T6 controller.
+I need you to understand the SPI register structure, SPI modes and other important imformation about SPI
+from the below documents placed in the repository.
+1> AI_Generated Code/rm0091-stm32f0x1stm32f0x2stm32f0x8-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+2> AI_Generated Code/stm32f051r8.pdf
+
+Please provide the SPI driver code for the STM32F051R8T6 controller.
+Also provide the example codes for the possible SPI modes (like Master mode, 
+Slave mode, Full duplex, Simplex, 8-bit, 16-bit, 32-bit data frame sizes).
+Also provide the examples with CRC based communication.
+
+I want you to generate the spiF051.c anf spiF051.h files for the driver code 
+inside the folder "AI_Generated Code\SPI\Code"
+
+and the example codes inside the folder "AI_Generated Code\SPI\Code\Examples"
+---------------------------------------------------------------------
+
+I have successfully developed the SPI driver for the STM32F051R8T6 controller. The following files have been created:
+
+Driver Files (in SPI/Code/)
+1. spiF051.h
+Complete SPI driver header file with:
+SPI register definitions for STM32F051
+SPI mode enumerations (Master/Slave, Clock Polarity, Clock Phase)
+Data frame size options (8-bit to 16-bit)
+Communication modes (Full-duplex, Simplex, Half-duplex)
+NSS modes (Software, Hardware)
+CRC configuration options
+All function prototypes
+2. spiF051.c
+Complete SPI driver implementation with:
+Initialization and de-initialization functions
+Configuration functions (baud rate, data size, clock polarity/phase)
+Data transfer functions (8-bit, 16-bit, 32-bit)
+Blocking transfer functions
+CRC functions (enable/disable, polynomial, TX/RX CRC)
+Status checking functions
+DMA and interrupt support functions
+Proper SPI disable procedure as per RM0091
+Example Files (in SPI/Code/Examples/)
+Example_Master_FullDuplex_8bit.c - Master mode, full-duplex, 8-bit data
+Example_Master_FullDuplex_16bit.c - Master mode, full-duplex, 16-bit data
+Example_Master_Simplex_Tx_8bit.c - Master mode, simplex transmit-only, 8-bit
+Example_Slave_FullDuplex_8bit.c - Slave mode, full-duplex, 8-bit
+Example_Master_CRC_8bit.c - Master with CRC communication (CRC-8)
+Example_Slave_CRC_8bit.c - Slave with CRC communication
+Example_Master_AllModes.c - All four SPI clock modes (Mode 0-3)
+Example_Master_LSB_First.c - Master with LSB-first frame format
+Key Features Implemented:
+Full support for SPI modes 0, 1, 2, 3 (CPOL/CPHA combinations)
+Master and Slave modes
+Full-duplex and Simplex communication
+8-bit and 16-bit data frame sizes
+CRC calculation (CRC-8)
+Software and Hardware NSS management
+MSB and LSB first frame formats
+Proper SPI disable procedure as per STM32 reference manual
+Support for DMA and interrupts (functions provided)
