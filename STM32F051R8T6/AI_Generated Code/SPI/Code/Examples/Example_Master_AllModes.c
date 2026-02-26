@@ -9,38 +9,29 @@
  * 
  * Hardware Setup:
  * - SPI1: PA5 (SCK), PA6 (MISO), PA7 (MOSI), PA4 (NSS)
+ * 
+ * Important Fixes:
+ * - MODF (Mode Fault) is prevented by proper initialization sequence:
+ *   1. Configure GPIO pins first
+ *   2. Set NSS pin HIGH using GPIO (for manual control)
+ *   3. Initialize SPI with software NSS mode (sets SSI bit internally)
+ *   4. Enable SPI peripheral
+ * - MISO pin has pull-up configured for proper idle state
  */
 
-#include "spiF051.h"
-#include "gpio.h"
-#include "rcc.h"
+#include "../spiF051.h"
+#include "../../GPIO_AI/gpio.h"
+#include "../../DeepSeek_Generated/RCC/rcc.h"
 #include <stdio.h>
 
 //============================================================================
-// Register Definitions
+// Register Definitions (for Clock Config only)
 //============================================================================
 
 #define RCC_BASE        0x40021000UL
 #define RCC_CR         (*(volatile uint32_t *)(RCC_BASE + 0x00))
 #define RCC_CFGR       (*(volatile uint32_t *)(RCC_BASE + 0x04))
 #define RCC_APB2ENR    (*(volatile uint32_t *)(RCC_BASE + 0x24))
-
-#define GPIOA_BASE      0x48000000UL
-#define GPIOA          ((GPIO_TypeDef *)GPIOA_BASE)
-
-typedef struct {
-    volatile uint32_t MODER;
-    volatile uint32_t OTYPER;
-    volatile uint32_t OSPEEDR;
-    volatile uint32_t PUPDR;
-    volatile uint32_t IDR;
-    volatile uint32_t ODR;
-    volatile uint32_t BSRR;
-    volatile uint32_t LCKR;
-    volatile uint32_t AFRL;
-    volatile uint32_t AFRH;
-    volatile uint32_t BRR;
-} GPIO_TypeDef;
 
 //============================================================================
 // Global Variables
@@ -76,36 +67,38 @@ int main(void)
     // Test Mode 0
     printf("Testing Mode 0 (CPOL=0, CPHA=0)...\r\n");
     SPI1_Init_Mode0();
-    SPI_SetNSSPin(&hspi1, false);
+    // NSS LOW to start transmission
+    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
     rx_data = SPI_Transfer(&hspi1, tx_data);
-    SPI_SetNSSPin(&hspi1, true);
+    // NSS HIGH after transmission
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);
     printf("  Sent: %02X, Received: %02X\r\n", tx_data, rx_data);
     SPI_Disable(&hspi1);
     
     // Test Mode 1
     printf("Testing Mode 1 (CPOL=0, CPHA=1)...\r\n");
     SPI1_Init_Mode1();
-    SPI_SetNSSPin(&hspi1, false);
+    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
     rx_data = SPI_Transfer(&hspi1, tx_data);
-    SPI_SetNSSPin(&hspi1, true);
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);
     printf("  Sent: %02X, Received: %02X\r\n", tx_data, rx_data);
     SPI_Disable(&hspi1);
     
     // Test Mode 2
     printf("Testing Mode 2 (CPOL=1, CPHA=0)...\r\n");
     SPI1_Init_Mode2();
-    SPI_SetNSSPin(&hspi1, false);
+    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
     rx_data = SPI_Transfer(&hspi1, tx_data);
-    SPI_SetNSSPin(&hspi1, true);
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);
     printf("  Sent: %02X, Received: %02X\r\n", tx_data, rx_data);
     SPI_Disable(&hspi1);
     
     // Test Mode 3
     printf("Testing Mode 3 (CPOL=1, CPHA=1)...\r\n");
     SPI1_Init_Mode3();
-    SPI_SetNSSPin(&hspi1, false);
+    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
     rx_data = SPI_Transfer(&hspi1, tx_data);
-    SPI_SetNSSPin(&hspi1, true);
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);
     printf("  Sent: %02X, Received: %02X\r\n", tx_data, rx_data);
     SPI_Disable(&hspi1);
     
@@ -131,46 +124,69 @@ void SystemClock_Config(void)
 }
 
 //============================================================================
-// GPIO Initialization
+/* GPIO Initialization
+  The function sets up the four required SPI pins:
+
+PA4 (NSS) - Slave Select/Chip Select (output)
+PA5 (SCK) - Serial Clock (alternate function)
+PA6 (MISO) - Master In Slave Out (alternate function)
+PA7 (MOSI) - Master Out Slave In (alternate function)
+
+Pin	GPIO Register	Configuration
+NSS (PA4)	MODER = 0x01 (Output)	Push-pull, High speed
+SCK (PA5)	MODER = 0x02 (AF)	Push-pull, High speed, AF0
+MISO (PA6)	MODER = 0x02 (AF)	Push-pull, High speed, AF0
+MOSI (PA7)	MODER = 0x02 (AF)	Push-pull, High speed, AF0
+*/
 //============================================================================
 
 void SPI1_GPIO_Init(void)
 {
-    RCC_APB2ENR |= (1 << 2);
+    GPIO_InitTypeDef GPIO_InitStruct;
     
-    // NSS
-    GPIOA->MODER &= ~((0x03 << (4 * 2)));
-    GPIOA->MODER |= (0x01 << (4 * 2));
-    GPIOA->OTYPER &= ~(1 << 4);
-    GPIOA->OSPEEDR &= ~((0x03 << (4 * 2)));
-    GPIOA->OSPEEDR |= (0x03 << (4 * 2));
+    // Enable GPIOA clock
+    GPIO_EnableClock(GPIOA);
     
-    // SCK
-    GPIOA->MODER &= ~((0x03 << (5 * 2)));
-    GPIOA->MODER |= (0x02 << (5 * 2));
-    GPIOA->OTYPER &= ~(1 << 5);
-    GPIOA->OSPEEDR &= ~((0x03 << (5 * 2)));
-    GPIOA->OSPEEDR |= (0x03 << (5 * 2));
-    GPIOA->AFRL &= ~((0x0F << (5 * 4)));
-    GPIOA->AFRL |= (0x00 << (5 * 4));
+    // Configure NSS (PA4) as GPIO output - Manual slave select control
+    // This pin will be controlled manually, not by SPI hardware
+    GPIO_InitStruct.Pin = GPIO_PIN_4;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_PULL_NO;  // No pull-up/down for NSS
+    GPIO_InitStruct.AF = GPIO_AF0;
+    GPIO_Init(GPIOA, &GPIO_InitStruct);
     
-    // MISO
-    GPIOA->MODER &= ~((0x03 << (6 * 2)));
-    GPIOA->MODER |= (0x02 << (6 * 2));
-    GPIOA->OTYPER &= ~(1 << 6);
-    GPIOA->OSPEEDR &= ~((0x03 << (6 * 2)));
-    GPIOA->OSPEEDR |= (0x03 << (6 * 2));
-    GPIOA->AFRL &= ~((0x0F << (6 * 4)));
-    GPIOA->AFRL |= (0x00 << (6 * 4));
+    // Set NSS pin HIGH initially (inactive) - IMPORTANT for MODF prevention
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);
     
-    // MOSI
-    GPIOA->MODER &= ~((0x03 << (7 * 2)));
-    GPIOA->MODER |= (0x02 << (7 * 2));
-    GPIOA->OTYPER &= ~(1 << 7);
-    GPIOA->OSPEEDR &= ~((0x03 << (7 * 2)));
-    GPIOA->OSPEEDR |= (0x03 << (7 * 2));
-    GPIOA->AFRL &= ~((0x0F << (7 * 4)));
-    GPIOA->AFRL |= (0x00 << (7 * 4));
+    // Configure SCK (PA5) - SPI1_SCK
+    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    GPIO_InitStruct.Mode = GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_PULL_NO;
+    GPIO_InitStruct.AF = GPIO_AF0;  // SPI1 uses AF0 on PA5
+    GPIO_Init(GPIOA, &GPIO_InitStruct);
+    
+    // Configure MISO (PA6) - SPI1_MISO
+    // IMPORTANT: MISO needs pull-up for proper idle state in master mode
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Mode = GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_PULL_UP;  // Pull-up for MISO (prevents floating)
+    GPIO_InitStruct.AF = GPIO_AF0;  // SPI1 uses AF0 on PA6
+    GPIO_Init(GPIOA, &GPIO_InitStruct);
+    
+    // Configure MOSI (PA7) - SPI1_MOSI
+    GPIO_InitStruct.Pin = GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Pull = GPIO_PULL_NO;
+    GPIO_InitStruct.AF = GPIO_AF0;  // SPI1 uses AF0 on PA7
+    GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 //============================================================================
@@ -193,9 +209,13 @@ void SPI1_Init_Mode0(void)
     hspi1.Init.crc_enabled = false;
     hspi1.Init.crc_polynomial = 7;
     hspi1.Init.nss_pulse_enabled = false;
+    
+    // CRITICAL FIX: Set NSS pin HIGH via GPIO BEFORE initializing SPI
+    // This prevents MODF (Mode Fault) when using software slave management
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
+    
     SPI_Init(&hspi1);
     SPI_Enable(&hspi1);
-    SPI_SetNSSPin(&hspi1, true);
 }
 
 void SPI1_Init_Mode1(void)
@@ -214,9 +234,12 @@ void SPI1_Init_Mode1(void)
     hspi1.Init.crc_enabled = false;
     hspi1.Init.crc_polynomial = 7;
     hspi1.Init.nss_pulse_enabled = false;
+    
+    // CRITICAL FIX: Set NSS pin HIGH via GPIO BEFORE initializing SPI
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
+    
     SPI_Init(&hspi1);
     SPI_Enable(&hspi1);
-    SPI_SetNSSPin(&hspi1, true);
 }
 
 void SPI1_Init_Mode2(void)
@@ -235,9 +258,12 @@ void SPI1_Init_Mode2(void)
     hspi1.Init.crc_enabled = false;
     hspi1.Init.crc_polynomial = 7;
     hspi1.Init.nss_pulse_enabled = false;
+    
+    // CRITICAL FIX: Set NSS pin HIGH via GPIO BEFORE initializing SPI
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
+    
     SPI_Init(&hspi1);
     SPI_Enable(&hspi1);
-    SPI_SetNSSPin(&hspi1, true);
 }
 
 void SPI1_Init_Mode3(void)
@@ -256,9 +282,12 @@ void SPI1_Init_Mode3(void)
     hspi1.Init.crc_enabled = false;
     hspi1.Init.crc_polynomial = 7;
     hspi1.Init.nss_pulse_enabled = false;
+    
+    // CRITICAL FIX: Set NSS pin HIGH via GPIO BEFORE initializing SPI
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
+    
     SPI_Init(&hspi1);
     SPI_Enable(&hspi1);
-    SPI_SetNSSPin(&hspi1, true);
 }
 
 //============================================================================

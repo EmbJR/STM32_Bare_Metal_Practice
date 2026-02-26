@@ -6,6 +6,7 @@
  */
 
 #include "gpio.h"
+#include "rcc.h"
 
 /*============================================================================
  * GPIO Initialization and Configuration

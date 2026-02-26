@@ -17,3 +17,10 @@ inside the folder "AI_Generated Code\SPI\Code"
 
 and the example codes inside the folder "AI_Generated Code\SPI\Code\Examples"
 ---------------------------------------------------------------------
+
+I cannot able to run the example for Master mode 0 of SPI code you have generated in "Example_Master_AllModes.c" file. 
+When I see the outputs on MOSI, MISO, Sck pins, no signal is generated.
+Also the MODF Status is generated in Software slave menagement.
+
+Please help me to debug this issue. 
+Also replace the GPIO configurations with the GPIO driver code from "AI_Generated Code\GPIO_AI" folder.
