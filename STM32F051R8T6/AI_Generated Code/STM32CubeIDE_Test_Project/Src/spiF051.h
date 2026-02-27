@@ -19,6 +19,10 @@
 #define SPI1_BASE       0x40013000UL
 #define SPI2_BASE       0x40003800UL
 
+/* Interrupt Numbers */
+#define SPI1_IRQn       25   /*!< SPI 1 Interrupt */
+#define SPI2_IRQn       26   /*!< SPI 2 Interrupt */
+
 //============================================================================
 // SPI Register Structure
 //============================================================================

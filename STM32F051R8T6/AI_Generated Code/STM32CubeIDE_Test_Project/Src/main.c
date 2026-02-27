@@ -27,9 +27,15 @@
 
 volatile uint8_t Interrupt_Count = 0;
 
+uint8_t SpiTxCmpltFlag = 1;
+uint8_t Txnum = 0;
+
 SPI_HandleTypeDef hspi1;
-uint8_t tx_data = 0x55;
-uint8_t rx_data = 0;
+uint8_t tx_data[100] = {0};
+uint8_t rx_data[100];
+
+volatile uint8_t TxXfrerCnt = 0;
+uint16_t transfer_error_int = 0;
 
 void Delay_ms(uint32_t ms) {
     uint32_t i, j;
@@ -109,7 +115,7 @@ void SPI1_Init_Mode0(void)
     hspi1.Init.data_size = SPI_DATA_SIZE_8BIT;
     hspi1.Init.baud_rate = SPI_BAUD_RATE_DIV_16;
     hspi1.Init.comm_mode = SPI_COMM_MODE_FULL_DUPLEX;
-    hspi1.Init.nss_mode = SPI_NSS_HARDWARE_OUTPUT; //
+    hspi1.Init.nss_mode = SPI_NSS_SOFTWARE; //
     hspi1.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;
     hspi1.Init.rx_fifo_threshold = SPI_FIFO_THRESHOLD_1_2;
     hspi1.Init.crc_enabled = false;
@@ -121,7 +127,14 @@ void SPI1_Init_Mode0(void)
     GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
 
     SPI_Init(&hspi1);
+    // Enable NVIC interrupt for SPI1 (IRQ 25)
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+
+    // Enable interrupts
     SPI_Enable(&hspi1);
+
+
 }
 
 void SPI1_GPIO_Init(void)
@@ -137,7 +150,7 @@ void SPI1_GPIO_Init(void)
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Pull = GPIO_PULL_NO;  // No pull-up/down for NSS
+    GPIO_InitStruct.Pull = GPIO_PULL_UP;  // No pull-up/down for NSS
     GPIO_InitStruct.AF = GPIO_AF0;
     GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -182,20 +195,51 @@ int main(void) {
 
 	SPI1_GPIO_Init();
 	//SPI_EnableClock(SPI_INSTANCE_1);
+	Delay_ms(100);
 	SPI1_Init_Mode0();
+
+	for(int i = 0; i < sizeof(tx_data); i++)
+	{
+		tx_data[i] = i;
+	}
+
+	GPIO_ResetPin(GPIOA, GPIO_PIN_4);
+	//SPI_SendData8(&hspi1, tx_data[0]);
+	TxXfrerCnt = 1;
+	SpiTxCmpltFlag = 0;
+	SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+
 
 	while(1)
 	{
-		GPIO_SetPin(GPIOC, GPIO_PIN_9);
+		//GPIO_SetPin(GPIOC, GPIO_PIN_9);
 
+		/*
 	    // NSS LOW to start transmission
 	    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
 	    rx_data = SPI_Transfer(&hspi1, tx_data);
 	    // NSS HIGH after transmission
-	    Delay_ms(100);
+	    Delay_ms(1);
 	    GPIO_SetPin(GPIOA, GPIO_PIN_4);
+	    */
 
-		GPIO_ResetPin(GPIOC, GPIO_PIN_9);
+	    //Delay_ms(1000);
+		//GPIO_ResetPin(GPIOC, GPIO_PIN_9);
+
+	    if(SpiTxCmpltFlag == 1)
+	    {
+	    	Delay_ms(1000);
+	    	if(Txnum < 1)
+	    	{
+	    		Txnum++;
+				GPIO_ResetPin(GPIOA, GPIO_PIN_4);
+				SPI_SendData8(&hspi1, tx_data[0]);
+				TxXfrerCnt = 1;
+				SpiTxCmpltFlag = 0;
+				SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+	    	}
+		}
+
 
 	}
 
@@ -214,6 +258,44 @@ int main(void) {
         }
     }
     return 0;
+}
+
+void SPI1_IRQHandler(void)
+{
+	volatile uint32_t sr = hspi1.Instance->SR;
+
+	// TXE interrupt - send next data
+	if (sr & SPI_SR_TXE) {
+		if (TxXfrerCnt < sizeof(tx_data)) {
+			SPI_SendData8(&hspi1, tx_data[TxXfrerCnt]);
+			TxXfrerCnt++;
+		}
+		else
+		{
+			while (hspi1.Instance->SR & SPI_SR_BSY);
+			if(SpiTxCmpltFlag == 0)
+			{
+				//------------ Send via irq ---------------//
+				TxXfrerCnt = 0;
+				SpiTxCmpltFlag = 1;
+
+				/* Configure NVIC for EXTI0_1 IRQ */
+				GPIO_SetPin(GPIOA, GPIO_PIN_4);
+				SPI_DisableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+				//------------------------------------------//
+			}
+		}
+	}
+
+	// RXNE interrupt - receive data
+	if (sr & SPI_SR_RXNE) {
+
+	}
+
+	// Error handling
+	if (sr & ( SPI_SR_MODF | SPI_SR_CRCERR)) {
+		transfer_error_int = sr;
+	}
 }
 
 

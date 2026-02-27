@@ -21,10 +21,6 @@
 // Configuration
 //============================================================================
 
-#define SPI_INSTANCE    SPI_INSTANCE_1
-#define SPI_HW         SPI1
-
-// Buffer sizes
 #define BUFFER_SIZE    8
 
 // CRC Polynomial (default is 7 for CRC-8)
@@ -34,13 +30,8 @@
 #define CRC_POLYNOMIAL  0x07  // CRC-8 polynomial
 
 //============================================================================
-// Register Definitions
+// Register Definitions - Using spiF051.h definitions instead
 //============================================================================
-
-#define RCC_BASE        0x40021000UL
-#define RCC_CR         (*(volatile uint32_t *)(RCC_BASE + 0x00))
-#define RCC_CFGR       (*(volatile uint32_t *)(RCC_BASE + 0x04))
-#define RCC_APB2ENR    (*(volatile uint32_t *)(RCC_BASE + 0x24))
 
 #define GPIOA_BASE      0x48000000UL
 #define GPIOA          ((GPIO_TypeDef *)GPIOA_BASE)
@@ -97,9 +88,6 @@ int main(void)
     printf("SPI Master with CRC Example\r\n");
     printf("===========================\r\n\r\n");
     
-    // Reset CRC before communication
-    SPI_ResetCRC(&hspi1);
-    
     // Print TX buffer
     printf("TX Buffer: ");
     for (int i = 0; i < BUFFER_SIZE; i++) {
@@ -112,6 +100,9 @@ int main(void)
     
     // Set NSS low
     SPI_SetNSSPin(&hspi1, false);
+    
+    // Reset CRC before communication (important!)
+    SPI_ResetCRC(&hspi1);
     
     // Send all data
     for (int i = 0; i < BUFFER_SIZE; i++) {
@@ -135,8 +126,12 @@ int main(void)
     SPI_WaitNotBusy(&hspi1);
     
     // Wait for CRC reception (in full-duplex, CRC is received after data)
-    // Small delay for CRC to be received
-    for (volatile int i = 0; i < 1000; i++);
+    // Wait for RXNE flag to indicate CRC has been received
+    while (!SPI_IsRXNE(&hspi1));
+    
+    // Read the CRC value from RX register (dummy read to clear RXNE)
+    volatile uint8_t dummy = SPI_ReceiveData8(&hspi1);
+    (void)dummy;  // Suppress unused variable warning
     
     // Check for CRC error
     if (SPI_CheckCRCError(&hspi1)) {
@@ -244,8 +239,8 @@ void SPI1_GPIO_Init(void)
 
 void SPI1_Init_Master_CRC_8bit(void)
 {
-    // Initialize SPI handle
-    hspi1.Instance = SPI_HW;
+    // Initialize SPI handle - use SPI1 directly
+    hspi1.Instance = SPI1;
     
     // Configure SPI with CRC enabled
     hspi1.Init.mode = SPI_MODE_MASTER;
@@ -262,7 +257,7 @@ void SPI1_Init_Master_CRC_8bit(void)
     hspi1.Init.crc_polynomial = CRC_POLYNOMIAL;  // CRC-8 polynomial
     hspi1.Init.nss_pulse_enabled = false;
     
-    // Initialize SPI
+    // Initialize SPI (this enables the clock internally)
     SPI_Init(&hspi1);
     
     // Enable SPI

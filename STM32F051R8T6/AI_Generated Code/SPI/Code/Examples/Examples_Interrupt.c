@@ -25,6 +25,11 @@
 #define RCC_CFGR       (*(volatile uint32_t *)(RCC_BASE + 0x04))
 #define RCC_APB2ENR    (*(volatile uint32_t *)(RCC_BASE + 0x24))
 
+#define NVIC_BASE       0xE000E100UL
+#define NVIC_ISER      (*(volatile uint32_t *)(NVIC_BASE + 0x00))
+#define NVIC_ICER      (*(volatile uint32_t *)(NVIC_BASE + 0x80))
+#define NVIC_IPR       ((volatile uint32_t *)(NVIC_BASE + 0x300))
+
 #define GPIOA_BASE      0x48000000UL
 #define GPIOA          ((GPIO_TypeDef *)GPIOA_BASE)
 
@@ -41,6 +46,42 @@ typedef struct {
     volatile uint32_t AFRH;
     volatile uint32_t BRR;
 } GPIO_TypeDef;
+
+//============================================================================
+// NVIC Functions
+//============================================================================
+
+/**
+ * @brief Enable NVIC interrupt
+ */
+static void NVIC_EnableIRQ(uint8_t irq)
+{
+    if (irq < 32) {
+        NVIC_ISER = (1U << irq);
+    } else if (irq < 64) {
+        NVIC_ISER = (1U << (irq - 32));
+    }
+}
+
+/**
+ * @brief Disable NVIC interrupt
+ */
+static void NVIC_DisableIRQ(uint8_t irq)
+{
+    if (irq < 32) {
+        NVIC_ICER = (1U << irq);
+    } else if (irq < 64) {
+        NVIC_ICER = (1U << (irq - 32));
+    }
+}
+
+/**
+ * @brief Set NVIC priority
+ */
+static void NVIC_SetPriority(uint8_t irq, uint8_t priority)
+{
+    NVIC_IPR[irq >> 2] = (priority << ((irq % 4) * 8)) & 0xFF;
+}
 
 //============================================================================
 // Example 1: Master Full-Duplex 8-bit with Interrupt
@@ -79,6 +120,10 @@ void Example1_Master_FullDuplex_8bit_Interrupt(void)
     hspi1_int.Init.crc_enabled = false;
     
     SPI_Init(&hspi1_int);
+    
+    // Enable NVIC interrupt for SPI1 (IRQ 25)
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
     
     // Enable interrupts
     SPI_EnableInterrupt(&hspi1_int, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
@@ -137,8 +182,12 @@ void SPI1_IRQHandler_Example1(void)
         transfer_error_int = true;
     }
     
-    // Check completion
+    // Check completion - wait for BSY to go low before de-asserting NSS
+    // TXE only indicates buffer is empty, NOT that transmission is complete
     if (rx_index_int >= BUFFER_SIZE && tx_index_int >= BUFFER_SIZE) {
+        // Wait for SPI to finish transmitting all data (BSY flag cleared)
+        while (hspi1_int.Instance->SR & SPI_SR_BSY);
+        
         transfer_complete_int = true;
         SPI_SetNSSPin(&hspi1_int, true);
         SPI_DisableInterrupt(&hspi1_int, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
@@ -180,6 +229,10 @@ void Example2_Master_FullDuplex_16bit_Interrupt(void)
     hspi1_16.Init.crc_enabled = false;
     
     SPI_Init(&hspi1_16);
+    // Enable NVIC for SPI1
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+    
     SPI_EnableInterrupt(&hspi1_16, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
     SPI_Enable(&hspi1_16);
     
@@ -216,7 +269,12 @@ void SPI1_IRQHandler_Example2(void)
         }
     }
     
+    // Check completion - wait for BSY to go low before de-asserting NSS
+    // TXE only indicates buffer is empty, NOT that transmission is complete
     if (rx_index_16 >= BUFFER_SIZE_16 && tx_index_16 >= BUFFER_SIZE_16) {
+        // Wait for SPI to finish transmitting all data (BSY flag cleared)
+        while (hspi1_16.Instance->SR & SPI_SR_BSY);
+        
         transfer_complete_16 = true;
         SPI_SetNSSPin(&hspi1_16, true);
     }
@@ -254,6 +312,10 @@ void Example3_Master_Simplex_Tx_Interrupt(void)
     hspi1_simplex.Init.crc_enabled = false;
     
     SPI_Init(&hspi1_simplex);
+    // Enable NVIC for SPI1
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+    
     SPI_EnableInterrupt(&hspi1_simplex, SPI_IT_TXE);
     SPI_Enable(&hspi1_simplex);
     
@@ -319,6 +381,10 @@ void Example4_Slave_FullDuplex_Interrupt(void)
     hspi1_slave.Init.crc_enabled = false;
     
     SPI_Init(&hspi1_slave);
+    // Enable NVIC for SPI1
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+    
     SPI_EnableInterrupt(&hspi1_slave, SPI_IT_RXNE | SPI_IT_ERR);
     SPI_Enable(&hspi1_slave);
     
@@ -391,6 +457,10 @@ void Example5_Master_CRC_Interrupt(void)
     hspi1_crc.Init.crc_polynomial = 0x07;
     
     SPI_Init(&hspi1_crc);
+    // Enable NVIC for SPI1
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+    
     SPI_EnableInterrupt(&hspi1_crc, SPI_IT_TXE | SPI_IT_RXNE);
     SPI_Enable(&hspi1_crc);
     
@@ -437,8 +507,11 @@ void SPI1_IRQHandler_Example5(void)
         printf("CRC Error detected!\r\n");
     }
     
-    // Check completion
+    // Check completion - wait for BSY to go low before de-asserting NSS
     if (crc_rx_index >= CRC_BUFFER_SIZE && crc_tx_index > CRC_BUFFER_SIZE) {
+        // Wait for SPI to finish transmitting all data including CRC (BSY flag cleared)
+        while (hspi1_crc.Instance->SR & SPI_SR_BSY);
+        
         crc_transfer_done = true;
         SPI_SetNSSPin(&hspi1_crc, true);
         
@@ -576,7 +649,7 @@ int main(void)
     // Uncomment one of the following to test:
     
     // Example 1: Master Full-Duplex 8-bit Interrupt
-    // Example1_Master_FullDuplex_8bit_Interrupt();
+    Example1_Master_FullDuplex_8bit_Interrupt();
     
     // Example 2: Master Full-Duplex 16-bit Interrupt
     // Example2_Master_FullDuplex_16bit_Interrupt();
@@ -591,7 +664,7 @@ int main(void)
     // Example5_Master_CRC_Interrupt();
     
     // Example 6: All Modes (polling for simplicity)
-    Example6_Master_AllModes_Interrupt();
+    // Example6_Master_AllModes_Interrupt();
     
     while (1) {
         // Main loop - process interrupts
@@ -615,8 +688,10 @@ int main(void)
  */
 void SPI1_IRQHandler(void)
 {
-    // Uncomment the example handler you want to use:
-    // SPI1_IRQHandler_Example1();
+    // Call Example 1 handler (Master Full-Duplex 8-bit Interrupt)
+    SPI1_IRQHandler_Example1();
+    
+    // For other examples, uncomment the corresponding handler:
     // SPI1_IRQHandler_Example2();
     // SPI1_IRQHandler_Example3();
     // SPI1_IRQHandler_Example4();

@@ -24,3 +24,19 @@ Also the MODF Status is generated in Software slave menagement.
 
 Please help me to debug this issue. 
 Also replace the GPIO configurations with the GPIO driver code from "AI_Generated Code\GPIO_AI" folder.
+---------------------------------------------------------------------
+Please add the Global interrupt enable/disable related code and macros for SPI in "spiF051.h" and "spiF051.c" files.
+
+---------------------------------------------------------------------
+The example given for interrupt is "Examples_Interrupt.c" is not working. The interrupt cannot generated. Please rectify it.
+---------------------------------------------------------------------
+Dues interrupt pending bit for SPI needs to be clear or not in IRQ handler?
+---------------------------------------------------------------------
+I am facing the issue where after making the hardware SS line low and enabling the interrupt, the below situation happens. I have attached the logic annalyser to SS, SCLK, and MOSI line.
+1> the SPI transaction is begin to process.
+2> At the last inteerupt for TXE, my check for buffer becomes true (if (rx_index_int >= BUFFER_SIZE && tx_index_int >= BUFFER_SIZE) {}) so we dissabled the interrupt and make the hardware SS line high.
+3> When I monitor it with the ligic annalyser, I found that after transmitting near about 5 bytes, the hardware SS line becomes high which keads to incompletion of the data transfer.
+
+Please solve the issue and make the changes in "Examples_Interrupt.c" file for the issue.
+
+---------------------------------------------------------------------
