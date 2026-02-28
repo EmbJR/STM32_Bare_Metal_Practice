@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "string.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,7 +43,7 @@
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t dataRx[100] = {0};
+volatile uint8_t dataRx[10] = {0xFF};
 volatile uint8_t rxCnt = 0;
 /* USER CODE END PV */
 
@@ -92,7 +91,9 @@ int main(void)
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_SPI_Receive_IT(&hspi1,(uint8_t *) dataRx, sizeof(dataRx));
+  memset((uint8_t *)dataRx, 0x55, sizeof(dataRx));
+  HAL_SPI_Transmit_IT(&hspi1,(uint8_t *) dataRx, sizeof(dataRx));
+  //HAL_SPI_Receive_IT(&hspi1,(uint8_t *) dataRx, sizeof(dataRx));
   //HAL_SPI_Receive(&hspi1, (uint8_t *)dataRx, sizeof(dataRx), 10000);
   /* USER CODE END 2 */
 
@@ -105,8 +106,9 @@ int main(void)
 	  {
 		  rxCnt = 0;
 		  HAL_Delay(100);
-		  memset((uint8_t *)dataRx, 0x00, sizeof(dataRx));
-		  HAL_SPI_Receive_IT(&hspi1, (uint8_t *)dataRx, sizeof(dataRx));
+		  memset((uint8_t *)dataRx, 0x55, sizeof(dataRx));
+		  HAL_SPI_Transmit_IT(&hspi1,(uint8_t *) dataRx, sizeof(dataRx));
+		  //HAL_SPI_Receive_IT(&hspi1, (uint8_t *)dataRx, sizeof(dataRx));
 	  }
     /* USER CODE END WHILE */
 
@@ -200,7 +202,8 @@ static void MX_SPI1_Init(void)
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 0x0;
+  hspi1.Init.CRCPolynomial = 0x107;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_8BIT;
   hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
   hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_08DATA;
@@ -244,6 +247,15 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	if((SPI_HandleTypeDef *)&hspi->Instance == (SPI_HandleTypeDef *)&hspi1.Instance)
+	{
+		rxCnt = 1;
+	}
+}
+
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if((SPI_HandleTypeDef *)&hspi->Instance == (SPI_HandleTypeDef *)&hspi1.Instance)
 	{

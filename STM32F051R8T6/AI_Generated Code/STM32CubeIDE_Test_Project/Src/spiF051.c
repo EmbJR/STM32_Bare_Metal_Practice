@@ -397,7 +397,7 @@ uint16_t SPI_ReceiveData(SPI_HandleTypeDef *hspi)
  */
 void SPI_SendData8(SPI_HandleTypeDef *hspi, uint8_t data)
 {
-    hspi->Instance->DR = (uint16_t)data;
+	*((volatile uint8_t *)&hspi->Instance->DR) = (uint16_t)data;
 }
 
 /**
@@ -472,6 +472,91 @@ uint16_t SPI_Transfer(SPI_HandleTypeDef *hspi, uint16_t data)
 }
 
 /**
+ * @brief Send buffer - 8-bit version (transmit only mode)
+ * @param hspi: Pointer to SPI handle structure
+ * @param buffer: Data buffer to send (8-bit)
+ * @param size: Number of bytes to send
+ */
+void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
+{
+    for (uint16_t i = 0; i < size; i++) {
+        // Wait for TX buffer empty
+        SPI_WaitTXE(hspi);
+        
+        // Send data (8-bit)
+        *((volatile uint16_t *)&hspi->Instance->DR) = buffer[i];
+        
+        // For full-duplex mode: wait for RXNE and read the dummy data
+        // This prevents the extra dummy byte on next transmission
+        if (hspi->Init.comm_mode == SPI_COMM_MODE_FULL_DUPLEX) {
+            SPI_WaitRXNE(hspi);
+            (void)hspi->Instance->DR;
+        }
+    }
+    
+    // Wait for last transmission to complete
+    SPI_WaitNotBusy(hspi);
+    
+    // Additional drain: read any remaining data in RX FIFO
+    while (SPI_GetFIFOLevel(hspi) > 0) {
+        (void)hspi->Instance->DR;
+    }
+}
+
+/**
+ * @brief Receive buffer - 8-bit version (receive only mode)
+ * @param hspi: Pointer to SPI handle structure
+ * @param buffer: Buffer to store received data
+ * @param size: Number of bytes to receive
+ */
+void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
+{
+    for (uint16_t i = 0; i < size; i++) {
+        // Wait for RX buffer not empty
+        SPI_WaitRXNE(hspi);
+        
+        // Receive data (8-bit)
+        buffer[i] = (uint8_t)hspi->Instance->DR;
+    }
+}
+
+/**
+ * @brief Transfer buffer - 8-bit version (full-duplex)
+ * @param hspi: Pointer to SPI handle structure
+ * @param tx_buffer: Transmit buffer
+ * @param rx_buffer: Receive buffer
+ * @param size: Number of bytes to transfer
+ */
+void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer, 
+                         uint8_t *rx_buffer, uint16_t size)
+{
+    for (uint16_t i = 0; i < size; i++) {
+        // Wait for TX buffer empty
+        SPI_WaitTXE(hspi);
+        
+        // Send data
+        if (tx_buffer != 0) {
+            hspi->Instance->DR = (uint16_t)tx_buffer[i];
+        } else {
+            hspi->Instance->DR = 0;
+        }
+        
+        // Wait for RX buffer not empty
+        SPI_WaitRXNE(hspi);
+        
+        // Receive data
+        if (rx_buffer != 0) {
+            rx_buffer[i] = (uint8_t)hspi->Instance->DR;
+        } else {
+            (void)hspi->Instance->DR;
+        }
+    }
+    
+    // Flush any remaining data in RX FIFO to prevent issues on next transmission
+    SPI_FlushRX(hspi);
+}
+
+/**
  * @brief Transfer buffer (full-duplex)
  * @param hspi: Pointer to SPI handle structure
  * @param tx_buffer: Transmit buffer
@@ -502,6 +587,9 @@ void SPI_TransferBuffer(SPI_HandleTypeDef *hspi, uint16_t *tx_buffer,
             (void)hspi->Instance->DR;
         }
     }
+    
+    // Flush any remaining data in RX FIFO to prevent issues on next transmission
+    SPI_FlushRX(hspi);
 }
 
 /**
@@ -518,10 +606,23 @@ void SPI_SendBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size)
         
         // Send data
         hspi->Instance->DR = buffer[i];
+        
+        // For full-duplex mode: wait for RXNE and read the dummy data
+        // This prevents the extra dummy byte on next transmission
+        if (hspi->Init.comm_mode == SPI_COMM_MODE_FULL_DUPLEX) {
+            SPI_WaitRXNE(hspi);
+            (void)hspi->Instance->DR;
+        }
     }
     
     // Wait for last transmission to complete
     SPI_WaitNotBusy(hspi);
+    
+    // Additional drain: read any remaining data in RX FIFO
+    // This ensures no pending data causes issues on next transmission
+    while (SPI_GetFIFOLevel(hspi) > 0) {
+        (void)hspi->Instance->DR;
+    }
 }
 
 /**
@@ -709,6 +810,36 @@ void SPI_WaitNotBusy(SPI_HandleTypeDef *hspi)
 void SPI_WaitFIFOEmpty(SPI_HandleTypeDef *hspi)
 {
     while ((hspi->Instance->SR & SPI_SR_FTLVL) != 0);
+}
+
+/**
+ * @brief Flush RX buffer (drain any pending data)
+ * @param hspi: Pointer to SPI handle structure
+ * @note This function reads and discards all pending data in the RX FIFO
+ *       to prevent dummy byte issues on subsequent transmissions
+ */
+void SPI_FlushRX(SPI_HandleTypeDef *hspi)
+{
+    // Read and discard all data in RX FIFO
+    while (SPI_GetFIFOLevel(hspi) > 0) {
+        (void)hspi->Instance->DR;
+    }
+    
+    // Also clear any pending overrun flag
+    hspi->Instance->SR &= ~SPI_SR_OVR;
+}
+
+/**
+ * @brief Flush TX buffer (drain any pending data)
+ * @param hspi: Pointer to SPI handle structure
+ */
+void SPI_FlushTX(SPI_HandleTypeDef *hspi)
+{
+    // Wait until TX FIFO is empty
+    SPI_WaitFIFOEmpty(hspi);
+    
+    // Wait for BSY to clear
+    SPI_WaitNotBusy(hspi);
 }
 
 //============================================================================

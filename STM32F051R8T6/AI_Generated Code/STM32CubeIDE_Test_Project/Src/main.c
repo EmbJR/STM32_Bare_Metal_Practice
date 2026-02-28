@@ -27,15 +27,32 @@
 
 volatile uint8_t Interrupt_Count = 0;
 
-uint8_t SpiTxCmpltFlag = 1;
+enum{
+	DATA_MODE_8Bit,
+	DATA_MODE_8Bit_CRC,
+};
+
+uint8_t SpiDataMode = DATA_MODE_8Bit;
+
+uint8_t transfer_complete_int = false;
 uint8_t Txnum = 0;
 
 SPI_HandleTypeDef hspi1;
-uint8_t tx_data[100] = {0};
-uint8_t rx_data[100];
+uint8_t tx_data[100] = {0x55};
+uint8_t rx_data[10];
+
+uint8_t *SpiTxPtr = 0;
+uint8_t sendDataaCnt = 0;
+
+uint8_t *SpiRxPtr = 0;
+uint8_t receiveDataaCnt = 0;
 
 volatile uint8_t TxXfrerCnt = 0;
+volatile uint8_t RxXfrerCnt = 0;
+
 uint16_t transfer_error_int = 0;
+
+
 
 void Delay_ms(uint32_t ms) {
     uint32_t i, j;
@@ -105,7 +122,7 @@ void Example_Pin_Init(void) {
 }
 
 
-void SPI1_Init_Mode0(void)
+void SPI1_Init_Mode0_8bit(void)
 {
     hspi1.Instance = SPI1;
     hspi1.Init.mode = SPI_MODE_MASTER;
@@ -119,6 +136,36 @@ void SPI1_Init_Mode0(void)
     hspi1.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;
     hspi1.Init.rx_fifo_threshold = SPI_FIFO_THRESHOLD_1_2;
     hspi1.Init.crc_enabled = false;
+    hspi1.Init.crc_polynomial = 7;
+    hspi1.Init.nss_pulse_enabled = false;
+
+    // CRITICAL FIX: Set NSS pin HIGH via GPIO BEFORE initializing SPI
+    // This prevents MODF (Mode Fault) when using software slave management
+    GPIO_SetPin(GPIOA, GPIO_PIN_4);  // NSS HIGH via GPIO
+
+    SPI_Init(&hspi1);
+    // Enable NVIC interrupt for SPI1 (IRQ 25)
+    NVIC_EnableIRQ(SPI1_IRQn);
+    NVIC_SetPriority(SPI1_IRQn, 0);
+
+    // Enable interrupts
+    SPI_Enable(&hspi1);
+}
+
+void SPI1_Init_Mode0_CRC(void)
+{
+    hspi1.Instance = SPI1;
+    hspi1.Init.mode = SPI_MODE_MASTER;
+    hspi1.Init.clock_polarity = SPI_CLOCK_POLARITY_LOW;   // CPOL = 0
+    hspi1.Init.clock_phase = SPI_CLOCK_PHASE_1ST_EDGE;   // CPHA = 0
+    hspi1.Init.frame_format = SPI_FRAME_FORMAT_MSB_FIRST;
+    hspi1.Init.data_size = SPI_DATA_SIZE_8BIT;
+    hspi1.Init.baud_rate = SPI_BAUD_RATE_DIV_16;
+    hspi1.Init.comm_mode = SPI_COMM_MODE_FULL_DUPLEX;
+    hspi1.Init.nss_mode = SPI_NSS_SOFTWARE; //
+    hspi1.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;
+    hspi1.Init.rx_fifo_threshold = SPI_FIFO_THRESHOLD_1_2;
+    hspi1.Init.crc_enabled = true;
     hspi1.Init.crc_polynomial = 7;
     hspi1.Init.nss_pulse_enabled = false;
 
@@ -186,8 +233,73 @@ void SPI1_GPIO_Init(void)
     GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
+void sendDataIT_SPI(uint8_t *dataptr, uint16_t size)
+{
+	SpiDataMode = DATA_MODE_8Bit;
+	GPIO_ResetPin(GPIOA, GPIO_PIN_4);
+	SPI_SendData8(&hspi1, tx_data[0]);
+	TxXfrerCnt = 1;
+	SpiTxPtr = dataptr;
+	sendDataaCnt = size;
+	transfer_complete_int = false;
+	SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
 
-int main(void) {
+}
+
+void receiveDataIT_SPI(uint8_t *dataptr, uint8_t size)
+{
+	SpiDataMode = DATA_MODE_8Bit;
+	GPIO_ResetPin(GPIOA, GPIO_PIN_4);
+	//SPI_SendData8(&hspi1, 0);
+
+	SpiRxPtr = dataptr;
+	receiveDataaCnt = size;
+
+	RxXfrerCnt = 0;
+	transfer_complete_int = false;
+	SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+
+	while (hspi1.Instance->SR & SPI_SR_BSY);
+
+}
+
+void sendDataIT_SPI_CRC(uint8_t *dataptr, uint8_t size)
+{
+	SpiDataMode = DATA_MODE_8Bit_CRC;
+	SPI_ResetCRC(&hspi1);
+	GPIO_ResetPin(GPIOA, GPIO_PIN_4);
+	//SPI_SendData8(&hspi1, tx_data[0]);
+	SpiTxPtr = dataptr;
+	sendDataaCnt = size;
+	TxXfrerCnt = 1;
+	transfer_complete_int = false;
+	SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+
+}
+
+int main_Master_Rx_8bit(void)
+{
+	SPI1_GPIO_Init();
+	Delay_ms(100);
+	SPI1_Init_Mode0_8bit();
+	receiveDataIT_SPI(rx_data, sizeof(rx_data));
+
+	Txnum = 0;
+	while(1)
+	{
+		if(transfer_complete_int == true)
+		{
+			Delay_ms(300);
+			if(Txnum < 100)
+			{
+				Txnum++;
+				receiveDataIT_SPI(rx_data, sizeof(rx_data));
+			}
+		}
+	}
+}
+
+int main_Master_Tx_8bit(void) {
     // Configure system clock
 	SystemClock_Config_8MHz();
 	Example_LED_Blink();
@@ -196,67 +308,76 @@ int main(void) {
 	SPI1_GPIO_Init();
 	//SPI_EnableClock(SPI_INSTANCE_1);
 	Delay_ms(100);
-	SPI1_Init_Mode0();
+	SPI1_Init_Mode0_8bit();
+
+	sendDataIT_SPI(tx_data, sizeof(tx_data));
+
+	while(1)
+	{
+		//GPIO_SetPin(GPIOC, GPIO_PIN_9);
+
+	    if(transfer_complete_int == true)
+	    {
+	    	Delay_ms(500);
+	    	if(Txnum < 1)
+	    	{
+	    		Txnum++;
+	    		sendDataIT_SPI(tx_data, sizeof(tx_data));
+	    	}
+		}
+	}
+    return 0;
+}
+
+
+int main_Master_Tx_8bit_With_CRC(void) {
+    // Configure system clock
+	SystemClock_Config_8MHz();
+	Example_LED_Blink();
+	//Example_Pin_Init();
+
+	SPI1_GPIO_Init();
+	//SPI_EnableClock(SPI_INSTANCE_1);
+	Delay_ms(100);
+	SPI1_Init_Mode0_CRC();
+
+//	SpiTxPtr = tx_data;
+//	uint32_t val1 = sizeof(SpiTxPtr);
+//	val1 = sizeof(tx_data);
+
+	sendDataIT_SPI_CRC(tx_data, sizeof(tx_data));
+
+	while(1)
+	{
+		//GPIO_SetPin(GPIOC, GPIO_PIN_9);
+
+	    if(transfer_complete_int == true)
+	    {
+	    	Delay_ms(500);
+	    	if(Txnum < 1)
+	    	{
+	    		Txnum++;
+	    		sendDataIT_SPI_CRC(tx_data, sizeof(tx_data));
+	    	}
+		}
+
+
+	}
+    return 0;
+}
+
+
+
+//------------------------------------ main code --------------------------------------//
+int main(void) {
+    // Configure system clock
 
 	for(int i = 0; i < sizeof(tx_data); i++)
 	{
 		tx_data[i] = i;
 	}
 
-	GPIO_ResetPin(GPIOA, GPIO_PIN_4);
-	//SPI_SendData8(&hspi1, tx_data[0]);
-	TxXfrerCnt = 1;
-	SpiTxCmpltFlag = 0;
-	SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
-
-
-	while(1)
-	{
-		//GPIO_SetPin(GPIOC, GPIO_PIN_9);
-
-		/*
-	    // NSS LOW to start transmission
-	    GPIO_ResetPin(GPIOA, GPIO_PIN_4);
-	    rx_data = SPI_Transfer(&hspi1, tx_data);
-	    // NSS HIGH after transmission
-	    Delay_ms(1);
-	    GPIO_SetPin(GPIOA, GPIO_PIN_4);
-	    */
-
-	    //Delay_ms(1000);
-		//GPIO_ResetPin(GPIOC, GPIO_PIN_9);
-
-	    if(SpiTxCmpltFlag == 1)
-	    {
-	    	Delay_ms(1000);
-	    	if(Txnum < 1)
-	    	{
-	    		Txnum++;
-				GPIO_ResetPin(GPIOA, GPIO_PIN_4);
-				SPI_SendData8(&hspi1, tx_data[0]);
-				TxXfrerCnt = 1;
-				SpiTxCmpltFlag = 0;
-				SPI_EnableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
-	    	}
-		}
-
-
-	}
-
-    // Enable peripheral clocks as needed
-
-    // Get current system clock frequency
-    uint32_t sysclk = RCC_GetSystemClockFrequency();
-
-    /* Main loop */
-    while (1) {
-        /* LED reflects interrupt count (mod 2) */
-        if (Interrupt_Count % 2) {
-            GPIO_SetPin(GPIOC, GPIO_PIN_9);
-        } else {
-            GPIO_ResetPin(GPIOC, GPIO_PIN_9);
-        }
-    }
+	main_Master_Tx_8bit();
     return 0;
 }
 
@@ -265,36 +386,53 @@ void SPI1_IRQHandler(void)
 	volatile uint32_t sr = hspi1.Instance->SR;
 
 	// TXE interrupt - send next data
-	if (sr & SPI_SR_TXE) {
-		if (TxXfrerCnt < sizeof(tx_data)) {
-			SPI_SendData8(&hspi1, tx_data[TxXfrerCnt]);
+	if ((sr & SPI_SR_TXE) && ((sendDataaCnt > 0) || (receiveDataaCnt > 0)))
+	{
+		if ((TxXfrerCnt < sendDataaCnt) && (sendDataaCnt > 0))
+		{
+			SPI_SendData8(&hspi1, SpiTxPtr[TxXfrerCnt]);
 			TxXfrerCnt++;
 		}
 		else
 		{
-			while (hspi1.Instance->SR & SPI_SR_BSY);
-			if(SpiTxCmpltFlag == 0)
+			if((SpiDataMode == DATA_MODE_8Bit_CRC) && (TxXfrerCnt == sendDataaCnt) && (sendDataaCnt > 0))
 			{
-				//------------ Send via irq ---------------//
-				TxXfrerCnt = 0;
-				SpiTxCmpltFlag = 1;
+				SPI_TransmitCRC(&hspi1);
+				TxXfrerCnt++;
+			}
 
-				/* Configure NVIC for EXTI0_1 IRQ */
-				GPIO_SetPin(GPIOA, GPIO_PIN_4);
-				SPI_DisableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
-				//------------------------------------------//
+			if ((RxXfrerCnt < receiveDataaCnt) && (receiveDataaCnt > 0))
+			{
+				SPI_SendData8(&hspi1, 0);		// send dummy bytes
 			}
 		}
 	}
 
 	// RXNE interrupt - receive data
-	if (sr & SPI_SR_RXNE) {
+    if (sr & SPI_SR_RXNE) {
 
-	}
+        if (RxXfrerCnt < receiveDataaCnt) {
+        	SpiRxPtr[RxXfrerCnt] = SPI_ReceiveData8(&hspi1);
+        	RxXfrerCnt++;
+        }
+    }
 
 	// Error handling
 	if (sr & ( SPI_SR_MODF | SPI_SR_CRCERR)) {
 		transfer_error_int = sr;
+	}
+
+	if (TxXfrerCnt >= sendDataaCnt && RxXfrerCnt >= receiveDataaCnt)
+	{
+		// Wait for SPI to finish transmitting all data (BSY flag cleared)
+		while (hspi1.Instance->SR & SPI_SR_BSY);
+
+		transfer_complete_int = true;
+
+		/* Configure NVIC for EXTI0_1 IRQ */
+		GPIO_SetPin(GPIOA, GPIO_PIN_4);
+		SPI_DisableInterrupt(&hspi1, SPI_IT_TXE | SPI_IT_RXNE | SPI_IT_ERR);
+		receiveDataaCnt = sendDataaCnt = 0;
 	}
 }
 

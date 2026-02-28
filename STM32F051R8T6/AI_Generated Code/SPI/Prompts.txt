@@ -40,3 +40,11 @@ I am facing the issue where after making the hardware SS line low and enabling t
 Please solve the issue and make the changes in "Examples_Interrupt.c" file for the issue.
 
 ---------------------------------------------------------------------
+Please review the code in "Example_Master_CRC_8bit.c" and make nessessary changes required to run the CRC based code. you can also refer the changes done in "Examples_Interrupt.c".
+---------------------------------------------------------------------
+
+*((volatile uint8_t *)&hspi->Instance->DR) = data;
+---------------------------------------------------------------------
+I found the issue in SPI transmitt that When I sen 1 byte, there is one dummy byte having value 0x00 transferred to the MOSI line. Please resolve this isse and update the spi driver files.
+
+

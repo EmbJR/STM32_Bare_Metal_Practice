@@ -250,6 +250,12 @@ void SPI_TransferBuffer(SPI_HandleTypeDef *hspi, uint16_t *tx_buffer,
 void SPI_SendBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size);
 void SPI_ReceiveBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size);
 
+// 8-bit buffer transfer functions (for 8-bit data size)
+void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer, 
+                         uint8_t *rx_buffer, uint16_t size);
+void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
+void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
+
 // CRC functions
 void SPI_SetCRCPolynomial(SPI_HandleTypeDef *hspi, uint8_t polynomial);
 uint16_t SPI_GetTXCRC(SPI_HandleTypeDef *hspi);
@@ -271,6 +277,10 @@ void SPI_WaitTXE(SPI_HandleTypeDef *hspi);
 void SPI_WaitRXNE(SPI_HandleTypeDef *hspi);
 void SPI_WaitNotBusy(SPI_HandleTypeDef *hspi);
 void SPI_WaitFIFOEmpty(SPI_HandleTypeDef *hspi);
+
+// Flush functions
+void SPI_FlushRX(SPI_HandleTypeDef *hspi);
+void SPI_FlushTX(SPI_HandleTypeDef *hspi);
 
 // NSS Pulse Management
 void SPI_EnableNSSP(SPI_HandleTypeDef *hspi);
