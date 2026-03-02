@@ -504,20 +504,32 @@ void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
 }
 
 /**
- * @brief Receive buffer - 8-bit version (receive only mode)
+ * @brief Receive buffer - 8-bit version (works for all modes including full duplex)
  * @param hspi: Pointer to SPI handle structure
  * @param buffer: Buffer to store received data
  * @param size: Number of bytes to receive
+ * 
+ * Note: In full duplex mode, we must send dummy bytes to initiate clock
+ * for receiving data
  */
 void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
 {
     for (uint16_t i = 0; i < size; i++) {
+        // Wait for TX buffer empty
+        SPI_WaitTXE(hspi);
+        
+        // Send dummy byte to initiate clock
+        *((volatile uint8_t *)&hspi->Instance->DR) = 0x00;
+        
         // Wait for RX buffer not empty
         SPI_WaitRXNE(hspi);
         
         // Receive data (8-bit)
         buffer[i] = (uint8_t)hspi->Instance->DR;
     }
+    
+    // Flush any remaining data in RX FIFO to prevent issues on next transmission
+    SPI_FlushRX(hspi);
 }
 
 /**

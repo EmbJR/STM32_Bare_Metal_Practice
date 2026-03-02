@@ -18,7 +18,7 @@
 #define AT45DB_CS_PORT             GPIOA
 #define AT45DB_CS_PIN              GPIO_PIN_4
 #define TEST_PAGE_START            0x00    // First page to test
-#define TEST_BUFFER_SIZE           256     // Test buffer size
+#define TEST_BUFFER_SIZE           6     // Test buffer size
 #define TEST_PAGE_COUNT            2       // Number of pages to test
 
 /*============================================================================
@@ -65,7 +65,7 @@ static void AT45DB_SPI_Config(void) {
     spi_handle.Init.clock_phase = SPI_CLOCK_PHASE_1ST_EDGE; // Mode 0
     spi_handle.Init.frame_format = SPI_FRAME_FORMAT_MSB_FIRST;
     spi_handle.Init.data_size = SPI_DATA_SIZE_8BIT;
-    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_64; // 12MHz for 48MHz system clock
+    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_256; // 12MHz for 48MHz system clock
     spi_handle.Init.comm_mode = SPI_COMM_MODE_FULL_DUPLEX;
     spi_handle.Init.nss_mode = SPI_NSS_SOFTWARE;
     spi_handle.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;

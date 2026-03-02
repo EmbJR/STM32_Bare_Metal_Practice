@@ -254,7 +254,7 @@ void SPI_ReceiveBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size)
 void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer, 
                          uint8_t *rx_buffer, uint16_t size);
 void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
-void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
+void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, volatile uint8_t *buffer, uint16_t size);
 
 // CRC functions
 void SPI_SetCRCPolynomial(SPI_HandleTypeDef *hspi, uint8_t polynomial);

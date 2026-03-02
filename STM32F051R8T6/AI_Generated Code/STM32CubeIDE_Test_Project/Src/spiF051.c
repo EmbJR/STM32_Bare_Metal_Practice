@@ -398,6 +398,7 @@ uint16_t SPI_ReceiveData(SPI_HandleTypeDef *hspi)
 void SPI_SendData8(SPI_HandleTypeDef *hspi, uint8_t data)
 {
 	*((volatile uint8_t *)&hspi->Instance->DR) = (uint16_t)data;
+	while (hspi->Instance->SR & SPI_SR_BSY);
 }
 
 /**
@@ -408,6 +409,7 @@ void SPI_SendData8(SPI_HandleTypeDef *hspi, uint8_t data)
 uint8_t SPI_ReceiveData8(SPI_HandleTypeDef *hspi)
 {
     return (uint8_t)hspi->Instance->DR;
+    while (hspi->Instance->SR & SPI_SR_BSY);
 }
 
 /**
@@ -480,11 +482,12 @@ uint16_t SPI_Transfer(SPI_HandleTypeDef *hspi, uint16_t data)
 void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
 {
     for (uint16_t i = 0; i < size; i++) {
+    	while (hspi->Instance->SR & SPI_SR_BSY);
         // Wait for TX buffer empty
         SPI_WaitTXE(hspi);
         
         // Send data (8-bit)
-        *((volatile uint16_t *)&hspi->Instance->DR) = buffer[i];
+        *((volatile uint8_t *)&hspi->Instance->DR) = buffer[i];
         
         // For full-duplex mode: wait for RXNE and read the dummy data
         // This prevents the extra dummy byte on next transmission
@@ -504,20 +507,37 @@ void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
 }
 
 /**
- * @brief Receive buffer - 8-bit version (receive only mode)
+ * @brief Receive buffer - 8-bit version (works for all modes including full duplex)
  * @param hspi: Pointer to SPI handle structure
  * @param buffer: Buffer to store received data
  * @param size: Number of bytes to receive
+ * 
+ * Note: In full duplex mode, we must send dummy bytes to initiate clock
+ * for receiving data
  */
-void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size)
+void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, volatile uint8_t *buffer, uint16_t size)
 {
     for (uint16_t i = 0; i < size; i++) {
+    	while (hspi->Instance->SR & SPI_SR_BSY);
+        // Wait for TX buffer empty
+        SPI_WaitTXE(hspi);
+        
+        // Send dummy byte to initiate clock
+        *((volatile uint8_t *)&hspi->Instance->DR) = 0x00;
+        
+        while (hspi->Instance->SR & SPI_SR_BSY);
+
         // Wait for RX buffer not empty
         SPI_WaitRXNE(hspi);
         
         // Receive data (8-bit)
         buffer[i] = (uint8_t)hspi->Instance->DR;
     }
+    
+    while (hspi->Instance->SR & SPI_SR_BSY);
+
+    // Flush any remaining data in RX FIFO to prevent issues on next transmission
+    SPI_FlushRX(hspi);
 }
 
 /**
@@ -533,12 +553,12 @@ void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer,
     for (uint16_t i = 0; i < size; i++) {
         // Wait for TX buffer empty
         SPI_WaitTXE(hspi);
-        
+        while (hspi->Instance->SR & SPI_SR_BSY);
         // Send data
         if (tx_buffer != 0) {
-            hspi->Instance->DR = (uint16_t)tx_buffer[i];
+            *((volatile uint8_t *)&hspi->Instance->DR) = (uint16_t)tx_buffer[i];
         } else {
-            hspi->Instance->DR = 0;
+            *((volatile uint8_t *)&hspi->Instance->DR) = 0;
         }
         
         // Wait for RX buffer not empty
@@ -546,12 +566,12 @@ void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer,
         
         // Receive data
         if (rx_buffer != 0) {
-            rx_buffer[i] = (uint8_t)hspi->Instance->DR;
+            rx_buffer[i] = *((volatile uint8_t *)&hspi->Instance->DR);
         } else {
             (void)hspi->Instance->DR;
         }
     }
-    
+
     // Flush any remaining data in RX FIFO to prevent issues on next transmission
     SPI_FlushRX(hspi);
 }
@@ -601,6 +621,7 @@ void SPI_TransferBuffer(SPI_HandleTypeDef *hspi, uint16_t *tx_buffer,
 void SPI_SendBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size)
 {
     for (uint16_t i = 0; i < size; i++) {
+        while (hspi->Instance->SR & SPI_SR_BSY);
         // Wait for TX buffer empty
         SPI_WaitTXE(hspi);
         

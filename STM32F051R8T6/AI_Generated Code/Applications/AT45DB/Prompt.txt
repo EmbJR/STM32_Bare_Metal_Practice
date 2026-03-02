@@ -106,4 +106,4 @@ At top level:
 "
 
 ----------------------------------------------------------
-
+I am using SPI in full duplex mode and I found that "SPI_ReceiveBuffer8()" call in the AT45DB example might be inadequate for the purpose because my code stuck in the "SPI_WaitRXNE(hspi);" indefinitely. Please correct the spi transfer in the "Applications\AT45DB\Code" codes.

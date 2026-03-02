@@ -107,10 +107,12 @@ void AT45DB_DeInit(AT45DB_HandleTypeDef *handle) {
  * @brief   Read JEDEC ID to check device presence
  */
 bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint16_t *device_id) {
-    uint8_t rx_data[3];
+    uint8_t rx_data[4] = {0};
+    uint8_t tx_data[4] = {AT45DB_CMD_JEDEC_ID};
     
     AT45DB_Select(handle);
-    SPI_SendData8(handle->hspi, AT45DB_CMD_JEDEC_ID);
+    SPI_SendBuffer8(handle->hspi, tx_data, 1);
+    //SPI_TransferBuffer8(handle->hspi, 0, rx_data, 3);
     SPI_ReceiveBuffer8(handle->hspi, rx_data, 3);
     AT45DB_Deselect(handle);
     
@@ -146,6 +148,7 @@ bool AT45DB_CheckDevicePresence(AT45DB_HandleTypeDef *handle) {
             handle->is_45db041e = false;
             break;
         case 0x2601:
+        case 0x2400:
             handle->is_45db041e = true;
             break;
         default:
@@ -170,13 +173,16 @@ bool AT45DB_CheckDevicePresence(AT45DB_HandleTypeDef *handle) {
  * @brief   Read status register
  */
 bool AT45DB_ReadStatus(AT45DB_HandleTypeDef *handle, uint8_t *status) {
-    if (!handle || !status) {
+    uint8_t txdata[2] = {AT45DB_CMD_STATUS_READ};
+
+	if (!handle || !status) {
         return false;
     }
     
     AT45DB_Select(handle);
-    SPI_SendData8(handle->hspi, AT45DB_CMD_STATUS_READ);
-    *status = SPI_ReceiveData8(handle->hspi);
+    SPI_SendBuffer8(handle->hspi, txdata, 1);
+    //*status = SPI_ReceiveData8(handle->hspi);
+    SPI_ReceiveBuffer8(handle->hspi, status, 1);
     AT45DB_Deselect(handle);
     
     return true;
@@ -199,12 +205,14 @@ bool AT45DB_IsReady(AT45DB_HandleTypeDef *handle) {
  * @brief   Wait for device to become ready
  */
 bool AT45DB_WaitReady(AT45DB_HandleTypeDef *handle, uint32_t timeout_ms) {
-    uint32_t start_time = 0; // Implement your timer here
+    volatile uint32_t start_time = 0; // Implement your timer here
     
     while (!AT45DB_IsReady(handle)) {
         // Simple timeout implementation
-        for (volatile int i = 0; i < 1000; i++);
-        if (++start_time > timeout_ms) {
+
+        for (int i = 0; i < 100; i++);
+
+        if (start_time++ > timeout_ms) {
             return false;
         }
     }
@@ -237,7 +245,7 @@ bool AT45DB_ReadContinuous(AT45DB_HandleTypeDef *handle, uint32_t address, uint8
     AT45DB_EncodeAddress(address, &cmd_buffer[1], handle->page_size);
     
     AT45DB_Select(handle);
-    SPI_SendBuffer8(handle->hspi, cmd_buffer, 4);
+    SPI_SendBuffer8(handle->hspi, cmd_buffer, 5);
     SPI_ReceiveBuffer8(handle->hspi, buffer, length);
     AT45DB_Deselect(handle);
     
@@ -268,7 +276,7 @@ bool AT45DB_ReadBuffer1(AT45DB_HandleTypeDef *handle, uint16_t offset, uint8_t *
     cmd_buffer[3] = 0x00; // Dummy byte
     
     AT45DB_Select(handle);
-    SPI_SendBuffer8(handle->hspi, cmd_buffer, 4);
+    SPI_SendBuffer8(handle->hspi, cmd_buffer, 5);
     SPI_ReceiveBuffer8(handle->hspi, buffer, length);
     AT45DB_Deselect(handle);
     
@@ -352,7 +360,7 @@ bool AT45DB_WriteBuffer2(AT45DB_HandleTypeDef *handle, uint16_t offset, uint8_t 
  * @brief   Program through Buffer 1 with built-in erase
  */
 bool AT45DB_ProgramBuffer1(AT45DB_HandleTypeDef *handle, uint16_t page, uint16_t offset, uint8_t *buffer, uint32_t length) {
-    uint8_t cmd_buffer[4];
+    uint8_t cmd_buffer[5];
     
     if (!handle || !buffer) {
         return false;
@@ -363,11 +371,11 @@ bool AT45DB_ProgramBuffer1(AT45DB_HandleTypeDef *handle, uint16_t page, uint16_t
     AT45DB_EncodeAddress(address, &cmd_buffer[1], handle->page_size);
     
     AT45DB_Select(handle);
-    SPI_SendBuffer8(handle->hspi, cmd_buffer, 4);
+    SPI_SendBuffer8(handle->hspi, cmd_buffer, 5);
     SPI_SendBuffer8(handle->hspi, buffer, length);
     AT45DB_Deselect(handle);
     
-    return AT45DB_WaitReady(handle, 1000);
+    return AT45DB_WaitReady(handle, 10);
 }
 
 /**
@@ -456,7 +464,7 @@ bool AT45DB_ErasePage(AT45DB_HandleTypeDef *handle, uint16_t page) {
     SPI_SendBuffer8(handle->hspi, cmd_buffer, 4);
     AT45DB_Deselect(handle);
     
-    return AT45DB_WaitReady(handle, 2000);
+    return AT45DB_WaitReady(handle, 20);
 }
 
 /**
