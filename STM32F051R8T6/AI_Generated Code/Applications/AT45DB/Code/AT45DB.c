@@ -15,21 +15,21 @@
 /**
  * @brief   Select the AT45DB chip by pulling CS low
  */
-static void AT45DB_Select(AT45DB_HandleTypeDef *handle) {
+void AT45DB_Select(AT45DB_HandleTypeDef *handle) {
     GPIO_ResetPin(handle->cs_port, handle->cs_pin);
 }
 
 /**
  * @brief   Deselect the AT45DB chip by pulling CS high
  */
-static void AT45DB_Deselect(AT45DB_HandleTypeDef *handle) {
+void AT45DB_Deselect(AT45DB_HandleTypeDef *handle) {
     GPIO_SetPin(handle->cs_port, handle->cs_pin);
 }
 
 /**
  * @brief   Encode address according to current page size mode
  */
-static void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size) {
+void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size) {
     if (page_size == AT45DB_PAGE_SIZE_BINARY) {
         // Binary page mode: A18..A8 = page, A7..A0 = byte
         addr_bytes[0] = (address >> 16) & 0xFF;
@@ -103,7 +103,7 @@ void AT45DB_DeInit(AT45DB_HandleTypeDef *handle) {
 /**
  * @brief   Read JEDEC ID to check device presence
  */
-bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint8_t *device_id) {
+bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint16_t *device_id) {
     uint8_t rx_data[3];
     
     AT45DB_Select(handle);
@@ -126,7 +126,7 @@ bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, 
  */
 bool AT45DB_CheckDevicePresence(AT45DB_HandleTypeDef *handle) {
     uint8_t manufacturer_id;
-    uint8_t device_id;
+    uint16_t device_id;
     
     if (!AT45DB_ReadJEDECID(handle, &manufacturer_id, &device_id)) {
         return false;

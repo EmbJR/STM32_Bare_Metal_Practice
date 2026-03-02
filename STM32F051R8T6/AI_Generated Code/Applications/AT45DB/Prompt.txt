@@ -15,4 +15,95 @@ Also write the example code for configuration/Read/Write in file "AT45DBExample.
 I want to have some examples of the driver code you have generated in "Applications\AT45DB\Code" for AT45DB chip.
 Also generate the file "AT45DBExampe" in same folder having the example code.
 Please only use the driver files from the folder "AI_Generated Code\". for the reference codes.
+---------------------------------------
+I found bellow errors when compiling the example in "Applications\AT45DB\Code" file. Please resolve it.
+
+12:38:40 **** Build of configuration Debug for project Gereral_For_AI_Test ****
+make -j4 all 
+arm-none-eabi-gcc -mcpu=cortex-m0 -g3 -DDEBUG -c -x assembler-with-cpp -MMD -MP -MF"Startup/startup_stm32f051r8tx.d" -MT"Startup/startup_stm32f051r8tx.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Startup/startup_stm32f051r8tx.o" "../Startup/startup_stm32f051r8tx.s"
+arm-none-eabi-gcc "../Src/AT45DB.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/AT45DB.d" -MT"Src/AT45DB.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/AT45DB.o"
+arm-none-eabi-gcc "../Src/gpio.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/gpio.d" -MT"Src/gpio.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/gpio.o"
+arm-none-eabi-gcc "../Src/main_AT45DB.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/main_AT45DB.d" -MT"Src/main_AT45DB.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/main_AT45DB.o"
+../Src/AT45DB.c: In function 'AT45DB_CheckDevicePresence':
+../Src/AT45DB.c:142:9: warning: case label value exceeds maximum value for type [-Wswitch-outside-range]
+  142 |         case 0x2600:
+      |         ^~~~
+../Src/AT45DB.c:145:9: warning: case label value exceeds maximum value for type [-Wswitch-outside-range]
+  145 |         case 0x2601:
+      |         ^~~~
+arm-none-eabi-gcc "../Src/rcc.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/rcc.d" -MT"Src/rcc.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/rcc.o"
+../Src/main_AT45DB.c:59:13: error: 'SPI_Config' redeclared as different kind of symbol
+   59 | static void SPI_Config(void) {
+      |             ^~~~~~~~~~
+In file included from ../Src/AT45DB.h:13,
+                 from ../Src/main_AT45DB.c:8:
+../Src/spiF051.h:193:3: note: previous declaration of 'SPI_Config' was here
+  193 | } SPI_Config;
+      |   ^~~~~~~~~~
+In file included from ../Src/main_AT45DB.c:8:
+../Src/AT45DB.h:117:13: warning: 'AT45DB_Select' declared 'static' but never defined [-Wunused-function]
+  117 | static void AT45DB_Select(AT45DB_HandleTypeDef *handle);
+      |             ^~~~~~~~~~~~~
+../Src/AT45DB.h:118:13: warning: 'AT45DB_Deselect' declared 'static' but never defined [-Wunused-function]
+  118 | static void AT45DB_Deselect(AT45DB_HandleTypeDef *handle);
+      |             ^~~~~~~~~~~~~~~
+../Src/AT45DB.h:119:13: warning: 'AT45DB_EncodeAddress' declared 'static' but never defined [-Wunused-function]
+  119 | static void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size);
+      |             ^~~~~~~~~~~~~~~~~~~~
+../Src/main_AT45DB.c:141:13: warning: 'PrintBuffer' defined but not used [-Wunused-function]
+  141 | static void PrintBuffer(const char *label, uint8_t *buffer, uint32_t size) {
+      |             ^~~~~~~~~~~
+make: *** [Src/subdir.mk:31: Src/main_AT45DB.o] Error 1
+make: *** Waiting for unfinished jobs....
+"make -j4 all" terminated with exit code 2. Build might be incomplete.
+
+----------------------------------------------------------
+Please resolve the below errors.
+
+"make -j4 all 
+arm-none-eabi-gcc -mcpu=cortex-m0 -g3 -DDEBUG -c -x assembler-with-cpp -MMD -MP -MF"Startup/startup_stm32f051r8tx.d" -MT"Startup/startup_stm32f051r8tx.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Startup/startup_stm32f051r8tx.o" "../Startup/startup_stm32f051r8tx.s"
+arm-none-eabi-gcc "../Src/AT45DB.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/AT45DB.d" -MT"Src/AT45DB.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/AT45DB.o"
+arm-none-eabi-gcc "../Src/gpio.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/gpio.d" -MT"Src/gpio.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/gpio.o"
+arm-none-eabi-gcc "../Src/main_AT45DB.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/main_AT45DB.d" -MT"Src/main_AT45DB.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/main_AT45DB.o"
+../Src/AT45DB.c:18:13: error: static declaration of 'AT45DB_Select' follows non-static declaration
+   18 | static void AT45DB_Select(AT45DB_HandleTypeDef *handle) {
+      |             ^~~~~~~~~~~~~
+In file included from ../Src/AT45DB.c:8:
+../Src/AT45DB.h:117:6: note: previous declaration of 'AT45DB_Select' was here
+  117 | void AT45DB_Select(AT45DB_HandleTypeDef *handle);
+      |      ^~~~~~~~~~~~~
+../Src/AT45DB.c:25:13: error: static declaration of 'AT45DB_Deselect' follows non-static declaration
+   25 | static void AT45DB_Deselect(AT45DB_HandleTypeDef *handle) {
+      |             ^~~~~~~~~~~~~~~
+In file included from ../Src/AT45DB.c:8:
+../Src/AT45DB.h:118:6: note: previous declaration of 'AT45DB_Deselect' was here
+  118 | void AT45DB_Deselect(AT45DB_HandleTypeDef *handle);
+      |      ^~~~~~~~~~~~~~~
+../Src/AT45DB.c:32:13: error: static declaration of 'AT45DB_EncodeAddress' follows non-static declaration
+   32 | static void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size) {
+      |             ^~~~~~~~~~~~~~~~~~~~
+In file included from ../Src/AT45DB.c:8:
+../Src/AT45DB.h:119:6: note: previous declaration of 'AT45DB_EncodeAddress' was here
+  119 | void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size);
+      |      ^~~~~~~~~~~~~~~~~~~~
+make: *** [Src/subdir.mk:31: Src/AT45DB.o] Error 1
+make: *** Waiting for unfinished jobs....
+../Src/main_AT45DB.c: In function 'TestDeviceInit':
+../Src/main_AT45DB.c:167:63: warning: passing argument 3 of 'AT45DB_ReadJEDECID' from incompatible pointer type [-Wincompatible-pointer-types]
+  167 |     if (!AT45DB_ReadJEDECID(&at45db_handle, &manufacturer_id, &device_id)) {
+      |                                                               ^~~~~~~~~~
+      |                                                               |
+      |                                                               uint8_t * {aka unsigned char *}
+In file included from ../Src/main_AT45DB.c:8:
+../Src/AT45DB.h:81:91: note: expected 'uint16_t *' {aka 'short unsigned int *'} but argument is of type 'uint8_t *' {aka 'unsigned char *'}
+   81 | bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint16_t *device_id);
+      |                                                                                 ~~~~~~~~~~^~~~~~~~~
+At top level:
+../Src/main_AT45DB.c:141:13: warning: 'PrintBuffer' defined but not used [-Wunused-function]
+  141 | static void PrintBuffer(const char *label, uint8_t *buffer, uint32_t size) {
+      |             ^~~~~~~~~~~
+"make -j4 all" terminated with exit code 2. Build might be incomplete.
+"
+
+----------------------------------------------------------
 

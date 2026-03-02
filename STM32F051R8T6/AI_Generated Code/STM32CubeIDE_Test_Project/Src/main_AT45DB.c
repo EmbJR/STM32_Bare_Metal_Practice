@@ -56,7 +56,7 @@ static void SystemClock_Config(void) {
 /**
  * @brief   SPI peripheral configuration
  */
-static void SPI_Config(void) {
+static void AT45DB_SPI_Config(void) {
     memset(&spi_handle, 0, sizeof(SPI_HandleTypeDef));
 
     spi_handle.Instance = AT45DB_SPI_INSTANCE;
@@ -83,8 +83,10 @@ static void SPI_Config(void) {
  */
 static void GPIO_Config(void) {
     // Enable GPIO clocks
-    RCC_EnablePeripheralClock(PERIPH_GPIOA, 0);
-    RCC_EnablePeripheralClock(PERIPH_GPIOB, 0);
+//	RCC_EnablePeripheralClock(PERIPH_GPIOA, 0);
+//    RCC_EnablePeripheralClock(PERIPH_GPIOB, 0);
+//  Enable GPIOA clock
+	GPIO_EnableClock(GPIOA);
 
     // Configure SPI1 pins
     GPIO_InitTypeDef gpio_init;
@@ -163,7 +165,8 @@ static bool TestDeviceInit(void) {
     }
 
     // Check device presence
-    uint8_t manufacturer_id, device_id;
+    uint8_t manufacturer_id;
+    uint16_t device_id;
     if (!AT45DB_ReadJEDECID(&at45db_handle, &manufacturer_id, &device_id)) {
         return false;
     }
@@ -316,7 +319,7 @@ static bool TestPowerManagement(void) {
 int main(void) {
     // Initialize system
     SystemClock_Config();
-    SPI_Config();
+    AT45DB_SPI_Config();
     GPIO_Config();
 
     // Run all tests

@@ -78,7 +78,7 @@ bool AT45DB_Init(AT45DB_HandleTypeDef *handle, SPI_HandleTypeDef *hspi, GPIO_Typ
 void AT45DB_DeInit(AT45DB_HandleTypeDef *handle);
 
 /* Device Identification */
-bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint8_t *device_id);
+bool AT45DB_ReadJEDECID(AT45DB_HandleTypeDef *handle, uint8_t *manufacturer_id, uint16_t *device_id);
 bool AT45DB_CheckDevicePresence(AT45DB_HandleTypeDef *handle);
 
 /* Status Register */
@@ -114,8 +114,8 @@ bool AT45DB_EnterUltraDeepPowerDown(AT45DB_HandleTypeDef *handle);
 bool AT45DB_ExitUltraDeepPowerDown(AT45DB_HandleTypeDef *handle);
 
 /* Internal Helper Functions */
-static void AT45DB_Select(AT45DB_HandleTypeDef *handle);
-static void AT45DB_Deselect(AT45DB_HandleTypeDef *handle);
-static void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size);
+void AT45DB_Select(AT45DB_HandleTypeDef *handle);
+void AT45DB_Deselect(AT45DB_HandleTypeDef *handle);
+void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t page_size);
 
 #endif /* AT45DB_H */
