@@ -65,7 +65,7 @@ static void SPI_Config(void) {
     spi_handle.Init.clock_phase = SPI_CLOCK_PHASE_1ST_EDGE; // Mode 0
     spi_handle.Init.frame_format = SPI_FRAME_FORMAT_MSB_FIRST;
     spi_handle.Init.data_size = SPI_DATA_SIZE_8BIT;
-    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_4; // 12MHz for 48MHz system clock
+    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_64; // 12MHz for 48MHz system clock
     spi_handle.Init.comm_mode = SPI_COMM_MODE_FULL_DUPLEX;
     spi_handle.Init.nss_mode = SPI_NSS_SOFTWARE;
     spi_handle.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;

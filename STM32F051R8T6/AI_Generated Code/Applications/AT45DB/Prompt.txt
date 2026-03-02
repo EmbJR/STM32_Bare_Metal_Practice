@@ -13,5 +13,6 @@ Please note below conditions.
 Also write the example code for configuration/Read/Write in file "AT45DBExample.c" file considering driver code in "\Applications\AT45DB\Code"
 ---------------------------------------
 I want to have some examples of the driver code you have generated in "Applications\AT45DB\Code" for AT45DB chip.
-Also genearate the file "AT45DBExampe" having the example code.
+Also generate the file "AT45DBExampe" in same folder having the example code.
+Please only use the driver files from the folder "AI_Generated Code\". for the reference codes.
 

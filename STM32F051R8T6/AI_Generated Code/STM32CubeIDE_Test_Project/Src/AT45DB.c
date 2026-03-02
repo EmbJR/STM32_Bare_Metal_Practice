@@ -6,7 +6,7 @@
  */
 
 #include "AT45DB.h"
-#include "../../DeepSeek_Generated/RCC/rcc.h"
+#include "rcc.h"
 
 /*============================================================================
  * Helper Functions

@@ -6,9 +6,9 @@
  */
 
 #include "AT45DB.h"
-#include "../../DeepSeek_Generated/RCC/rcc.h"
-#include "../../GPIO_AI/gpio.h"
-#include "../../SPI/Code/spiF051.h"
+#include "rcc.h"
+#include "gpio.h"
+#include "spiF051.h"
 #include <string.h>
 
 /*============================================================================
@@ -38,7 +38,7 @@ static uint8_t rx_buffer[TEST_BUFFER_SIZE];
  */
 static void SystemClock_Config(void) {
     RCC_Config rcc_config;
-    
+
     rcc_config.system_clock_source = CLOCK_SOURCE_HSI;
     rcc_config.target_frequency = SYSTEM_CLOCK_48MHZ;
     rcc_config.hse_enabled = false;
@@ -49,7 +49,7 @@ static void SystemClock_Config(void) {
     rcc_config.apb_prescaler = APB_PRESCALER_1;
     rcc_config.hsi48_enabled = false;
     rcc_config.css_enabled = false;
-    
+
     RCC_Init(&rcc_config);
 }
 
@@ -58,14 +58,14 @@ static void SystemClock_Config(void) {
  */
 static void SPI_Config(void) {
     memset(&spi_handle, 0, sizeof(SPI_HandleTypeDef));
-    
+
     spi_handle.Instance = AT45DB_SPI_INSTANCE;
     spi_handle.Init.mode = SPI_MODE_MASTER;
     spi_handle.Init.clock_polarity = SPI_CLOCK_POLARITY_LOW;
     spi_handle.Init.clock_phase = SPI_CLOCK_PHASE_1ST_EDGE; // Mode 0
     spi_handle.Init.frame_format = SPI_FRAME_FORMAT_MSB_FIRST;
     spi_handle.Init.data_size = SPI_DATA_SIZE_8BIT;
-    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_4; // 12MHz for 48MHz system clock
+    spi_handle.Init.baud_rate = SPI_BAUD_RATE_DIV_64; // 12MHz for 48MHz system clock
     spi_handle.Init.comm_mode = SPI_COMM_MODE_FULL_DUPLEX;
     spi_handle.Init.nss_mode = SPI_NSS_SOFTWARE;
     spi_handle.Init.protocol = SPI_FRAME_FORMAT_MOTOROLA;
@@ -74,7 +74,7 @@ static void SPI_Config(void) {
     spi_handle.Init.crc_polynomial = 0x07;
     spi_handle.Init.nss_pulse_enabled = false;
     spi_handle.is_busy = false;
-    
+
     SPI_Init(&spi_handle);
 }
 
@@ -85,10 +85,10 @@ static void GPIO_Config(void) {
     // Enable GPIO clocks
     RCC_EnablePeripheralClock(PERIPH_GPIOA, 0);
     RCC_EnablePeripheralClock(PERIPH_GPIOB, 0);
-    
+
     // Configure SPI1 pins
     GPIO_InitTypeDef gpio_init;
-    
+
     // SCK (PA5), MISO (PA6), MOSI (PA7)
     gpio_init.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
     gpio_init.Mode = GPIO_MODE_ALTERNATE;
@@ -97,7 +97,7 @@ static void GPIO_Config(void) {
     gpio_init.Pull = GPIO_PULL_NO;
     gpio_init.AF = GPIO_AF0; // SPI1 alternate function
     GPIO_Init(GPIOA, &gpio_init);
-    
+
     // CS pin (PA4) - will be configured by AT45DB_Init
 }
 
@@ -161,15 +161,15 @@ static bool TestDeviceInit(void) {
     if (!AT45DB_Init(&at45db_handle, &spi_handle, AT45DB_CS_PORT, AT45DB_CS_PIN)) {
         return false;
     }
-    
+
     // Check device presence
     uint8_t manufacturer_id, device_id;
     if (!AT45DB_ReadJEDECID(&at45db_handle, &manufacturer_id, &device_id)) {
         return false;
     }
-    
+
     PrintDeviceInfo(manufacturer_id, device_id, AT45DB_GetPageSize(&at45db_handle));
-    
+
     return true;
 }
 
@@ -179,23 +179,23 @@ static bool TestDeviceInit(void) {
 static bool TestBufferOperations(void) {
     // Fill test buffer
     FillTestBuffer(tx_buffer, TEST_BUFFER_SIZE, 0x55);
-    
+
     // Write to Buffer 1
     if (!AT45DB_WriteBuffer1(&at45db_handle, 0, tx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     // Read back from Buffer 1
     memset(rx_buffer, 0, sizeof(rx_buffer));
     if (!AT45DB_ReadBuffer1(&at45db_handle, 0, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     // Verify buffer contents
     if (!VerifyBuffers(tx_buffer, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -205,28 +205,28 @@ static bool TestBufferOperations(void) {
 static bool TestPageOperations(void) {
     // Fill test buffer
     FillTestBuffer(tx_buffer, TEST_BUFFER_SIZE, 0xAA);
-    
+
     // Erase test page
     if (!AT45DB_ErasePage(&at45db_handle, TEST_PAGE_START)) {
         return false;
     }
-    
+
     // Program Buffer 1 to test page
     if (!AT45DB_ProgramBuffer1(&at45db_handle, TEST_PAGE_START, 0, tx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     // Read back from page
     memset(rx_buffer, 0, sizeof(rx_buffer));
     if (!AT45DB_ReadPage(&at45db_handle, TEST_PAGE_START, 0, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     // Verify data
     if (!VerifyBuffers(tx_buffer, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -235,18 +235,18 @@ static bool TestPageOperations(void) {
  */
 static bool TestContinuousRead(void) {
     uint32_t address = TEST_PAGE_START * AT45DB_GetPageSize(&at45db_handle);
-    
+
     // Read continuously from memory
     memset(rx_buffer, 0, sizeof(rx_buffer));
     if (!AT45DB_ReadContinuous(&at45db_handle, address, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     // Verify data
     if (!VerifyBuffers(tx_buffer, rx_buffer, TEST_BUFFER_SIZE)) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -256,25 +256,25 @@ static bool TestContinuousRead(void) {
 static bool TestMultiPageOperations(void) {
     for (uint16_t page = TEST_PAGE_START; page < TEST_PAGE_START + TEST_PAGE_COUNT; page++) {
         FillTestBuffer(tx_buffer, TEST_BUFFER_SIZE, page);
-        
+
         if (!AT45DB_ErasePage(&at45db_handle, page)) {
             return false;
         }
-        
+
         if (!AT45DB_ProgramBuffer2(&at45db_handle, page, 0, tx_buffer, TEST_BUFFER_SIZE)) {
             return false;
         }
-        
+
         memset(rx_buffer, 0, sizeof(rx_buffer));
         if (!AT45DB_ReadPage(&at45db_handle, page, 0, rx_buffer, TEST_BUFFER_SIZE)) {
             return false;
         }
-        
+
         if (!VerifyBuffers(tx_buffer, rx_buffer, TEST_BUFFER_SIZE)) {
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -286,26 +286,26 @@ static bool TestPowerManagement(void) {
     if (!AT45DB_EnterDeepPowerDown(&at45db_handle)) {
         return false;
     }
-    
+
     // Wait for power down to complete
     for (volatile int i = 0; i < 100000; i++);
-    
+
     // Resume from Deep Power Down
     if (!AT45DB_ResumeFromDeepPowerDown(&at45db_handle)) {
         return false;
     }
-    
+
     // Wait for device to become ready
     if (!AT45DB_WaitReady(&at45db_handle, 1000)) {
         return false;
     }
-    
+
     // Verify device is still accessible
     uint8_t status;
     if (!AT45DB_ReadStatus(&at45db_handle, &status)) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -318,7 +318,7 @@ int main(void) {
     SystemClock_Config();
     SPI_Config();
     GPIO_Config();
-    
+
     // Run all tests
     bool test1 = TestDeviceInit();
     bool test2 = TestBufferOperations();
@@ -326,7 +326,7 @@ int main(void) {
     bool test4 = TestContinuousRead();
     bool test5 = TestMultiPageOperations();
     bool test6 = TestPowerManagement();
-    
+
     // If all tests passed, indicate success
     if (test1 && test2 && test3 && test4 && test5 && test6) {
         // Toggle LED or send success message

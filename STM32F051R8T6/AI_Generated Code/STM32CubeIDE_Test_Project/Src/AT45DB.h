@@ -10,8 +10,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../../SPI/Code/spiF051.h"
-#include "../../GPIO_AI/gpio.h"
+#include "spiF051.h"
+#include "gpio.h"
 
 /*============================================================================
  * Device Configuration
