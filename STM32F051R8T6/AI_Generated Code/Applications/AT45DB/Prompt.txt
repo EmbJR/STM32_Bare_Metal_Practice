@@ -1,0 +1,17 @@
+Please read the files stored in "Applications\AT45DB\Document" folder and describe the key points for the programming prespetie.
+Also make the file in same folder having all that points you have noted down.
+-------------------------------------
+write the code for "part 1 of 11) Practical firmware checklist (STM32-style)" in file "AT45DB_Programming_KeyPoints.md"
+
+Please note below conditions.
+1> You must use the RCC driver from "AI_Generated Code\DeepSeek_Generated\RCC" directory.
+2> You must use the GPIO related drivers from "AI_Generated Code\GPIO_AI" file.
+3> You must use the SPI related api from "AI_Generated Code\SPI\Code" file.
+4> Save the new code in "AI_Generated Code "Applications\AT45DB\Code" folder with "AT45DB.c" and "AT45DB.h" names.
+5> Also take care of the points written in the file "AT45DB_Programming_KeyPoints.md".
+---------------------------------------
+Also write the example code for configuration/Read/Write in file "AT45DBExample.c" file considering driver code in "\Applications\AT45DB\Code"
+---------------------------------------
+I want to have some examples of the driver code you have generated in "Applications\AT45DB\Code" for AT45DB chip.
+Also genearate the file "AT45DBExampe" having the example code.
+
