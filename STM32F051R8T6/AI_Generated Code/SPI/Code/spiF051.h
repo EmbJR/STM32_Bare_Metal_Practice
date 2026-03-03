@@ -1,10 +1,8 @@
 /**
- * @file spiF051.h
- * @brief SPI Driver for STM32F051R8T6
- * @description This file contains the SPI peripheral driver for STM32F051 series
- *              microcontrollers. It provides functions for configuring and using
- *              the SPI peripheral in various modes (Master/Slave, Full-duplex/Simplex,
- *              8-bit/16-bit data frame, with/without CRC).
+ * @file    spiF051.h
+ * @brief   SPI Driver for STM32F051R8T6
+ * @author  AI Generated
+ * @date    2026-03-02
  */
 
 #ifndef SPIF051_H
@@ -13,319 +11,580 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//============================================================================
-// SPI Base Addresses (STM32F051)
-//============================================================================
-#define SPI1_BASE       0x40013000UL
-#define SPI2_BASE       0x40003800UL
+/*============================================================================
+ * SPI Base Addresses
+ *============================================================================*/
+#define SPI1_BASE    (0x40013000UL)  /*!< SPI1 base address (APB2) */
+#define SPI2_BASE    (0x40003400UL)  /*!< SPI2 base address (APB1) */
 
-/* Interrupt Numbers */
-#define SPI1_IRQn       25   /*!< SPI 1 Interrupt */
-#define SPI2_IRQn       26   /*!< SPI 2 Interrupt */
-
-//============================================================================
-// SPI Register Structure
-//============================================================================
+/*============================================================================
+ * SPI Register Structure
+ *============================================================================*/
 typedef struct {
-    volatile uint32_t CR1;       // SPI Control Register 1
-    volatile uint32_t CR2;       // SPI Control Register 2
-    volatile uint32_t SR;        // SPI Status Register
-    volatile uint32_t DR;        // SPI Data Register
-    volatile uint32_t CRCPR;     // SPI CRC Polynomial Register
-    volatile uint32_t RXCRCR;    // SPI RX CRC Register
-    volatile uint32_t TXCRCR;    // SPI TX CRC Register
-    volatile uint32_t I2SCFGR;   // SPI I2S Configuration Register
+    volatile uint32_t CR1;       /*!< Control Register 1,         Address offset: 0x00 */
+    volatile uint32_t CR2;       /*!< Control Register 2,         Address offset: 0x04 */
+    volatile uint32_t SR;        /*!< Status Register,            Address offset: 0x08 */
+    volatile uint32_t DR;        /*!< Data Register,              Address offset: 0x0C */
+    volatile uint32_t CRCPR;     /*!< CRC Polynomial Register,    Address offset: 0x10 */
+    volatile uint32_t RXCRCR;    /*!< RX CRC Register,            Address offset: 0x14 */
+    volatile uint32_t TXCRCR;    /*!< TX CRC Register,            Address offset: 0x18 */
+    volatile uint32_t I2SCFGR;    /*!< I2S Configuration Register, Address offset: 0x1C */
 } SPI_TypeDef;
 
-// SPI Instances
-#define SPI1            ((SPI_TypeDef *)SPI1_BASE)
-#define SPI2            ((SPI_TypeDef *)SPI2_BASE)
+/* SPI Base Address Macros */
+#define SPI1    ((SPI_TypeDef *)SPI1_BASE)
+#define SPI2    ((SPI_TypeDef *)SPI2_BASE)
 
-//============================================================================
-// SPI Clock Enable Macros (RCC)
-//============================================================================
-#define RCC_APB2ENR_SPI1EN     (1U << 12)   // SPI1 clock enable
-#define RCC_APB1ENR_SPI2EN     (1U << 14)   // SPI2 clock enable
+/*============================================================================
+ * SPI Register Bit Definitions
+ *============================================================================*/
 
-//============================================================================
-// SPI_CR1 Bit Definitions
-//============================================================================
-#define SPI_CR1_CPHA           (1U << 0)    // Clock Phase
-#define SPI_CR1_CPOL           (1U << 1)    // Clock Polarity
-#define SPI_CR1_MSTR           (1U << 2)    // Master Selection
-#define SPI_CR1_BR             (7U << 3)    // Baud Rate Control
-#define SPI_CR1_BR_0           (1U << 3)
-#define SPI_CR1_BR_1           (1U << 4)
-#define SPI_CR1_BR_2           (1U << 5)
-#define SPI_CR1_SPE            (1U << 6)    // SPI Enable
-#define SPI_CR1_LSBFIRST       (1U << 7)    // Frame Format (LSB/MSB)
-#define SPI_CR1_SSI            (1U << 8)    // Internal Slave Select
-#define SPI_CR1_SSM            (1U << 9)    // Software Slave Management
-#define SPI_CR1_RXONLY         (1U << 10)   // Receive Only Mode
-#define SPI_CR1_DFF            (1U << 11)   // Data Frame Format (8/16-bit)
-#define SPI_CR1_CRCNEXT        (1U << 12)   // CRC Transfer Next
-#define SPI_CR1_CRCEN          (1U << 13)    // CRC Enable
-#define SPI_CR1_BIDIOE         (1U << 14)    // Output Enable in Bidirectional Mode
-#define SPI_CR1_BIDIMODE       (1U << 15)   // Bidirectional Data Mode
+/* CR1 Register Bits */
+#define SPI_CR1_CPHA       (0x0001UL)  /*!< Clock Phase */
+#define SPI_CR1_CPOL       (0x0002UL)  /*!< Clock Polarity */
+#define SPI_CR1_MSTR       (0x0004UL)  /*!< Master Selection */
+#define SPI_CR1_BR         (0x0038UL)  /*!< Baud Rate Control [2:0] */
+#define SPI_CR1_BR_0       (0x0008UL)  /*!< Bit 0 */
+#define SPI_CR1_BR_1       (0x0010UL)  /*!< Bit 1 */
+#define SPI_CR1_BR_2       (0x0020UL)  /*!< Bit 2 */
+#define SPI_CR1_SPE        (0x0040UL)  /*!< SPI Enable */
+#define SPI_CR1_LSBFIRST   (0x0080UL)  /*!< Frame Format */
+#define SPI_CR1_SSI        (0x0100UL)  /*!< Internal Slave Select */
+#define SPI_CR1_SSM        (0x0200UL)  /*!< Software Slave Management */
+#define SPI_CR1_RXONLY     (0x0400UL)  /*!< Receive Only */
+#define SPI_CR1_DFF        (0x0800UL)  /*!< Data Frame Format (0=8bit, 1=16bit) - Not in F0 */
+#define SPI_CR1_CRCNEXT    (0x1000UL)  /*!< CRC Transfer Next */
+#define SPI_CR1_CRCEN      (0x2000UL)  /*!< Hardware CRC Enable */
+#define SPI_CR1_BIDIMODE   (0x4000UL)  /*!< Bidirectional Data Mode */
+#define SPI_CR1_BIDIOE     (0x8000UL)  /*!< Bidirectional Output Enable */
 
-//============================================================================
-// SPI_CR2 Bit Definitions
-//============================================================================
-#define SPI_CR2_RXDMAEN        (1U << 0)    // Rx Buffer DMA Enable
-#define SPI_CR2_TXDMAEN        (1U << 1)    // Tx Buffer DMA Enable
-#define SPI_CR2_SSOE           (1U << 2)    // SS Output Enable
-#define SPI_CR2_NSSP           (1U << 3)   // NSS Pulse Management
-#define SPI_CR2_FRF            (1U << 4)    // Frame Format (Motorola/TI)
-#define SPI_CR2_ERRIE          (1U << 5)    // Error Interrupt Enable
-#define SPI_CR2_RXNEIE         (1U << 6)    // RX Buffer Not Empty Interrupt Enable
-#define SPI_CR2_TXEIE          (1U << 7)    // TX Buffer Empty Interrupt Enable
-#define SPI_CR2_DS             (0xFU << 8)  // Data Size
-#define SPI_CR2_DS_0           (1U << 8)
-#define SPI_CR2_DS_1           (1U << 9)
-#define SPI_CR2_DS_2           (1U << 10)
-#define SPI_CR2_DS_3           (1U << 11)
-#define SPI_CR2_FRXTH          (1U << 12)   // FIFO Reception Threshold
-#define SPI_CR2_LDMA_RX        (1U << 13)   // Last DMA Rx Request
-#define SPI_CR2_LDMA_TX        (1U << 14)   // Last DMA Tx Request
+/* CR2 Register Bits */
+#define SPI_CR2_RXDMAEN    (0x0001UL)  /*!< RX Buffer DMA Enable */
+#define SPI_CR2_TXDMAEN    (0x0002UL)  /*!< TX Buffer DMA Enable */
+#define SPI_CR2_SSOE       (0x0004UL)  /*!< SS Output Enable */
+#define SPI_CR2_ERRIE      (0x0020UL)  /*!< Error Interrupt Enable */
+#define SPI_CR2_RXNEIE     (0x0040UL)  /*!< RX Buffer Not Empty Interrupt Enable */
+#define SPI_CR2_TXEIE      (0x0080UL)  /*!< TX Buffer Empty Interrupt Enable */
+#define SPI_CR2_DS         (0x0F00UL)  /*!< Data Size [3:0] */
+#define SPI_CR2_DS_0       (0x0100UL)  /*!< Bit 0 */
+#define SPI_CR2_DS_1       (0x0200UL)  /*!< Bit 1 */
+#define SPI_CR2_DS_2       (0x0400UL)  /*!< Bit 2 */
+#define SPI_CR2_DS_3       (0x0800UL)  /*!< Bit 3 */
+#define SPI_CR2_FRXTH      (0x1000UL)  /*!< FIFO Reception Threshold */
+#define SPI_CR2_LDMA_RX    (0x2000UL)  /*!< Last DMA Transfer for Reception */
+#define SPI_CR2_LDMA_TX    (0x4000UL)  /*!< Last DMA Transfer for Transmission */
+#define SPI_CR2_NSSP       (0x8000UL)  /*!< NSS Pulse Management */
+#define SPI_CR2_FRFT       (0x1000UL)  /*!< FIFO Reception Threshold (alternative) */
+#define SPI_CR2_TXFIFO      (0x0000UL)  /*!< TX FIFO */
+#define SPI_CR2_RXFIFO      (0x0000UL)  /*!< RX FIFO */
 
+/* SR Register Bits */
+#define SPI_SR_RXNE        (0x0001UL)  /*!< Receive Buffer Not Empty */
+#define SPI_SR_TXE         (0x0002UL)  /*!< Transmit Buffer Empty */
+#define SPI_SR_CHSIDE      (0x0004UL)  /*!< Channel Side - Not used in SPI mode */
+#define SPI_SR_UDR         (0x0008UL)  /*!< Underrun Flag - Not in F0 */
+#define SPI_SR_CRCERR      (0x0010UL)  /*!< CRC Error Flag */
+#define SPI_SR_MODF        (0x0020UL)  /*!< Mode Fault */
+#define SPI_SR_OVR         (0x0040UL)  /*!< Overrun Flag */
+#define SPI_SR_BSY         (0x0080UL)  /*!< Busy Flag */
+#define SPI_SR_FRE         (0x0100UL)  /*!< Frame Format Error - Not in F0 */
+#define SPI_SR_FRLVL       (0x0600UL)  /*!< FIFO Reception Level [1:0] */
+#define SPI_SR_FTLVL       (0x1800UL)  /*!< FIFO Transmission Level [1:0] */
 
-//============================================================================
-// SPI_SR Bit Definitions
-//============================================================================
-#define SPI_SR_RXNE            (1U << 0)    // Receive Buffer Not Empty
-#define SPI_SR_TXE             (1U << 1)    // Transmit Buffer Empty
-#define SPI_SR_CHSIDE          (1U << 2)    // Channel Side
-#define SPI_SR_UDR             (1U << 3)    // Underrun Flag
-#define SPI_SR_CRCERR          (1U << 4)    // CRC Error Flag
-#define SPI_SR_MODF            (1U << 5)    // Mode Fault
-#define SPI_SR_OVR             (1U << 6)    // Overrun Flag
-#define SPI_SR_BSY             (1U << 7)    // Busy Flag
-#define SPI_SR_FRE             (1U << 8)    // Frame Error
-#define SPI_SR_FTLVL           (3U << 9)    // FIFO Transmission Level
-#define SPI_SR_FRLVL           (3U << 11)   // FIFO Reception Level
+/*============================================================================
+ * SPI Configuration Enumerations
+ *============================================================================*/
 
-//============================================================================
-// SPI Mode Configuration
-//============================================================================
+/* SPI Mode */
 typedef enum {
     SPI_MODE_SLAVE = 0,
     SPI_MODE_MASTER = 1
-} SPI_Mode;
+} SPI_ModeTypeDef;
 
+/* Clock Polarity */
 typedef enum {
-    SPI_CLOCK_POLARITY_LOW = 0,     // CK to 0 when idle
-    SPI_CLOCK_POLARITY_HIGH = 1     // CK to 1 when idle
-} SPI_ClockPolarity;
+    SPI_CPOL_LOW = 0,    /*!< Clock polarity low when idle */
+    SPI_CPOL_HIGH = 1    /*!< Clock polarity high when idle */
+} SPI_CPOLTypeDef;
 
+/* Clock Phase */
 typedef enum {
-    SPI_CLOCK_PHASE_1ST_EDGE = 0,   // Data captured on first edge
-    SPI_CLOCK_PHASE_2ND_EDGE = 1    // Data captured on second edge
-} SPI_ClockPhase;
+    SPI_CPHA_1EDGE = 0,  /*!< First clock transition is first data capture edge */
+    SPI_CPHA_2EDGE = 1   /*!< Second clock transition is first data capture edge */
+} SPI_CPHATypeDef;
 
+/* Data Direction */
 typedef enum {
-    SPI_FRAME_FORMAT_MSB_FIRST = 0,
-    SPI_FRAME_FORMAT_LSB_FIRST = 1
-} SPI_FrameFormat;
+    SPI_DIRECTION_2LINES_FULLDUPLEX = 0x0000UL,
+    SPI_DIRECTION_2LINES_RXONLY = 0x0400UL,
+    SPI_DIRECTION_1LINE_TX = 0x4000UL,
+    SPI_DIRECTION_1LINE_RX = 0xC000UL
+} SPI_DirectionTypeDef;
 
+/* Data Size (DS bits in CR2) */
 typedef enum {
-    SPI_DATA_SIZE_8BIT = 7,         // 0x07 = 8-bit
-    SPI_DATA_SIZE_9BIT = 8,        // 0x08 = 9-bit
-    SPI_DATA_SIZE_10BIT = 9,       // 0x09 = 10-bit
-    SPI_DATA_SIZE_11BIT = 10,      // 0x0A = 11-bit
-    SPI_DATA_SIZE_12BIT = 11,      // 0x0B = 12-bit
-    SPI_DATA_SIZE_13BIT = 12,      // 0x0C = 13-bit
-    SPI_DATA_SIZE_14BIT = 13,      // 0x0D = 14-bit
-    SPI_DATA_SIZE_15BIT = 14,      // 0x0E = 15-bit
-    SPI_DATA_SIZE_16BIT = 15       // 0x0F = 16-bit
-} SPI_DataSize;
+    SPI_DATASIZE_4BIT  = 0x0300UL,
+    SPI_DATASIZE_5BIT  = 0x0400UL,
+    SPI_DATASIZE_6BIT  = 0x0500UL,
+    SPI_DATASIZE_7BIT  = 0x0600UL,
+    SPI_DATASIZE_8BIT  = 0x0700UL,
+    SPI_DATASIZE_9BIT  = 0x0800UL,
+    SPI_DATASIZE_10BIT = 0x0900UL,
+    SPI_DATASIZE_11BIT = 0x0A00UL,
+    SPI_DATASIZE_12BIT = 0x0B00UL,
+    SPI_DATASIZE_13BIT = 0x0C00UL,
+    SPI_DATASIZE_14BIT = 0x0D00UL,
+    SPI_DATASIZE_15BIT = 0x0E00UL,
+    SPI_DATASIZE_16BIT = 0x0F00UL
+} SPI_DataSizeTypeDef;
 
+/* Baud Rate Prescaler */
 typedef enum {
-    SPI_BAUD_RATE_DIV_2 = 0,
-    SPI_BAUD_RATE_DIV_4 = 1,
-    SPI_BAUD_RATE_DIV_8 = 2,
-    SPI_BAUD_RATE_DIV_16 = 3,
-    SPI_BAUD_RATE_DIV_32 = 4,
-    SPI_BAUD_RATE_DIV_64 = 5,
-    SPI_BAUD_RATE_DIV_128 = 6,
-    SPI_BAUD_RATE_DIV_256 = 7
-} SPI_BaudRate;
+    SPI_BAUDRATEPRESCALER_2   = 0x0000UL,
+    SPI_BAUDRATEPRESCALER_4   = 0x0008UL,
+    SPI_BAUDRATEPRESCALER_8   = 0x0010UL,
+    SPI_BAUDRATEPRESCALER_16  = 0x0018UL,
+    SPI_BAUDRATEPRESCALER_32  = 0x0020UL,
+    SPI_BAUDRATEPRESCALER_64  = 0x0028UL,
+    SPI_BAUDRATEPRESCALER_128 = 0x0030UL,
+    SPI_BAUDRATEPRESCALER_256 = 0x0038UL
+} SPI_BaudRatePrescalerTypeDef;
 
+/* NSS Pin Management */
 typedef enum {
-    SPI_COMM_MODE_FULL_DUPLEX = 0,
-    SPI_COMM_MODE_TRANSMIT_ONLY = 1,
-    SPI_COMM_MODE_RECEIVE_ONLY = 2,
-    SPI_COMM_MODE_HALF_DUPLEX = 3
-} SPI_CommMode;
+    SPI_NSS_SOFT = 0x0200UL,          /*!< Software NSS management */
+    SPI_NSS_HARD_OUTPUT = 0x0004UL,    /*!< Hardware NSS output enable */
+    SPI_NSS_HARD_INPUT = 0x0000UL     /*!< Hardware NSS input */
+} SPI_NSSModeTypeDef;
 
+/* Frame Format */
 typedef enum {
-    SPI_NSS_SOFTWARE = 0,
-    SPI_NSS_HARDWARE_OUTPUT = 1,
-    SPI_NSS_HARDWARE_INPUT = 2
-} SPI_NSSMode;
+    SPI_FRAME_FORMAT_MSBFIRST = 0x0000UL,
+    SPI_FRAME_FORMAT_LSBFIRST = 0x0080UL
+} SPI_FrameFormatTypeDef;
 
+/* FIFO Threshold */
 typedef enum {
-    SPI_FRAME_FORMAT_MOTOROLA = 0,
-    SPI_FRAME_FORMAT_TI = 1
-} SPI_ProtocolFormat;
+    SPI_FIFO_THRESHOLD_4DATA = 0x0000UL,
+    SPI_FIFO_THRESHOLD_8DATA = 0x1000UL
+} SPI_FIFOThresholdTypeDef;
 
+/* Communication Mode */
 typedef enum {
-    SPI_FIFO_THRESHOLD_1_4 = 0,     // 1/4 FIFO
-    SPI_FIFO_THRESHOLD_1_2 = 1      // 1/2 FIFO
-} SPI_FIFOThreshold;
+    SPI_COMM_MODE_POLING = 0,
+    SPI_COMM_MODE_INTERRUPT = 1,
+    SPI_COMM_MODE_DMA = 2
+} SPI_CommModeTypeDef;
 
-//============================================================================
-// SPI Configuration Structure
-//============================================================================
+/*============================================================================
+ * SPI Init Structure Definition
+ *============================================================================*/
 typedef struct {
-    SPI_Mode mode;                   // Master or Slave
-    SPI_ClockPolarity clock_polarity;
-    SPI_ClockPhase clock_phase;
-    SPI_FrameFormat frame_format;
-    SPI_DataSize data_size;
-    SPI_BaudRate baud_rate;
-    SPI_CommMode comm_mode;
-    SPI_NSSMode nss_mode;
-    SPI_ProtocolFormat protocol;
-    SPI_FIFOThreshold rx_fifo_threshold;
-    bool crc_enabled;
-    uint8_t crc_polynomial;
-    bool nss_pulse_enabled;
-} SPI_Config;
+    SPI_ModeTypeDef Mode;                /*!< Specifies the SPI operating mode */
+    SPI_BaudRatePrescalerTypeDef BaudRate; /*!< Specifies the SPI baud rate prescaler */
+    SPI_CPOLTypeDef ClockPolarity;       /*!< Specifies the clock polarity */
+    SPI_CPHATypeDef ClockPhase;          /*!< Specifies the clock phase */
+    SPI_DataSizeTypeDef DataSize;        /*!< Specifies the data size */
+    SPI_NSSModeTypeDef NSS;              /*!< Specifies the NSS mode */
+    SPI_FrameFormatTypeDef FrameFormat;  /*!< Specifies the frame format */
+    bool CRC_Enable;                     /*!< Enable or disable CRC */
+    uint8_t CRC_Polynomial;              /*!< CRC polynomial */
+    bool FIFOThreshold;                   /*!< FIFO threshold level */
+} SPI_InitTypeDef;
 
-//============================================================================
-// SPI Handle Structure
-//============================================================================
-typedef struct {
-    SPI_TypeDef *Instance;
-    SPI_Config Init;
-    volatile bool is_busy;
-} SPI_HandleTypeDef;
+/*============================================================================
+ * DMA Configuration Structures (for STM32F0)
+ *============================================================================*/
 
-//============================================================================
-// SPI Instance Selection
-//============================================================================
-typedef enum {
-    SPI_INSTANCE_1 = 0,
-    SPI_INSTANCE_2 = 1
-} SPI_Instance;
+/* DMA Base Addresses */
+#define DMA1_BASE        (0x40020000UL)
+#define DMA_ISR          (*(volatile uint32_t *)(DMA1_BASE + 0x00))
+#define DMA_IFCR         (*(volatile uint32_t *)(DMA1_BASE + 0x04))
+#define DMA_CCR1         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x00))
+#define DMA_CCR2         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x0C))
+#define DMA_CCR3         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x18))
+#define DMA_CCR4         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x24))
+#define DMA_CCR5         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x30))
+#define DMA_CCR6         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x3C))
+#define DMA_CCR7         (*(volatile uint32_t *)(DMA1_BASE + 0x08 + 0x48))
+#define DMA_CPAR1        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x00))
+#define DMA_CPAR2        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x0C))
+#define DMA_CPAR3        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x18))
+#define DMA_CPAR4        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x24))
+#define DMA_CPAR5        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x30))
+#define DMA_CPAR6        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x3C))
+#define DMA_CPAR7        (*(volatile uint32_t *)(DMA1_BASE + 0x0C + 0x48))
+#define DMA_CMAR1        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x00))
+#define DMA_CMAR2        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x0C))
+#define DMA_CMAR3        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x18))
+#define DMA_CMAR4        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x24))
+#define DMA_CMAR5        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x30))
+#define DMA_CMAR6        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x3C))
+#define DMA_CMAR7        (*(volatile uint32_t *)(DMA1_BASE + 0x10 + 0x48))
+#define DMA_CNDTR1       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x00))
+#define DMA_CNDTR2       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x0C))
+#define DMA_CNDTR3       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x18))
+#define DMA_CNDTR4       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x24))
+#define DMA_CNDTR5       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x30))
+#define DMA_CNDTR6       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x3C))
+#define DMA_CNDTR7       (*(volatile uint32_t *)(DMA1_BASE + 0x14 + 0x48))
 
-//============================================================================
-// Function Prototypes
-//============================================================================
+/* DMA Channel/Stream Selections for SPI */
+#define DMA_CHANNEL_SPI1_TX  0x0000UL  /*!< DMA Channel 0 for SPI1 TX */
+#define DMA_CHANNEL_SPI1_RX  0x0000UL  /*!< DMA Channel 0 for SPI1 RX */
+#define DMA_CHANNEL_SPI2_TX  0x0001UL  /*!< DMA Channel 1 for SPI2 TX */
+#define DMA_CHANNEL_SPI2_RX  0x0001UL  /*!< DMA Channel 1 for SPI2 RX */
 
-// Initialization and De-initialization
-void SPI_Init(SPI_HandleTypeDef *hspi);
-void SPI_DeInit(SPI_HandleTypeDef *hspi);
-void SPI_EnableClock(SPI_Instance instance);
-void SPI_DisableClock(SPI_Instance instance);
+/* DMA Stream Defines */
+#define DMA_STREAM_SPI1_TX  3  /*!< DMA1 Stream 3 for SPI1 TX */
+#define DMA_STREAM_SPI1_RX  2  /*!< DMA1 Stream 2 for SPI1 RX */
+#define DMA_STREAM_SPI2_TX  5  /*!< DMA1 Stream 5 for SPI2 TX */
+#define DMA_STREAM_SPI2_RX  4  /*!< DMA1 Stream 4 for SPI2 RX */
 
-// Configuration functions
-void SPI_SetBaudRate(SPI_HandleTypeDef *hspi, SPI_BaudRate baud_rate);
-void SPI_SetDataSize(SPI_HandleTypeDef *hspi, SPI_DataSize data_size);
-void SPI_SetClockPolarity(SPI_HandleTypeDef *hspi, SPI_ClockPolarity polarity);
-void SPI_SetClockPhase(SPI_HandleTypeDef *hspi, SPI_ClockPhase phase);
-void SPI_SetFrameFormat(SPI_HandleTypeDef *hspi, SPI_FrameFormat format);
-void SPI_SetCommMode(SPI_HandleTypeDef *hspi, SPI_CommMode mode);
-void SPI_SetNSSMode(SPI_HandleTypeDef *hspi, SPI_NSSMode nss_mode);
-void SPI_SetNSSPin(SPI_HandleTypeDef *hspi, bool state);
+/* DMA Channel Register Offsets */
+#define DMA_CCR_OFFSET    0x08
+#define DMA_CPAR_OFFSET   0x0C
+#define DMA_CMAR_OFFSET   0x10
+#define DMA_CNDTR_OFFSET  0x14
 
-// Enable/Disable functions
-void SPI_Enable(SPI_HandleTypeDef *hspi);
-void SPI_Disable(SPI_HandleTypeDef *hspi);
-void SPI_EnableCRC(SPI_HandleTypeDef *hspi);
-void SPI_DisableCRC(SPI_HandleTypeDef *hspi);
+/* DMA CR Register Bits */
+#define DMA_CR_EN         (0x0001UL)  /*!< Channel Enable */
+#define DMA_CR_TCIE       (0x0002UL)  /*!< Transfer Complete Interrupt Enable */
+#define DMA_CR_HTIE       (0x0004UL)  /*!< Half Transfer Interrupt Enable */
+#define DMA_CR_TEIE       (0x0008UL)  /*!< Transfer Error Interrupt Enable */
+#define DMA_CR_DIR        (0x0010UL)  /*!< Data Transfer Direction */
+#define DMA_CR_CIRC       (0x0020UL)  /*!< Circular Mode */
+#define DMA_CR_PINC       (0x0040UL)  /*!< Peripheral Increment Mode */
+#define DMA_CR_MINC       (0x0080UL)  /*!< Memory Increment Mode */
+#define DMA_CR_PSIZE      (0x0300UL)  /*!< Peripheral Size [1:0] */
+#define DMA_CR_PSIZE_0   (0x0100UL)  /*!< Bit 0 */
+#define DMA_CR_PSIZE_1   (0x0200UL)  /*!< Bit 1 */
+#define DMA_CR_MSIZE      (0x0C00UL)  /*!< Memory Size [1:0] */
+#define DMA_CR_MSIZE_0   (0x0400UL)  /*!< Bit 0 */
+#define DMA_CR_MSIZE_1   (0x0800UL)  /*!< Bit 1 */
+#define DMA_CR_PL         (0x3000UL)  /*!< Priority Level [1:0] */
 
-// Data transfer functions
-void SPI_SendData(SPI_HandleTypeDef *hspi, uint16_t data);
-uint16_t SPI_ReceiveData(SPI_HandleTypeDef *hspi);
-void SPI_SendData8(SPI_HandleTypeDef *hspi, uint8_t data);
-uint8_t SPI_ReceiveData8(SPI_HandleTypeDef *hspi);
-void SPI_SendData32(SPI_HandleTypeDef *hspi, uint32_t data);
-uint32_t SPI_ReceiveData32(SPI_HandleTypeDef *hspi);
+/* DMA Flags */
+#define DMA_FLAG_TCIF     (0x00000020UL)  /*!< Transfer Complete Flag */
+#define DMA_FLAG_HTIF     (0x00000010UL)  /*!< Half Transfer Flag */
+#define DMA_FLAG_TEIF     (0x00000008UL)  /*!< Transfer Error Flag */
 
-// Blocking transfer functions
-uint16_t SPI_Transfer(SPI_HandleTypeDef *hspi, uint16_t data);
-void SPI_TransferBuffer(SPI_HandleTypeDef *hspi, uint16_t *tx_buffer, 
-                        uint16_t *rx_buffer, uint16_t size);
-void SPI_SendBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size);
-void SPI_ReceiveBuffer(SPI_HandleTypeDef *hspi, uint16_t *buffer, uint16_t size);
+/*============================================================================
+ * NVIC Interrupt Numbers for SPI
+ *============================================================================*/
+#define SPI1_IRQn         35   /*!< SPI1 Global Interrupt */
+#define SPI2_IRQn         36   /*!< SPI2 Global Interrupt */
 
-// 8-bit buffer transfer functions (for 8-bit data size)
-void SPI_TransferBuffer8(SPI_HandleTypeDef *hspi, uint8_t *tx_buffer, 
-                         uint8_t *rx_buffer, uint16_t size);
-void SPI_SendBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
-void SPI_ReceiveBuffer8(SPI_HandleTypeDef *hspi, uint8_t *buffer, uint16_t size);
+/*============================================================================
+ * SPI Driver API - Initialization and Configuration
+ *============================================================================*/
 
-// CRC functions
-void SPI_SetCRCPolynomial(SPI_HandleTypeDef *hspi, uint8_t polynomial);
-uint16_t SPI_GetTXCRC(SPI_HandleTypeDef *hspi);
-uint16_t SPI_GetRXCRC(SPI_HandleTypeDef *hspi);
-void SPI_ResetCRC(SPI_HandleTypeDef *hspi);
-bool SPI_CheckCRCError(SPI_HandleTypeDef *hspi);
-void SPI_ClearCRCError(SPI_HandleTypeDef *hspi);
-void SPI_TransmitCRC(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Initialize SPI peripheral
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  SPI_Init: pointer to SPI_InitTypeDef structure
+ */
+void SPI_Init(SPI_TypeDef *SPIx, SPI_InitTypeDef *SPI_Init);
 
-// Status functions
-bool SPI_GetFlagStatus(SPI_HandleTypeDef *hspi, uint32_t flag);
-bool SPI_IsTXE(SPI_HandleTypeDef *hspi);
-bool SPI_IsRXNE(SPI_HandleTypeDef *hspi);
-bool SPI_IsBusy(SPI_HandleTypeDef *hspi);
-uint8_t SPI_GetFIFOLevel(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  De-Initialize SPI peripheral
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_DeInit(SPI_TypeDef *SPIx);
 
-// Wait functions
-void SPI_WaitTXE(SPI_HandleTypeDef *hspi);
-void SPI_WaitRXNE(SPI_HandleTypeDef *hspi);
-void SPI_WaitNotBusy(SPI_HandleTypeDef *hspi);
-void SPI_WaitFIFOEmpty(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Fill initialization structure with default values
+ * @param  SPI_InitStruct: pointer to SPI_InitTypeDef structure
+ */
+void SPI_StructInit(SPI_InitTypeDef *SPI_Init);
 
-// Flush functions
-void SPI_FlushRX(SPI_HandleTypeDef *hspi);
-void SPI_FlushTX(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Enable SPI peripheral
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_Enable(SPI_TypeDef *SPIx);
 
-// NSS Pulse Management
-void SPI_EnableNSSP(SPI_HandleTypeDef *hspi);
-void SPI_DisableNSSP(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Disable SPI peripheral
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_Disable(SPI_TypeDef *SPIx);
 
-// TI Protocol Mode
-void SPI_EnableTIProtocol(SPI_HandleTypeDef *hspi);
-void SPI_DisableTIProtocol(SPI_HandleTypeDef *hspi);
+/*============================================================================
+ * SPI Driver API - Data Transfer (Polling)
+ *============================================================================*/
 
-// DMA support (optional)
-void SPI_EnableDMA_TX(SPI_HandleTypeDef *hspi);
-void SPI_DisableDMA_TX(SPI_HandleTypeDef *hspi);
-void SPI_EnableDMA_RX(SPI_HandleTypeDef *hspi);
-void SPI_DisableDMA_RX(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Transmit and Receive a data byte (Full Duplex - Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  txData: data to transmit
+ * @return received data
+ */
+uint8_t SPI_TransmitReceive(SPI_TypeDef *SPIx, uint8_t txData);
 
-// Interrupt support (optional)
-void SPI_EnableInterrupt(SPI_HandleTypeDef *hspi, uint32_t interrupt);
-void SPI_DisableInterrupt(SPI_HandleTypeDef *hspi, uint32_t interrupt);
+/**
+ * @brief  Transmit a data byte (Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  txData: data to transmit
+ */
+void SPI_SendData(SPI_TypeDef *SPIx, uint8_t txData);
 
-// Low-level disable procedure
-void SPI_DisablePeripheral(SPI_HandleTypeDef *hspi);
+/**
+ * @brief  Receive a data byte (Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return received data
+ */
+uint8_t SPI_ReceiveData(SPI_TypeDef *SPIx);
 
-//============================================================================
-// Macros for common configurations
-//============================================================================
+/**
+ * @brief  Transmit and Receive multiple data bytes (Full Duplex - Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  txBuffer: pointer to transmit buffer
+ * @param  rxBuffer: pointer to receive buffer
+ * @param  length: number of bytes to transfer
+ */
+void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length);
 
-// Common SPI mode configurations
-#define SPI_MODE_0 (SPI_CLOCK_POLARITY_LOW, SPI_CLOCK_PHASE_1ST_EDGE)
-#define SPI_MODE_1 (SPI_CLOCK_POLARITY_LOW, SPI_CLOCK_PHASE_2ND_EDGE)
-#define SPI_MODE_2 (SPI_CLOCK_POLARITY_HIGH, SPI_CLOCK_PHASE_1ST_EDGE)
-#define SPI_MODE_3 (SPI_CLOCK_POLARITY_HIGH, SPI_CLOCK_PHASE_2ND_EDGE)
+/**
+ * @brief  Transmit multiple data bytes (Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  txBuffer: pointer to transmit buffer
+ * @param  length: number of bytes to transmit
+ */
+void SPI_SendBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint16_t length);
 
-// Status flag masks
-#define SPI_FLAG_RXNE    SPI_SR_RXNE
-#define SPI_FLAG_TXE     SPI_SR_TXE
-#define SPI_FLAG_BSY     SPI_SR_BSY
-#define SPI_FLAG_OVR     SPI_SR_OVR
-#define SPI_FLAG_MODF    SPI_SR_MODF
-#define SPI_FLAG_CRCERR  SPI_SR_CRCERR
-#define SPI_FLAG_UDR     SPI_SR_UDR
-#define SPI_FLAG_FRE     SPI_SR_FRE
+/**
+ * @brief  Receive multiple data bytes (Polling)
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  rxBuffer: pointer to receive buffer
+ * @param  length: number of bytes to receive
+ */
+void SPI_ReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *rxBuffer, uint16_t length);
 
-// Interrupt masks
-#define SPI_IT_TXE       SPI_CR2_TXEIE
-#define SPI_IT_RXNE      SPI_CR2_RXNEIE
-#define SPI_IT_ERR       SPI_CR2_ERRIE
+/*============================================================================
+ * SPI Driver API - Interrupt Functions
+ *============================================================================*/
 
-#endif // SPIF051_H
+/**
+ * @brief  Enable SPI interrupts
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  interrupt: interrupt source to enable (TXE, RXNE, ERR)
+ */
+void SPI_EnableInterrupt(SPI_TypeDef *SPIx, uint32_t interrupt);
+
+/**
+ * @brief  Disable SPI interrupts
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  interrupt: interrupt source to disable
+ */
+void SPI_DisableInterrupt(SPI_TypeDef *SPIx, uint32_t interrupt);
+
+/**
+ * @brief  Get SPI interrupt status
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  interrupt: interrupt source to check
+ * @return interrupt status (SET or RESET)
+ */
+uint32_t SPI_GetInterruptStatus(SPI_TypeDef *SPIx, uint32_t interrupt);
+
+/**
+ * @brief  Clear SPI interrupt flag
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  flag: flag to clear
+ */
+void SPI_ClearFlag(SPI_TypeDef *SPIx, uint32_t flag);
+
+/*============================================================================
+ * SPI Driver API - Status Flags
+ *============================================================================*/
+
+/**
+ * @brief  Get SPI status flags
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return SPI status register value
+ */
+uint32_t SPI_GetStatus(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Check if TX buffer is empty
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return true if TX buffer is empty
+ */
+bool SPI_IsTXEmpty(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Check if RX buffer is not empty
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return true if RX buffer has data
+ */
+bool SPI_IsRXNotEmpty(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Check if SPI is busy
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return true if SPI is busy
+ */
+bool SPI_IsBusy(SPI_TypeDef *SPIx);
+
+/*============================================================================
+ * SPI Driver API - CRC Functions
+ *============================================================================*/
+
+/**
+ * @brief  Enable CRC
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_EnableCRC(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Disable CRC
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_DisableCRC(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Reset CRC
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_ResetCRC(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Get transmitted CRC value
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return transmitted CRC value
+ */
+uint16_t SPI_GetTransmitCRC(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Get received CRC value
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return received CRC value
+ */
+uint16_t SPI_GetReceiveCRC(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Check if CRC error occurred
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @return true if CRC error occurred
+ */
+bool SPI_IsCRCError(SPI_TypeDef *SPIx);
+
+/**
+ * @brief  Clear CRC error flag
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ */
+void SPI_ClearCRCError(SPI_TypeDef *SPIx);
+
+/*============================================================================
+ * SPI Driver API - DMA Functions
+ *============================================================================*/
+
+/**
+ * @brief  Enable SPI DMA
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  direction: DMA direction (TX, RX, or TX_RX)
+ */
+void SPI_EnableDMA(SPI_TypeDef *SPIx, uint8_t direction);
+
+/**
+ * @brief  Disable SPI DMA
+ * @param  SPIx: pointer to SPI peripheral (SPI1 or SPI2)
+ * @param  direction: DMA direction (TX, RX, or TX_RX)
+ */
+void SPI_DisableDMA(SPI_TypeDef *SPIx, uint8_t direction);
+
+/*============================================================================
+ * DMA Driver API
+ *============================================================================*/
+
+/**
+ * @brief  Configure DMA channel for SPI
+ * @param  channel: DMA channel number (1-7)
+ * @param  peripheralAddr: peripheral address (SPI data register)
+ * @param  memoryAddr: memory address
+ * @param  dataSize: number of data to transfer
+ * @param  direction: transfer direction (0=read from peripheral, 1=read from memory)
+ * @param  memoryIncrement: enable memory increment
+ */
+void DMA_ConfigChannel(uint8_t channel, uint32_t peripheralAddr, uint32_t memoryAddr, 
+                       uint16_t dataSize, uint8_t direction, bool memoryIncrement);
+
+/**
+ * @brief  Enable DMA channel
+ * @param  channel: DMA channel number (1-7)
+ */
+void DMA_EnableChannel(uint8_t channel);
+
+/**
+ * @brief  Disable DMA channel
+ * @param  channel: DMA channel number (1-7)
+ */
+void DMA_DisableChannel(uint8_t channel);
+
+/**
+ * @brief  Get DMA channel status flags
+ * @param  channel: DMA channel number (1-7)
+ * @return status flags
+ */
+uint32_t DMA_GetStatusFlags(uint8_t channel);
+
+/**
+ * @brief  Clear DMA channel flags
+ * @param  channel: DMA channel number (1-7)
+ * @param  flags: flags to clear
+ */
+void DMA_ClearFlags(uint8_t channel, uint32_t flags);
+
+/**
+ * @brief  Check if DMA transfer is complete
+ * @param  channel: DMA channel number (1-7)
+ * @return true if transfer is complete
+ */
+bool DMA_IsTransferComplete(uint8_t channel);
+
+/*============================================================================
+ * NVIC Functions for SPI
+ *============================================================================*/
+
+/**
+ * @brief  Enable SPI interrupt in NVIC
+ * @param  IRQn: interrupt number
+ */
+void NVIC_EnableSPI(uint8_t IRQn);
+
+/**
+ * @brief  Disable SPI interrupt in NVIC
+ * @param  IRQn: interrupt number
+ */
+void NVIC_DisableSPI(uint8_t IRQn);
+
+/**
+ * @brief  Set SPI interrupt priority
+ * @param  IRQn: interrupt number
+ * @param  priority: priority (0-3)
+ */
+void NVIC_SetSPIPriority(uint8_t IRQn, uint8_t priority);
+
+/*============================================================================
+ * Helper Macros
+ *============================================================================*/
+
+/* SPI Interrupt Enable/Disable Macros */
+#define SPI_IT_TXE        SPI_CR2_TXEIE    /*!< TX Buffer Empty Interrupt */
+#define SPI_IT_RXNE       SPI_CR2_RXNEIE   /*!< RX Buffer Not Empty Interrupt */
+#define SPI_IT_ERR        SPI_CR2_ERRIE    /*!< Error Interrupt */
+
+/* DMA Direction */
+#define SPI_DMA_DIR_TX    0x01  /*!< DMA TX Direction */
+#define SPI_DMA_DIR_RX    0x02  /*!< DMA RX Direction */
+#define SPI_DMA_DIR_TX_RX 0x03  /*!< DMA TX and RX Direction */
+
+/* Flag definitions */
+#define SPI_FLAG_RXNE     SPI_SR_RXNE    /*!< Receive buffer not empty flag */
+#define SPI_FLAG_TXE      SPI_SR_TXE     /*!< Transmit buffer empty flag */
+#define SPI_FLAG_BSY      SPI_SR_BSY     /*!< Busy flag */
+#define SPI_FLAG_OVR      SPI_SR_OVR     /*!< Overrun flag */
+#define SPI_FLAG_MODF     SPI_SR_MODF    /*!< Mode fault flag */
+#define SPI_FLAG_CRCERR   SPI_SR_CRCERR  /*!< CRC error flag */
+
+#endif /* SPIF051_H */
