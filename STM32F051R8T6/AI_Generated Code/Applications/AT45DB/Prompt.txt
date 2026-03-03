@@ -107,3 +107,29 @@ At top level:
 
 ----------------------------------------------------------
 I am using SPI in full duplex mode and I found that "SPI_ReceiveBuffer8()" call in the AT45DB example might be inadequate for the purpose because my code stuck in the "SPI_WaitRXNE(hspi);" indefinitely. Please correct the spi transfer in the "Applications\AT45DB\Code" codes.
+
+
+------------------------ New generate code -------------------------------
+I want you to develop the library in c for AT45DB chip.
+The code should follow the process and standard given in the document in "AI_Generated Code\Applications\AT45DB\Document" folder.
+
+Please note that the driver code should not have any other library dependencies like (CMSIS, HAL, etc)
+
+I want you to generate the AT45DB.c anf AT45DB.h files for the driver code
+inside the folder "AI_Generated Code\Applications\AT45DB\Code"
+
+Please make the code as simple as possible, modular and easy to understand.
+
+You can use the nessessary libraries (like rcc, gpio etc.) from the files in "AI_Generated Code" folder and its sub folders.
+
+For the SPI driver, I want you to use mostly the below API calls for the communication.
+1> to send the data
+- SPI_SendBuffer() - for multiple bytes transmit.
+- SPI_TransmitReceive() - for single buye transmit.
+2> to receive data.
+- SPI_ReceiveBuffer() - for multiple bytes receive
+- SPI_ReceiveData() - for single buye receive.
+3> To send and receive data.
+- SPI_TransmitReceiveBuffer - for multiple bytes transmit & receive.
+
+I also want you to develop the example code for the AT45DB driver for memory interfacing.

@@ -23,7 +23,9 @@ inside the folder "AI_Generated Code\SPI\Code"
 
 and the example codes inside the folder "AI_Generated Code\SPI\Code\Examples"
 
-Please make the code as simple as possible, modular and easy to understand. Please only mention the SPI based calls in the example. Please use the libraries from "AI_Generated Code" folder for dependencies.
+Please make the code as simple as possible, modular and easy to understand. 
+
+Please only mention the SPI based calls in the example. Please use the libraries from "AI_Generated Code" folder for dependencies.
 ---------------------------------------------------------------------
 
 I cannot able to run the example for Master mode 0 of SPI code you have generated in "Example_Master_AllModes.c" file. 

@@ -279,6 +279,11 @@ void SPI_Disable(SPI_TypeDef *SPIx) {
 uint8_t SPI_TransmitReceive(SPI_TypeDef *SPIx, uint8_t txData) {
     uint32_t timeout = SPI_TIMEOUT_MAX;
     
+    /* Wait for transmission to complete */
+    while (SPIx->SR & SPI_SR_BSY) {
+        /* Wait */
+    }
+
     /* Wait for TX buffer empty */
     while (!(SPIx->SR & SPI_SR_TXE)) {
         if (timeout-- == 0) {
@@ -317,7 +322,7 @@ void SPI_SendData(SPI_TypeDef *SPIx, uint8_t txData) {
     }
     
     /* Send data */
-    SPIx->DR = txData;
+    *(volatile uint8_t*)&SPIx->DR = txData;
 }
 
 /**
@@ -357,9 +362,9 @@ void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rx
         
         /* Send data */
         if (txBuffer != 0) {
-            SPIx->DR = txBuffer[i];
+            *(volatile uint8_t*)&SPIx->DR = txBuffer[i];
         } else {
-            SPIx->DR = 0xFF;  /* Dummy byte */
+            *(volatile uint8_t*)&SPIx->DR = 0xFF;  /* Dummy byte */
         }
         
         /* Wait for RX buffer not empty */
@@ -393,7 +398,7 @@ void SPI_SendBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint16_t length) {
         }
         
         /* Send data */
-        SPIx->DR = txBuffer[i];
+        *(volatile uint8_t*)&SPIx->DR = txBuffer[i];
     }
     
     /* Wait for transmission to complete */
@@ -416,7 +421,7 @@ void SPI_ReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *rxBuffer, uint16_t length) {
         while (!(SPIx->SR & SPI_SR_TXE)) {
             /* Wait */
         }
-        SPIx->DR = 0xFF;
+        *(volatile uint8_t*)&SPIx->DR = 0xFF;
         
         /* Wait for RX buffer not empty */
         while (!(SPIx->SR & SPI_SR_RXNE)) {
