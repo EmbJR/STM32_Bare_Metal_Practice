@@ -1,0 +1,30 @@
+------------------------------------------------------------------
+I want to develop the UART driver for the STM32F051R8T6 controller.
+I need you to understand the UART register structure, UART modes and other important imformation about UART
+from the below documents placed in the repository.
+1> AI_Generated Code/rm0091-stm32f0x1stm32f0x2stm32f0x8-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+2> AI_Generated Code/stm32f051r8.pdf
+
+Please provide the UART driver code for the STM32F051R8T6 controller.
+Also provide the example codes for the below modes 
+1> UART polling mode
+2> UART Interrupt mode
+3> UART DMA mode
+
+The UART driver should support both poling and interrupt based communication.
+Please add the UART Status register checks whevever possible to avoid the conflicts and synchronization errors.
+
+Please note that the driver code should not have anny other library dependencies like (CMSIS, HAL, etc)
+
+I want you to generate the uartF051.c anf uartF051.h files for the driver code 
+inside the folder "AI_Generated Code\UART\Code"
+
+and the example codes inside the folder "AI_Generated Code\UART\Code\Examples"
+
+Please make the code as simple as possible, modular and easy to understand. 
+
+Please only mention the UART based calls in the example. 
+Please use the libraries from "AI_Generated Code" folder for dependencies.
+
+
+
