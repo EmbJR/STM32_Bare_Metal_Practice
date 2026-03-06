@@ -71,5 +71,11 @@ Please write the example code for UART Interrupt Mode for STM32F051R8Tx using th
 Also write the code in the form of API. Don't write the raw codes. 
 Please check the UART baude rate calculation in library and fix any errors in it.
 Only modify the code in "AI_Generated Code\UART" folder for any fixes.
+-------------------------------------------------------------
+Please rewrite the "UART_Interrupt_Mode.c" example by replacing the buffer related logic to the APIs in the file "CirBuffer.c".
+Don't change the other part of the code except the buffer related logic.
+Also modify the other example code like optimization and use of APIs done in the "UART_Interrupt_Mode.c" 
+so all codes in the example are looks neat and clean and API friendly.
+Only modify the code in "AI_Generated Code\UART\Code\Examples" folder.
 
 
