@@ -25,6 +25,51 @@ Please make the code as simple as possible, modular and easy to understand.
 
 Please only mention the UART based calls in the example. 
 Please use the libraries from "AI_Generated Code" folder for dependencies.
+-----------------------------------------------------------------------------
+Please resolve the error below for the UART driver code
+"
+make -j4 clean 
+rm -rf ./Startup/startup_stm32f051r8tx.d ./Startup/startup_stm32f051r8tx.o
+rm -rf ./Src/AT45DB.d ./Src/AT45DB.o ./Src/AT45DB.su ./Src/AT45DB_Example.d ./Src/AT45DB_Example.o ./Src/AT45DB_Example.su ./Src/gpio.d ./Src/gpio.o ./Src/gpio.su ./Src/rcc.d ./Src/rcc.o ./Src/rcc.su ./Src/spiF051.d ./Src/spiF051.o ./Src/spiF051.su
+rm -rf Gereral_For_AI_Test.elf Gereral_For_AI_Test.list Gereral_For_AI_Test.map default.size.stdout
+ 
 
+18:12:38 Build Finished. 0 errors, 0 warnings. (took 281ms)
+
+18:12:38 **** Build of configuration Debug for project Gereral_For_AI_Test ****
+make -j4 all 
+arm-none-eabi-gcc -mcpu=cortex-m0 -g3 -DDEBUG -c -x assembler-with-cpp -MMD -MP -MF"Startup/startup_stm32f051r8tx.d" -MT"Startup/startup_stm32f051r8tx.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Startup/startup_stm32f051r8tx.o" "../Startup/startup_stm32f051r8tx.s"
+arm-none-eabi-gcc "../Src/AT45DB.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/AT45DB.d" -MT"Src/AT45DB.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/AT45DB.o"
+arm-none-eabi-gcc "../Src/UART_Interrupt_Mode.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/UART_Interrupt_Mode.d" -MT"Src/UART_Interrupt_Mode.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/UART_Interrupt_Mode.o"
+arm-none-eabi-gcc "../Src/gpio.c" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DSTM32 -DSTM32F0 -DSTM32F051R8Tx -c -I../Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Src/gpio.d" -MT"Src/gpio.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Src/gpio.o"
+../Src/UART_Interrupt_Mode.c:49:13: error: conflicting types for 'UART_EnableInterrupt'
+   49 | static void UART_EnableInterrupt(USART_TypeDef *USARTx);
+      |             ^~~~~~~~~~~~~~~~~~~~
+In file included from ../Src/UART_Interrupt_Mode.c:14:
+../Src/uartF051.h:315:6: note: previous declaration of 'UART_EnableInterrupt' was here
+  315 | void UART_EnableInterrupt(USART_TypeDef *USARTx, uint32_t Interrupt);
+      |      ^~~~~~~~~~~~~~~~~~~~
+../Src/UART_Interrupt_Mode.c:50:13: error: conflicting types for 'UART_DisableInterrupt'
+   50 | static void UART_DisableInterrupt(USART_TypeDef *USARTx);
+      |             ^~~~~~~~~~~~~~~~~~~~~
+In file included from ../Src/UART_Interrupt_Mode.c:14:
+../Src/uartF051.h:316:6: note: previous declaration of 'UART_DisableInterrupt' was here
+  316 | void UART_DisableInterrupt(USART_TypeDef *USARTx, uint32_t Interrupt);
+      |      ^~~~~~~~~~~~~~~~~~~~~
+../Src/UART_Interrupt_Mode.c:237:13: warning: 'UART_DisableInterrupt' defined but not used [-Wunused-function]
+  237 | static void UART_DisableInterrupt(USART_TypeDef *USARTx) {
+      |             ^~~~~~~~~~~~~~~~~~~~~
+../Src/UART_Interrupt_Mode.c:226:13: warning: 'UART_EnableInterrupt' defined but not used [-Wunused-function]
+  226 | static void UART_EnableInterrupt(USART_TypeDef *USARTx) {
+      |             ^~~~~~~~~~~~~~~~~~~~
+make: *** [Src/subdir.mk:34: Src/UART_Interrupt_Mode.o] Error 1
+make: *** Waiting for unfinished jobs....
+"make -j4 all" terminated with exit code 2. Build might be incomplete.
+"
+-------------------------------------------------------------
+Please write the example code for UART Interrupt Mode for STM32F051R8Tx using the library in "AI_Generated Code\UART" folder.
+Also write the code in the form of API. Don't write the raw codes. 
+Please check the UART baude rate calculation in library and fix any errors in it.
+Only modify the code in "AI_Generated Code\UART" folder for any fixes.
 
 

@@ -6,8 +6,8 @@
  */
 
 #include "spiF051.h"
-#include "../../GPIO_AI/gpio.h"
-#include "../../DeepSeek_Generated/RCC/rcc.h"
+#include "gpio.h"
+#include "rcc.h"
 
 /*============================================================================
  * Private Macros

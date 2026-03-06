@@ -195,7 +195,7 @@ bool UART_SendDataIT(USART_TypeDef *USARTx, uint8_t data) {
  */
 bool UART_ReceiveDataIT(USART_TypeDef *USARTx, uint8_t *data) {
     (void)USARTx;  /* Not needed for buffer access */
-    
+
     if (rxCount == 0) {
         return false;  /* Buffer empty */
     }
@@ -244,10 +244,10 @@ bool UART_SendStringIT(USART_TypeDef *USARTx, const char *str) {
  */
 void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate) {
     UART_InitTypeDef UART_InitStruct;
-    
+
     /* Initialize UART configuration to defaults */
     UART_StructInit(&UART_InitStruct);
-    
+
     /* Configure for interrupt mode */
     UART_InitStruct.BaudRate = baudRate;
     UART_InitStruct.WordLength = UART_WORDLENGTH_8B;
@@ -257,7 +257,7 @@ void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate) {
     UART_InitStruct.HwFlowCtl = UART_HWCONTROL_NONE;
     UART_InitStruct.OverSampling = UART_OVERSAMPLING_16;
     UART_InitStruct.OneBitSampling = false;
-    
+
     /* Initialize UART peripheral */
     UART_Init(USARTx, &UART_InitStruct);
 }
@@ -269,10 +269,10 @@ void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate) {
 void UART_EnableRxTxInterrupts(USART_TypeDef *USARTx) {
     /* Enable RXNE interrupt for receive */
     UART_EnableInterrupt(USARTx, USART_CR1_RXNEIE);
-    
+
     /* Enable PE interrupt for parity error */
     UART_EnableInterrupt(USARTx, USART_CR1_PEIE);
-    
+
     /* Enable Error interrupts (ORE, NE, FE) */
     UART_EnableInterrupt(USARTx, USART_CR3_EIE);
 }
@@ -283,7 +283,7 @@ void UART_EnableRxTxInterrupts(USART_TypeDef *USARTx) {
  */
 void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx) {
     /* Disable all UART interrupts */
-    UART_DisableInterrupt(USARTx, USART_CR1_RXNEIE | USART_CR1_TXEIE | 
+    UART_DisableInterrupt(USARTx, USART_CR1_RXNEIE | USART_CR1_TXEIE |
                                 USART_CR1_TCIE | USART_CR1_PEIE | USART_CR1_IDLEIE);
     UART_DisableInterrupt(USARTx, USART_CR3_EIE | USART_CR3_CTSIE);
 }
@@ -298,49 +298,49 @@ void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx) {
 int main(void) {
     uint8_t txData[] = "UART Interrupt Mode Demo\r\n";
     uint32_t i;
-    
+
     /* Configure System Clock */
     SystemClock_Config();
-    
+
     /* Initialize UART for interrupt mode at 115200 baud */
     UART_InterruptInit(USART1, USART_BAUD_RATE);
-    
+
     /* Enable UART interrupts in peripheral */
     UART_EnableRxTxInterrupts(USART1);
-    
+
     /* Enable USART1 interrupt in NVIC */
     NVIC_EnableUARTInterrupt(UART1_IRQno);
-    
+
     /* Copy transmission data to buffer */
     for (i = 0; i < sizeof(txData) - 1; i++) {
         txBuffer[txHead] = txData[i];
         txHead = (txHead + 1) % TX_BUFFER_SIZE;
         txCount++;
     }
-    
+
     /* Enable TXE interrupt to start transmission */
     /* First character will be sent from the interrupt handler */
     UART_EnableInterrupt(USART1, USART_CR1_TXEIE);
-    
+
     /* Main loop */
     while (1) {
         /* Process received data */
         while (UART_Available() > 0) {
             uint8_t ch;
-            
+
             /* Get received character */
             if (UART_ReceiveDataIT(USART1, &ch)) {
                 /* Echo back received character */
                 UART_SendDataIT(USART1, ch);
             }
         }
-        
+
         /* Check for transmission complete */
         if (txComplete) {
             txComplete = false;
             /* Transmission finished - could signal another task here */
         }
-        
+
         /* Check for error */
         if (errorOccurred) {
             errorOccurred = false;
