@@ -25,6 +25,8 @@
 #define TX_BUFFER_SIZE     256
 #define RX_BUFFER_SIZE     256
 
+#define Cmd_Read_Full	0x01u
+
 /*============================================================================
  * NVIC Definitions (STM32F051)
  *============================================================================*/
@@ -360,6 +362,8 @@ int main(void) {
     /* First character will be sent from the interrupt handler */
     UART_EnableInterrupt(USART1, USART_CR1_TXEIE);
 
+    uint16_t cmdLen = 0;
+    uint8_t uartData[10] = {0};
     /* Main loop */
     while (1) {
         /* Process received data */
@@ -368,6 +372,24 @@ int main(void) {
 
             /* Get received character */
             if (UART_ReceiveDataIT(USART1, &ch)) {
+            	if(ch == 0xA5)
+            	{
+            		// creat the CRC of data
+            		// match the crc if true then
+            		//
+            		{
+            			// define the length of the data and feed into cmdLen
+            			// decode the data to var "uartData[]" having the length = cmdLen
+            			uartData[0]	= Cmd_Read_Full;
+            			if(uartData[0]	== Cmd_Read_Full)
+            			{
+            				for(uint16_t i = 0; i < 10; i++)
+            				{
+            					UART_SendDataIT(USART1,  i);
+            				}
+            			}
+            		}
+            	}
                 /* Echo back received character */
                 UART_SendDataIT(USART1, ch);
             }

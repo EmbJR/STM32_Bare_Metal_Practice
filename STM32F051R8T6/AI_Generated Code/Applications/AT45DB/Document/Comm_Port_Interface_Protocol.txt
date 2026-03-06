@@ -1,0 +1,54 @@
+
+# Protocol details
+*****************************************************************************
+**************************** Transmit/Reeive command *******************************
+*****************************************************************************
+- Below is the protocol for transmitted/receive command from/to GUI and Controller.
+-------------------------------------------------------------------------------------------------
+Transmitt Data format:- 		   |<Header>| <CRC16> | <Length>| <Cmd>	 | <Data> |
+Length:-   						   | 1 byte | 2 bytes | 2 bytes |1 bytes | n bytes|
+--------------------------------------------------------------------------------------------------
+>> Info about the protocol
+- Header:- Fixed value 0xA5.
+- CRC16:- CRC or the subsequent data.
+- Length:- length of the subsequent data.
+- Cmd:- Command. The list of the commands are as follows.
+	1> Read entire Memory 		(0x01)
+	2> Write Memory 			(0x02)
+	3> Erase Memory 			(0x03)
+	4> Erase Chip   			(0x04)
+	5> Reading Error   			(0x70)
+	6> Chip comm error  		(0x71)
+- Data:- The data can be the sub command or data related to the perticular command or any error codes.	
+	
+## Read entire Memory
+*****************************************************************************
+************************* Read entire Memory ********************************
+*****************************************************************************
+>> From GUI to controller
+-------------------------------------------------------------------------------------------------
+Transmitt Data format:- 	|0xA5  | CRC16 |0x00,0x03|  0x01  |
+							|1 byte|2 bytes| 2 bytes |1 bytes |
+							
+Receive from controller:- 	|  0xA5  |  CRC16 |0x01,0x0D|  0x01 |0x0,0xD0 |	Memory Data |
+							|<Header>| <CRC16>| <Length>| <Cmd> |<Address>|   <Data>    |
+							| 1 byte | 2 bytes| 2 bytes |1 bytes| 2 bytes | 264 bytes   |
+--------------------------------------------------------------------------------------------------
+
+	
+## Sample Commands
+*****************************************************************************
+********************* Sample Read entire Memory ****************************
+*****************************************************************************
+- The below example shows the command fired by GUI to microcontroler at once and the microcontroller will revert the entire memory of 2048 pages buffer with chunks of 264 bytes values repeating about 2048 times.
+- The GUI waits for one of the below event after firing the command to controller. 
+	1> Wait for Entire memory update from controller (upto 2048 chunks of reply). 
+	2> wait upto 4 minuits.
+	3> Wait for any error received from controller.
+- The GUI will parallaly update the "self.memory_buffer" for each chunk received from controller.
+-------------------------------------------------------------------------------------------------
+>> From GUI to controller for requesting memory:- 	|0xA5|0x00,0x03|0x01|CRC16|
+>> From controller to GUI for memory data:- 		|0xA5|0x01,0x0D|0x07,0xD0|264 bytes of data|CRC16|
+													
+>> From controller to GUI for Reading error:- 		|0xA5|0x00,0x03|0x70|CRC16|
+--------------------------------------------------------------------------------------------------

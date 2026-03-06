@@ -1,0 +1,5 @@
+Please create the C based driver code for CRC hardware of STM32F051R8T6 controller.
+make the code simple and easy to understand and based on API format.
+Please create the crcF051.c and crcF051.h files for the driver and put these files in "AI_Generated Code\CRC\code\library" folder.
+Please make this code indipendent of any kind of library dependencies like (HAL, CRSIS, etc).
+Also creat the example code for created library in  "AI_Generated Code\CRC\code\Example" folder indicating how to use the libraries inside "AI_Generated Code\CRC\code\library" folder.
