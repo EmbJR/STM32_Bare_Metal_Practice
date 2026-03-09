@@ -18,6 +18,7 @@
 #include "crc.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 /*============================================================================
  * Macros
@@ -27,6 +28,12 @@
 #define RX_BUFFER_SIZE     256
 
 #define Cmd_Read_Full	0x01u
+
+enum
+{
+    FAIL,
+    PASS
+};
 
 /*============================================================================
  * NVIC Definitions (STM32F051)
@@ -42,6 +49,9 @@
 volatile bool txComplete = false;
 volatile bool rxComplete = false;
 volatile bool errorOccurred = false;
+
+uint8_t ReceivedData[20] = {0};
+volatile uint8_t RxCound_Down = 0;
 
 /* Circular Buffers for TX and RX */
 static CircularBuffer *txBuffer = NULL;
@@ -159,6 +169,7 @@ void USART1_IRQHandler(void)
     /* Check for RXNE - Data Received */
     if (isr & USART_ISR_RXNE)
     {
+    	RxCound_Down = 200;
         /* Read received data */
         data = (uint8_t)(USART1->RDR & 0xFF);
 
@@ -366,6 +377,51 @@ void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx)
     UART_DisableInterrupt(USARTx, USART_CR3_EIE | USART_CR3_CTSIE);
 }
 
+uint8_t identifyReceiveData(uint8_t *Str)
+{
+    bool retVal = FAIL;
+    uint8_t dataval = 0;
+    uint16_t length = 0;
+    uint16_t crc16 = 0, crc16_2 = 0;
+
+    if(Str == NULL)
+        return FAIL;
+
+    UART_ReceiveDataIT(USART1, &dataval);
+    crc16 = dataval;
+    UART_ReceiveDataIT(USART1, &dataval);
+    crc16 |= (dataval << 8);
+    UART_ReceiveDataIT(USART1, &dataval);
+    Str[0] = dataval;   // to calculate the CRC
+    length = dataval;
+    UART_ReceiveDataIT(USART1, &dataval);
+    Str[1] = dataval;
+    length |= (dataval << 8);
+
+    if(length > 0)
+    {
+        for(uint16_t i = 0; i < length; i++)
+        {
+            UART_ReceiveDataIT(USART1, &Str[i+2]);
+        }
+        crc16_2 = CalculateCRC16(Str, length+2);
+        if(crc16_2 == crc16)
+        {
+            //StrData[length] = 0;
+            retVal = PASS;
+        }
+        else
+        {
+            retVal = FAIL;
+        }
+    }
+    else
+    {
+        retVal = FAIL;
+    }
+    return retVal;
+}
+
 /*============================================================================
  * Main Function
  *============================================================================*/
@@ -375,8 +431,8 @@ void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx)
  */
 int main(void)
 {
+    uint8_t data = 0, len = 0;
     uint8_t txData[] = "UART Interrupt Mode Demo\r\n";
-    uint8_t ch;
     uint32_t i;
 
     /* Initialize circular buffers */
@@ -404,39 +460,35 @@ int main(void)
     /* First character will be sent from the interrupt handler */
     UART_EnableInterrupt(USART1, USART_CR1_TXEIE);
 
-    uint8_t uartData[10] = {0};
     /* Main loop */
     while (1)
     {
         /* Process received data */
+    	memset((uint8_t*)ReceivedData, 0x00, sizeof(ReceivedData));
         while (UART_Available() > 0)
         {
-            uint8_t ch;
+        	RxCound_Down--;
+        	if(RxCound_Down == 0)
+        	{
+				if(UART_ReceiveDataIT(USART1, &data))
+				{
+					if(data == 0xA5)
+					{
+						len = identifyReceiveData(ReceivedData);
+						if(len)
+						{
+							if(ReceivedData[2] == 0x01)
+							{
+							    for (i = 0; i < 10; i++)
+							    {
+							    	UART_SendDataIT(USART1, i);
+							    }
+							}
 
-            /* Get received character */
-            if (UART_ReceiveDataIT(USART1, &ch))
-            {
-                if(ch == 0xA5)
-                {
-                    // creat the CRC of data
-                    // match the crc if true then
-                    //
-                    {
-                        // define the length of the data and feed into cmdLen
-                        // decode the data to var "uartData[]" having the length = cmdLen
-                        uartData[0]	= Cmd_Read_Full;
-                        if(uartData[0]	== Cmd_Read_Full)
-                        {
-                            for(uint16_t i = 0; i < 10; i++)
-                            {
-                                UART_SendDataIT(USART1,  i);
-                            }
-                        }
-                    }
-                }
-                /* Echo back received character */
-                UART_SendDataIT(USART1, ch);
-            }
+						}
+					}
+				}
+        	}
         }
 
         /* Check for transmission complete */
@@ -454,7 +506,7 @@ int main(void)
             UART_ClearError(USART1);
         }
     }
-
+    for(int l; l < 2000; l++);
     /* Cleanup buffers (never reached in infinite loop) */
     Buffer_DeInit();
 }
