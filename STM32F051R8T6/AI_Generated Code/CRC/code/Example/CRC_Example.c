@@ -30,8 +30,7 @@
 
 /* RCC AHB peripheral clock enable register */
 #define RCC_AHBENR_OFFSET     0x14U
-#define RCC_PTR               ((volatile uint32_t *)(RCC_BASE_ADDR))
-#define RCC_AHBENR            (*(RCC_PTR + (RCC_AHBENR_OFFSET / 4)))
+#define RCC_AHBENR            (*(volatile uint32_t *)(RCC_BASE_ADDR + RCC_AHBENR_OFFSET))
 
 /* CRC clock enable bit in RCC_AHBENR */
 #define RCC_AHBENR_CRCEN      (1U << 6)

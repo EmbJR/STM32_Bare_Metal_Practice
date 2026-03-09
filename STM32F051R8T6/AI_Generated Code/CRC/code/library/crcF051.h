@@ -24,10 +24,18 @@ extern "C" {
 #include <stdint.h>
 
 /*============================================================================
+ * RCC Clock Control
+ *============================================================================*/
+#define RCC_BASE_ADDR         0x40021000U
+#define RCC_AHBENR_OFFSET     0x14U
+#define RCC_AHBENR            (*(volatile uint32_t *)(RCC_BASE_ADDR + RCC_AHBENR_OFFSET))
+#define RCC_AHBENR_CRCEN      (1U << 6)
+
+/*============================================================================
  * Base Address Definition
  *============================================================================*/
 /* CRC Peripheral Base Address for STM32F051 */
-#define CRC_BASE_ADDR         0x40022000U
+#define CRC_BASE_ADDR         0x40022400U
 
 /*============================================================================
  * Register Definitions

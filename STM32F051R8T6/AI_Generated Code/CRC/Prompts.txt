@@ -3,3 +3,5 @@ make the code simple and easy to understand and based on API format.
 Please create the crcF051.c and crcF051.h files for the driver and put these files in "AI_Generated Code\CRC\code\library" folder.
 Please make this code indipendent of any kind of library dependencies like (HAL, CRSIS, etc).
 Also creat the example code for created library in  "AI_Generated Code\CRC\code\Example" folder indicating how to use the libraries inside "AI_Generated Code\CRC\code\library" folder.
+-----------------------------------------------------------
+When I tried to run the example of CRC in "AI_Generated Code\CRC\code", the code stucked and restarted. Please find the possible errors in CRC code. Please cross-check the implementaion of CRC driver and example code with the document stored in "AI_Generated Code\STM32F051R8T6_Document" forler.

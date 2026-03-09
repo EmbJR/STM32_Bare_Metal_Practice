@@ -3,7 +3,7 @@
  * @brief   UART Interrupt Mode Example for STM32F051R8T6
  * @author  AI Generated
  * @date    2026-03-06
- * 
+ *
  * @note    This example demonstrates UART transmission and reception using interrupts
  *          Non-blocking communication with interrupt handlers using the UART API
  *          Uses Circular Buffer APIs for efficient data handling
@@ -15,6 +15,7 @@
 #include "uartF051.h"
 #include "CirBuffer.h"
 #include "rcc.h"
+#include "crc.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -63,8 +64,10 @@ static void Buffer_DeInit(void);
  * @brief  Enable UART interrupt in NVIC
  * @param  irq: IRQ number (UART1_IRQn = 27, UART2_IRQn = 28)
  */
-static void NVIC_EnableUARTInterrupt(uint8_t irq) {
-    if (irq < 32) {
+static void NVIC_EnableUARTInterrupt(uint8_t irq)
+{
+    if (irq < 32)
+    {
         NVIC_ISER = (1 << irq);
     }
 }
@@ -73,8 +76,10 @@ static void NVIC_EnableUARTInterrupt(uint8_t irq) {
  * @brief  Disable UART interrupt in NVIC
  * @param  irq: IRQ number (UART1_IRQn = 27, UART2_IRQn = 28)
  */
-static void NVIC_DisableUARTInterrupt(uint8_t irq) {
-    if (irq < 32) {
+static void NVIC_DisableUARTInterrupt(uint8_t irq)
+{
+    if (irq < 32)
+    {
         NVIC_ICER = (1 << irq);
     }
 }
@@ -86,17 +91,20 @@ static void NVIC_DisableUARTInterrupt(uint8_t irq) {
 /**
  * @brief  Initialize circular buffers for TX and RX
  */
-static void Buffer_Init(void) {
+static void Buffer_Init(void)
+{
     /* Create TX circular buffer */
     txBuffer = circular_buffer_create(TX_BUFFER_SIZE);
-    if (txBuffer == NULL) {
+    if (txBuffer == NULL)
+    {
         /* Handle error - buffer creation failed */
         while (1);
     }
 
     /* Create RX circular buffer */
     rxBuffer = circular_buffer_create(RX_BUFFER_SIZE);
-    if (rxBuffer == NULL) {
+    if (rxBuffer == NULL)
+    {
         /* Handle error - buffer creation failed */
         while (1);
     }
@@ -105,13 +113,16 @@ static void Buffer_Init(void) {
 /**
  * @brief  De-initialize circular buffers
  */
-static void Buffer_DeInit(void) {
-    if (txBuffer != NULL) {
+static void Buffer_DeInit(void)
+{
+    if (txBuffer != NULL)
+    {
         circular_buffer_destroy(txBuffer);
         txBuffer = NULL;
     }
 
-    if (rxBuffer != NULL) {
+    if (rxBuffer != NULL)
+    {
         circular_buffer_destroy(rxBuffer);
         rxBuffer = NULL;
     }
@@ -125,64 +136,77 @@ static void Buffer_DeInit(void) {
  * @brief  UART1 Interrupt Handler
  * @note   Handles TXE, RXNE, PE, and error interrupts
  */
-void USART1_IRQHandler(void) {
+void USART1_IRQHandler(void)
+{
     uint32_t isr = USART1->ISR;
     uint8_t data;
-    
+
     /* Check for Parity Error */
-    if (isr & USART_ISR_PE) {
+    if (isr & USART_ISR_PE)
+    {
         errorOccurred = true;
         UART_ClearInterruptFlag(USART1, USART_ICR_PECF);
     }
-    
+
     /* Check for Frame Error, Noise, or Overrun */
-    if (isr & (USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE)) {
+    if (isr & (USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE))
+    {
         errorOccurred = true;
         /* Clear the error flags */
         UART_ClearInterruptFlag(USART1, USART_ICR_FECF | USART_ICR_NCF | USART_ICR_ORECF);
     }
-    
+
     /* Check for RXNE - Data Received */
-    if (isr & USART_ISR_RXNE) {
+    if (isr & USART_ISR_RXNE)
+    {
         /* Read received data */
         data = (uint8_t)(USART1->RDR & 0xFF);
-        
+
         /* Store in circular buffer using API */
-        if (circular_buffer_write(rxBuffer, (char)data) == BUFFER_OK) {
+        if (circular_buffer_write(rxBuffer, (char)data) == BUFFER_OK)
+        {
             rxComplete = true;
-        } else {
+        }
+        else
+        {
             /* Buffer overflow - error */
             errorOccurred = true;
         }
     }
-    
+
     /* Check for TXE - Transmit Buffer Empty */
-    if (isr & USART_ISR_TXE) {
+    if (isr & USART_ISR_TXE)
+    {
         /* Check if there's data to send using API */
-        if (!circular_buffer_is_empty(txBuffer)) {
+        if (!circular_buffer_is_empty(txBuffer))
+        {
             /* Read next character from buffer */
             char txData;
-            if (circular_buffer_read(txBuffer, &txData) == BUFFER_OK) {
+            if (circular_buffer_read(txBuffer, &txData) == BUFFER_OK)
+            {
                 /* Send character */
                 USART1->TDR = (uint8_t)txData;
             }
-        } else {
+        }
+        else
+        {
             /* No more data - disable TXE interrupt to prevent continuous interrupts */
             UART_DisableInterrupt(USART1, USART_CR1_TXEIE);
-            
+
             /* Enable TC interrupt to know when transmission is truly complete */
             UART_EnableInterrupt(USART1, USART_CR1_TCIE);
         }
     }
-    
+
     /* Check for Transmission Complete */
-    if (isr & USART_ISR_TC) {
+    if (isr & USART_ISR_TC)
+    {
         /* Clear TC flag */
         UART_ClearInterruptFlag(USART1, USART_ICR_TCCF);
-        
+
         /* Disable TC interrupt */
         UART_DisableInterrupt(USART1, USART_CR1_TCIE);
-        
+
         /* Signal transmission complete */
         txComplete = true;
     }
@@ -195,7 +219,8 @@ void USART1_IRQHandler(void) {
 /**
  * @brief  Configure system clock
  */
-static void SystemClock_Config(void) {
+static void SystemClock_Config(void)
+{
     /* Enable HSI and use as system clock */
     RCC_EnableHSI();
     RCC_SetSystemClockSource(CLOCK_SOURCE_HSI);
@@ -207,20 +232,23 @@ static void SystemClock_Config(void) {
  * @param  data: data to send
  * @return true if data queued, false if buffer full
  */
-bool UART_SendDataIT(USART_TypeDef *USARTx, uint8_t data) {
+bool UART_SendDataIT(USART_TypeDef *USARTx, uint8_t data)
+{
     /* Check if buffer has space using API */
-    if (circular_buffer_is_full(txBuffer)) {
+    if (circular_buffer_is_full(txBuffer))
+    {
         return false;  /* Buffer full */
     }
-    
+
     /* Write data to circular buffer using API */
-    if (circular_buffer_write(txBuffer, (char)data) != BUFFER_OK) {
+    if (circular_buffer_write(txBuffer, (char)data) != BUFFER_OK)
+    {
         return false;  /* Write failed */
     }
-    
+
     /* Enable TXE interrupt to start transmission */
     UART_EnableInterrupt(USARTx, USART_CR1_TXEIE);
-    
+
     return true;
 }
 
@@ -230,33 +258,38 @@ bool UART_SendDataIT(USART_TypeDef *USARTx, uint8_t data) {
  * @param  data: pointer to store received data
  * @return true if data available, false if buffer empty
  */
-bool UART_ReceiveDataIT(USART_TypeDef *USARTx, uint8_t *data) {
+bool UART_ReceiveDataIT(USART_TypeDef *USARTx, uint8_t *data)
+{
     (void)USARTx;  /* Not needed for buffer access */
 
     /* Check if buffer has data using API */
-    if (circular_buffer_is_empty(rxBuffer)) {
+    if (circular_buffer_is_empty(rxBuffer))
+    {
         return false;  /* Buffer empty */
     }
-    
+
     /* Read data from circular buffer using API */
-    if (circular_buffer_read(rxBuffer, (char *)data) != BUFFER_OK) {
+    if (circular_buffer_read(rxBuffer, (char *)data) != BUFFER_OK)
+    {
         return false;  /* Read failed */
     }
-    
+
     return true;
 }
 
 /**
  * @brief  Get number of bytes available in RX buffer
  */
-uint32_t UART_Available(void) {
+uint32_t UART_Available(void)
+{
     return (uint32_t)circular_buffer_available(rxBuffer);
 }
 
 /**
  * @brief  Get number of bytes in TX buffer waiting to be sent
  */
-uint32_t UART_TxWaiting(void) {
+uint32_t UART_TxWaiting(void)
+{
     return (uint32_t)circular_buffer_available(txBuffer);
 }
 
@@ -266,9 +299,12 @@ uint32_t UART_TxWaiting(void) {
  * @param  str: string to send
  * @return true if all data queued
  */
-bool UART_SendStringIT(USART_TypeDef *USARTx, const char *str) {
-    while (*str) {
-        if (!UART_SendDataIT(USARTx, (uint8_t)*str)) {
+bool UART_SendStringIT(USART_TypeDef *USARTx, const char *str)
+{
+    while (*str)
+    {
+        if (!UART_SendDataIT(USARTx, (uint8_t)*str))
+        {
             return false;  /* Buffer full */
         }
         str++;
@@ -281,7 +317,8 @@ bool UART_SendStringIT(USART_TypeDef *USARTx, const char *str) {
  * @param  USARTx: UART peripheral
  * @param  baudRate: desired baud rate
  */
-void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate) {
+void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate)
+{
     UART_InitTypeDef UART_InitStruct;
 
     /* Initialize UART configuration to defaults */
@@ -305,7 +342,8 @@ void UART_InterruptInit(USART_TypeDef *USARTx, uint32_t baudRate) {
  * @brief  Enable UART interrupts (RX, TX, PE, Error)
  * @param  USARTx: UART peripheral
  */
-void UART_EnableRxTxInterrupts(USART_TypeDef *USARTx) {
+void UART_EnableRxTxInterrupts(USART_TypeDef *USARTx)
+{
     /* Enable RXNE interrupt for receive */
     UART_EnableInterrupt(USARTx, USART_CR1_RXNEIE);
 
@@ -320,10 +358,11 @@ void UART_EnableRxTxInterrupts(USART_TypeDef *USARTx) {
  * @brief  Disable UART interrupts
  * @param  USARTx: UART peripheral
  */
-void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx) {
+void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx)
+{
     /* Disable all UART interrupts */
     UART_DisableInterrupt(USARTx, USART_CR1_RXNEIE | USART_CR1_TXEIE |
-                                USART_CR1_TCIE | USART_CR1_PEIE | USART_CR1_IDLEIE);
+                          USART_CR1_TCIE | USART_CR1_PEIE | USART_CR1_IDLEIE);
     UART_DisableInterrupt(USARTx, USART_CR3_EIE | USART_CR3_CTSIE);
 }
 
@@ -334,8 +373,10 @@ void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx) {
 /**
  * @brief  Main function - UART Interrupt Mode Example
  */
-int main(void) {
+int main(void)
+{
     uint8_t txData[] = "UART Interrupt Mode Demo\r\n";
+    uint8_t ch;
     uint32_t i;
 
     /* Initialize circular buffers */
@@ -354,7 +395,8 @@ int main(void) {
     NVIC_EnableUARTInterrupt(UART1_IRQno);
 
     /* Queue transmission data to buffer using batch write API */
-    for (i = 0; i < sizeof(txData) - 1; i++) {
+    for (i = 0; i < sizeof(txData) - 1; i++)
+    {
         circular_buffer_write(txBuffer, (char)txData[i]);
     }
 
@@ -362,47 +404,51 @@ int main(void) {
     /* First character will be sent from the interrupt handler */
     UART_EnableInterrupt(USART1, USART_CR1_TXEIE);
 
-    uint16_t cmdLen = 0;
     uint8_t uartData[10] = {0};
     /* Main loop */
-    while (1) {
+    while (1)
+    {
         /* Process received data */
-        while (UART_Available() > 0) {
+        while (UART_Available() > 0)
+        {
             uint8_t ch;
 
             /* Get received character */
-            if (UART_ReceiveDataIT(USART1, &ch)) {
-            	if(ch == 0xA5)
-            	{
-            		// creat the CRC of data
-            		// match the crc if true then
-            		//
-            		{
-            			// define the length of the data and feed into cmdLen
-            			// decode the data to var "uartData[]" having the length = cmdLen
-            			uartData[0]	= Cmd_Read_Full;
-            			if(uartData[0]	== Cmd_Read_Full)
-            			{
-            				for(uint16_t i = 0; i < 10; i++)
-            				{
-            					UART_SendDataIT(USART1,  i);
-            				}
-            			}
-            		}
-            	}
+            if (UART_ReceiveDataIT(USART1, &ch))
+            {
+                if(ch == 0xA5)
+                {
+                    // creat the CRC of data
+                    // match the crc if true then
+                    //
+                    {
+                        // define the length of the data and feed into cmdLen
+                        // decode the data to var "uartData[]" having the length = cmdLen
+                        uartData[0]	= Cmd_Read_Full;
+                        if(uartData[0]	== Cmd_Read_Full)
+                        {
+                            for(uint16_t i = 0; i < 10; i++)
+                            {
+                                UART_SendDataIT(USART1,  i);
+                            }
+                        }
+                    }
+                }
                 /* Echo back received character */
                 UART_SendDataIT(USART1, ch);
             }
         }
 
         /* Check for transmission complete */
-        if (txComplete) {
+        if (txComplete)
+        {
             txComplete = false;
             /* Transmission finished - could signal another task here */
         }
 
         /* Check for error */
-        if (errorOccurred) {
+        if (errorOccurred)
+        {
             errorOccurred = false;
             /* Handle error - clear and continue */
             UART_ClearError(USART1);
