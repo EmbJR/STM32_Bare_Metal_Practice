@@ -169,7 +169,7 @@ void USART1_IRQHandler(void)
     /* Check for RXNE - Data Received */
     if (isr & USART_ISR_RXNE)
     {
-    	RxCound_Down = 200;
+        RxCound_Down = 200;
         /* Read received data */
         data = (uint8_t)(USART1->RDR & 0xFF);
 
@@ -464,31 +464,31 @@ int main(void)
     while (1)
     {
         /* Process received data */
-    	memset((uint8_t*)ReceivedData, 0x00, sizeof(ReceivedData));
+        memset((uint8_t*)ReceivedData, 0x00, sizeof(ReceivedData));
         while (UART_Available() > 0)
         {
-        	RxCound_Down--;
-        	if(RxCound_Down == 0)
-        	{
-				if(UART_ReceiveDataIT(USART1, &data))
-				{
-					if(data == 0xA5)
-					{
-						len = identifyReceiveData(ReceivedData);
-						if(len)
-						{
-							if(ReceivedData[2] == 0x01)
-							{
-							    for (i = 0; i < 10; i++)
-							    {
-							    	UART_SendDataIT(USART1, i);
-							    }
-							}
+            RxCound_Down--;
+            if(RxCound_Down == 0)
+            {
+                if(UART_ReceiveDataIT(USART1, &data))
+                {
+                    if(data == 0xA5)
+                    {
+                        len = identifyReceiveData(ReceivedData);
+                        if(len)
+                        {
+                            if(ReceivedData[2] == 0x01)
+                            {
+                                for (i = 0; i < 10; i++)
+                                {
+                                    UART_SendDataIT(USART1, i);
+                                }
+                            }
 
-						}
-					}
-				}
-        	}
+                        }
+                    }
+                }
+            }
         }
 
         /* Check for transmission complete */
