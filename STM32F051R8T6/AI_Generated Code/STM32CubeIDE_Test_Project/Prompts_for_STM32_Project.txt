@@ -1,0 +1,4 @@
+Please understand the code in the current folder where consider the "AT45_Memory Viewer_App.c" file as main file.
+In this code I am having one issue that When I write some data on page 30, the same data is appears on the page 158.
+Please find that what is the relation between the page sizes I have written and also find any errors in the code regarding to AT45db code.
+Also note that you only can change the files in "STM32CubeIDE_Test_Project\Src" folder.

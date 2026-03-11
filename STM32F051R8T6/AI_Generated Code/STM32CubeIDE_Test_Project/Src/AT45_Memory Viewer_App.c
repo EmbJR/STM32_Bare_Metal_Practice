@@ -42,8 +42,8 @@
 #define AT45DB_MOSI_PIN           GPIO_PIN_7
 
 #define USART_BAUD_RATE    115200UL
-#define TX_BUFFER_SIZE     256
-#define RX_BUFFER_SIZE     256
+#define TX_BUFFER_SIZE     264
+#define RX_BUFFER_SIZE     264
 
 #define Cmd_Read_Full	0x01u
 
@@ -85,8 +85,8 @@ volatile bool txComplete = false;
 volatile bool rxComplete = false;
 volatile bool errorOccurred = false;
 
-uint8_t RxData[LEN_DATA_TXRX] = {0};
-uint8_t TxData[LEN_DATA_TXRX];
+volatile uint8_t RxData[LEN_DATA_TXRX] = {0};
+volatile uint8_t TxData[LEN_DATA_TXRX] = {0};
 volatile uint8_t RxCound_Down = 0;
 
 /* Circular Buffers for TX and RX */
@@ -307,7 +307,7 @@ bool UART_SendDataIT(USART_TypeDef *USARTx, uint8_t data)
  * @param  data: pointer to store received data
  * @return true if data available, false if buffer empty
  */
-bool UART_ReceiveDataIT(USART_TypeDef *USARTx, uint8_t *data)
+bool UART_ReceiveDataIT(USART_TypeDef *USARTx, volatile uint8_t *data)
 {
     (void)USARTx;  /* Not needed for buffer access */
 
@@ -538,7 +538,7 @@ static void SPI_Config(void)
     SPI_Enable(AT45DB_SPI);
 }
 
-bool AT45Db_Init(void)
+bool AT45_mem_Init(void)
 {
     AT45_GPIO_Config();
 
@@ -562,7 +562,7 @@ bool AT45Db_Init(void)
     }
 }
 
-uint16_t encodeData(uint8_t *encodedData, uint16_t PageAdd)
+uint16_t encodeData(volatile uint8_t *encodedData, uint16_t PageAdd)
 {
     uint16_t length = 0;
     uint16_t crc16 = 0;
@@ -587,21 +587,21 @@ uint16_t encodeData(uint8_t *encodedData, uint16_t PageAdd)
 
     success = AT45DB_PageRead(&at45db_handle,
                               (uint16_t)PageAdd,
-                              &encodedData[TxRx_Data_POS]);
+                              (uint8_t *)&encodedData[TxRx_Data_POS]);
     length = length + 264;
     if(success == false)
     {
         return 0;
     }
 
-    crc16 = CalculateCRC16(&encodedData[TxRx_Len_POS], length);
+    crc16 = CalculateCRC16((uint8_t *)&encodedData[TxRx_Len_POS], length);
     encodedData[TxRx_CRC_POS] = (uint8_t)(crc16 & 0x00FF);
     encodedData[TxRx_CRC_POS + 1] = (uint8_t)((crc16 & 0xFF00) >> 8);
 
     return LEN_DATA_TXRX;
 }
 
-uint16_t encodeErrro(uint8_t *encodedData, uint8_t errorVal)
+uint16_t encodeErrro(volatile uint8_t *encodedData, uint8_t errorVal)
 {
     uint16_t crc16 = 0;
     uint16_t length = 0;
@@ -620,11 +620,62 @@ uint16_t encodeErrro(uint8_t *encodedData, uint8_t errorVal)
     encodedData[TxRx_CMD_POS] = errorVal;
     length = length + 1;
 
-    crc16 = CalculateCRC16(&encodedData[TxRx_Len_POS], length);
+    crc16 = CalculateCRC16((uint8_t *)&encodedData[TxRx_Len_POS], length);
     encodedData[TxRx_CRC_POS] = (uint8_t)(crc16 & 0x00FF);
     encodedData[TxRx_CRC_POS + 1] = (uint8_t)((crc16 & 0xFF00) >> 8);
 
     return LEN_DATA_TXRX;
+}
+
+/**
+ * @brief  Example: Read and Write operations
+ */
+static void AT45DB_Example_ReadWrite(void) {
+    uint16_t page_num = 30;
+    uint16_t i;
+    bool success;
+
+
+    /* Prepare test data */
+    for (i = 0; i < at45db_handle.PageSize; i++) {
+    			TxData[i] = (uint8_t)(i & 0xFF);
+    }
+
+    success = AT45DB_ProgramPage(&at45db_handle, page_num,
+    		(uint8_t *)TxData, at45db_handle.PageSize, true);
+    if (success) {
+        printf("Write successful!\r\n");
+    } else {
+        printf("Write FAILED!\r\n");
+        return;
+    }
+
+    /* Clear read buffer */
+    for (i = 0; i < at45db_handle.PageSize; i++) {
+    			TxData[i] = 0x00;
+    }
+
+    //--------------------------------------------------------------------------
+//    page_num = 158;
+//    /* Prepare test data */
+//    for (i = 0; i < at45db_handle.PageSize; i++) {
+//    			TxData[i] = (uint8_t)(0xFF);
+//    }
+//
+//    success = AT45DB_ProgramPage(&at45db_handle, page_num,
+//    			(uint8_t *)TxData, at45db_handle.PageSize, true);
+//    if (success) {
+//        printf("Write successful!\r\n");
+//    } else {
+//        printf("Write FAILED!\r\n");
+//        return;
+//    }
+//
+//    /* Clear read buffer */
+//    for (i = 0; i < at45db_handle.PageSize; i++) {
+//    			TxData[i] = 0x00;
+//    }
+
 }
 
 
@@ -639,6 +690,7 @@ int main(void)
 {
     uint8_t txData[] = "UART Interrupt Mode Demo\r\n";
     uint16_t MemPagecnt = 0, len = 0;
+    volatile uint8_t At45available = false, retryCnt = 0;;
 
     /* Initialize circular buffers */
     Buffer_Init();
@@ -649,12 +701,30 @@ int main(void)
     /* Initialize UART for interrupt mode at 115200 baud */
     UART_InterruptInit(USART1, USART_BAUD_RATE);
 
-    if(AT45Db_Init())
+    if(AT45_mem_Init())
     {
+    	At45available = true;
+/*
+    	for(uint16_t pgnum = 0; pgnum < 2048; pgnum++)
+    	{
+    		int err = AT45DB_PageErase(&at45db_handle, pgnum);
+    		if(err == 0)
+    		{
+    			At45available = 0;
+    		}
+    		else
+    		{
+    			At45available = 2;
+    		}
+    	}
+    	*/
+    	AT45DB_Example_ReadWrite();		// write sample data to memory
+
         // successfully configured AT45DB
     }
     else
     {
+    	At45available = false;
         // Failed to configure AT45DB
     }
 
@@ -693,9 +763,23 @@ int main(void)
                         for(MemPagecnt = 0; MemPagecnt < 2048; MemPagecnt++)
                         {
                             memset(TxData, 0x00, sizeof(TxData));
+                            if(len == 0)
+                            {
+                            	retryCnt++;
+                            	if(retryCnt > 10)
+                            	{
+                                	encodeErrro(TxData, TXRX_ERROR_READ);
+                                    for(len=0; len < 5; len++)
+                                        UART_SendDataIT(USART1, TxData[len]);
+                            		break;
+                            	}
+                            	if(MemPagecnt > 0)
+                            		MemPagecnt--;
+                            }
                             len = encodeData(TxData, MemPagecnt);
                             if(len)
                             {
+                            	retryCnt = 0;
                                 for(len=0; len < LEN_DATA_TXRX; len++)
                                     UART_SendDataIT(USART1, TxData[len]);
 
@@ -711,8 +795,9 @@ int main(void)
                                 	encodeErrro(TxData, TXRX_ERROR_READ);
                                     for(len=0; len < 5; len++)
                                         UART_SendDataIT(USART1, TxData[len]);
+                                    break;
                                 }
-                                for(int l; l < 3000; l++);
+                                for(int l; l < 4000; l++);
                             }
                         }
                     }

@@ -204,6 +204,10 @@ bool AT45DB_ReadStatus(AT45DB_HandleTypeDef *handle, uint8_t *status) {
     AT45DB_CDeselect(handle);
     
     *status = status_val;
+
+    if((status_val == 0x00) || (status_val == 0xFF))
+    	return false;
+
     return true;
 }
 
@@ -300,6 +304,10 @@ bool AT45DB_PageRead(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t
         return false;
     }
     
+    if(page_number == 157)
+    {
+    	page_number = 157;	// for debug purpose.
+    }
     /* Calculate address */
     address = (uint32_t)page_number * handle->PageSize;
     AT45DB_EncodeAddress(address, addr_bytes, handle->PageSize);
