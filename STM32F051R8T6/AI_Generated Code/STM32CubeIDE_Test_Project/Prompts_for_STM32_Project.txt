@@ -2,3 +2,10 @@ Please understand the code in the current folder where consider the "AT45_Memory
 In this code I am having one issue that When I write some data on page 30, the same data is appears on the page 158.
 Please find that what is the relation between the page sizes I have written and also find any errors in the code regarding to AT45db code.
 Also note that you only can change the files in "STM32CubeIDE_Test_Project\Src" folder.
+You can read the documents stored at "G:\New\Microcontrollers\STM32\Git_Repo\STM32F051R8T6\AI_Generated Code\Applications\AT45DB\Document" for the reference and also check the logic for page write according to it.
+--------------------------------------------------------------------------------------------------
+I want you to read the documents in "G:\New\Microcontrollers\STM32\Git_Repo\STM32F051R8T6\AI_Generated Code\Applications\AT45DB\Document" folder and cross-check the page write logic in the "STM32CubeIDE_Test_Project\Src" files. I am having the issue like below.
+1> When I write the entire page at address 30 (0x1E), then the same data buffer is also written to address 158 (0x9E). I haven't write any data at 158 page address.
+
+Please resolve the avove issue by comparing the logic with the above given document.
+Also keep in mind that you should only change the code inside the "STM32CubeIDE_Test_Project\Src" folder.

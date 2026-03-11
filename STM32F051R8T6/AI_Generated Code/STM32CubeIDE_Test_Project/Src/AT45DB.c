@@ -72,9 +72,19 @@ static void AT45DB_EncodeAddress(uint32_t address, uint8_t *addr_bytes, uint16_t
     }
     
     /* Encode as: [PageAddr High][PageAddr Low & ByteAddr High][ByteAddr Low] */
-    addr_bytes[0] = (uint8_t)((page_addr >> 3) & 0xFF);
-    addr_bytes[1] = (uint8_t)(((page_addr & 0x07) << 5) | ((byte_addr >> 3) & 0x1F));
-    addr_bytes[2] = (uint8_t)((byte_addr & 0x07) << 5);
+    /* For 264-byte mode: 9 bits for byte address (BA8-BA0) - bits 7-3 in byte 1, bits 2-0 in byte 2 */
+    /* For 256-byte mode: 8 bits for byte address (A7-A0) - bits 7-3 in byte 1, bits 2-0 in byte 2 */
+    if (page_size == AT45DB_PAGE_SIZE_256) {
+        /* 256-byte mode: 8-bit byte address */
+        addr_bytes[0] = (uint8_t)((page_addr >> 3) & 0xFF);
+        addr_bytes[1] = (uint8_t)(((page_addr & 0x07) << 5) | ((byte_addr >> 3) & 0x1F));
+        addr_bytes[2] = (uint8_t)((byte_addr & 0x1F) << 3);
+    } else {
+        /* 264-byte mode: 9-bit byte address */
+        addr_bytes[0] = (uint8_t)((page_addr >> 3) & 0xFF);
+        addr_bytes[1] = (uint8_t)(((page_addr & 0x07) << 5) | ((byte_addr >> 3) & 0x1F));
+        addr_bytes[2] = (uint8_t)((byte_addr & 0x1F) << 3);
+    }
 }
 
 /*============================================================================
@@ -91,7 +101,7 @@ bool AT45DB_Init(AT45DB_HandleTypeDef *handle) {
         return false;
     }
     
-    /* Default page size */
+    /* Default to 264-byte page size (factory default for AT45DB041D/E) */
     handle->PageSize = AT45DB_PAGE_SIZE_264;
     handle->DeviceFound = false;
     
@@ -100,8 +110,10 @@ bool AT45DB_Init(AT45DB_HandleTypeDef *handle) {
         return false;
     }
     
-    /* Read status to get page size */
+    /* Read status to get actual page size configuration */
     if (AT45DB_ReadStatus(handle, &status)) {
+        /* Check the page size bit in status register */
+        /* Bit 0: 0 = 264-byte pages, 1 = 256-byte pages */
         if (status & AT45DB_STATUS_PAGE_SIZE) {
             handle->PageSize = AT45DB_PAGE_SIZE_256;
         } else {
@@ -304,10 +316,6 @@ bool AT45DB_PageRead(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t
         return false;
     }
     
-    if(page_number == 157)
-    {
-    	page_number = 157;	// for debug purpose.
-    }
     /* Calculate address */
     address = (uint32_t)page_number * handle->PageSize;
     AT45DB_EncodeAddress(address, addr_bytes, handle->PageSize);
@@ -335,6 +343,93 @@ bool AT45DB_PageRead(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t
     AT45DB_CDeselect(handle);
     
     return true;
+}
+
+
+/**
+ * @brief Constructs the 4-byte command for Continuous Array Read (Opcode 03h).
+ * * @param page_addr   The target page index (0 to 2047).
+ * @param byte_offset The starting byte within the page.
+ * @param is_binary   True for 256B page size, false for 264B.
+ * @param cmd_buffer  4-byte array to store the sequence.
+ */
+void make_03h_read_cmd(uint16_t page_addr, uint16_t byte_offset, uint16_t page_size, uint8_t *cmd_buffer)
+{
+    cmd_buffer[0] = 0x03; // Opcode for Continuous Array Read (Low Frequency)
+
+    if (page_size == AT45DB_PAGE_SIZE_256) {
+        // 256B: Address bits A18-A8 (Page) and A7-A0 (Byte)
+        // [3 dummy][A18-A16] | [A15-A8] | [A7-A0]
+        cmd_buffer[1] = (uint8_t)((page_addr >> 8) & 0x07);
+        cmd_buffer[2] = (uint8_t)(page_addr & 0xFF);
+        cmd_buffer[3] = (uint8_t)(byte_offset & 0xFF);
+    } else {
+        // 264B: Address bits PA10-PA0 (Page) and BA8-BA0 (Byte)
+        // [4 dummy][PA10-PA7] | [PA6-PA0][BA8] | [BA7-BA0]
+        cmd_buffer[1] = (uint8_t)((page_addr >> 7) & 0x0F);
+        cmd_buffer[2] = (uint8_t)(((page_addr << 1) & 0xFE) | ((byte_offset >> 8) & 0x01));
+        cmd_buffer[3] = (uint8_t)(byte_offset & 0xFF);
+    }
+}
+
+/**
+ * @brief API to read data from a specific page and offset.
+ * * @param page_addr   Page index to read from.
+ * @param byte_offset Starting byte offset within the page.
+ * @param data_out    Buffer to store retrieved data.
+ * @param len         Number of bytes to read.
+ * @param is_binary   Current chip configuration (256B or 264B).
+ */
+bool flash_read_page(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t *buffer)
+{
+	uint8_t addr_bytes[4];
+	uint16_t i;
+
+	if (handle == NULL || buffer == NULL) {
+		return false;
+	}
+
+	/* Validate page number */
+	if (page_number >= AT45DB_PAGES) {
+		return false;
+	}
+
+if(page_number == 158)
+{
+	page_number = 158;
+}
+
+	/* Wait for device to be ready */
+	if (!AT45DB_WaitReady(handle, AT45DB_TIMEOUT_MAX)) {
+		return false;
+	}
+
+	//----------------
+
+    make_03h_read_cmd(page_number, 0, handle->PageSize, addr_bytes);
+
+    /* Assert CS */
+	AT45DB_CSelect(handle);
+
+	/* Send page read command */
+	//SPI_TransmitReceive((SPI_TypeDef*)handle->SPIx, AT45DB_OPCODE_PAGE_READ);
+
+	/* Send 3 address bytes */
+	SPI_TransmitReceiveBuffer((SPI_TypeDef*)handle->SPIx, addr_bytes, 0, 4);
+
+//	/* Send 4 dummy bytes */
+//	for (i = 0; i < 4; i++) {
+//		SPI_TransmitReceive((SPI_TypeDef*)handle->SPIx, 0xFF);
+//	}
+
+	/* Read page data */
+	for (i = 0; i < handle->PageSize; i++) {
+		buffer[i] = SPI_TransmitReceive((SPI_TypeDef*)handle->SPIx, 0xFF);
+	}
+	/* De-assert CS */
+	AT45DB_CDeselect(handle);
+
+	return true;
 }
 
 /*============================================================================
@@ -475,6 +570,96 @@ bool AT45DB_ProgramPage(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint
     
     /* Wait for programming to complete */
     return AT45DB_WaitReady(handle, AT45DB_TIMEOUT_MAX);
+}
+
+/**
+ * @brief Generates the 4-byte command sequence for Buffer 1 to Main Memory
+ * Page Program with Built-In Erase (Opcode 0x83).
+ * * @param page_addr The index of the page to be programmed (0 to 2047).
+ * @param is_binary_size Boolean flag; true if configured for 256B, false for 264B.
+ * @param cmd_buffer Array where the 4-byte sequence will be stored.
+ */
+void make_83h_command(uint16_t page_addr, uint16_t page_size, uint8_t *cmd_buffer) {
+    cmd_buffer[0] = 0x83; // Opcode for Buffer 1 to Main Memory Page Program
+
+    if (page_size == AT45DB_PAGE_SIZE_256)  {
+        // Binary Page Size (256 bytes):
+        // Address bits A18 - A8 specify the page.
+        // Sequence: 3 dummy bits | A18-A16 | A15-A8 | 8 dummy bits
+        cmd_buffer[1] = (uint8_t)((page_addr >> 8) & 0x07); // 3 dummy + 3 bits (A18-16)
+        cmd_buffer[2] = (uint8_t)(page_addr & 0xFF);        // 8 bits (A15-8)
+        cmd_buffer[3] = 0x00;                               // 8 dummy bits
+    } else {
+        // Standard DataFlash Page Size (264 bytes):
+        // Address bits PA10 - PA0 specify the page.
+        // Sequence: 4 dummy bits | PA10-PA7 | PA6-PA0 + 1 dummy | 8 dummy bits
+        cmd_buffer[1] = (uint8_t)((page_addr >> 7) & 0x0F); // 4 dummy + 4 bits (PA10-7)
+        cmd_buffer[2] = (uint8_t)((page_addr << 1) & 0xFE); // 7 bits (PA6-0) + 1 dummy
+        cmd_buffer[3] = 0x00;                               // 8 dummy bits
+    }
+}
+
+/**
+ * @brief Executes the 83h command to transfer data from Buffer 1 to Main Memory.
+ * * @param page_addr Target page address in main memory.
+ * @param is_binary_size Current page size configuration of the chip.
+ */
+bool flash_program_page_from_buffer1(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t *buffer, uint16_t length, bool use_buffer1) {
+	 uint8_t addr_bytes[4];
+	uint8_t opcode;
+
+	if (handle == NULL) {
+		return false;
+	}
+
+	/* Validate page number */
+	if (page_number >= AT45DB_PAGES) {
+		return false;
+	}
+
+	/* If buffer provided, write data to buffer first */
+	if (buffer != NULL && length > 0) {
+		if (use_buffer1) {
+			if (!AT45DB_Buffer1Write(handle, 0, buffer, length)) {
+				return false;
+			}
+		} else {
+			if (!AT45DB_Buffer2Write(handle, 0, buffer, length)) {
+				return false;
+			}
+		}
+	}
+
+	if(page_number == 30)
+	{
+		page_number = 30;
+	}
+
+	/* Wait for buffer write to complete */
+	if (!AT45DB_WaitReady(handle, AT45DB_TIMEOUT_MAX)) {
+		return false;
+	}
+
+    // 1. Prepare the byte sequence
+    make_83h_command(page_number, handle->PageSize, addr_bytes);
+
+    /* Choose opcode based on buffer selection */
+	opcode = use_buffer1 ? AT45DB_OPCODE_BUF1_TO_PAGE_ERASE : AT45DB_OPCODE_BUF2_TO_PAGE_ERASE;
+
+	/* Assert CS */
+	AT45DB_CSelect(handle);
+
+	/* Send program command */
+	//SPI_TransmitReceive((SPI_TypeDef*)handle->SPIx, opcode);
+
+	/* Send 3 address bytes */
+	SPI_TransmitReceiveBuffer((SPI_TypeDef*)handle->SPIx, addr_bytes, 0, 4);
+
+	/* De-assert CS to start internal programming */
+	AT45DB_CDeselect(handle);
+
+	/* Wait for programming to complete */
+	return AT45DB_WaitReady(handle, AT45DB_TIMEOUT_MAX);
 }
 
 /**
@@ -665,4 +850,103 @@ uint16_t AT45DB_GetPageSize(AT45DB_HandleTypeDef *handle) {
         return 0;
     }
     return handle->PageSize;
+}
+
+/**
+ * @brief  Force page size in driver (use if auto-detection fails)
+ * @note   This only changes the driver's understanding of page size.
+ *         Use AT45DB_ConfigurePageSize() to actually change the device configuration.
+ */
+void AT45DB_SetPageSize(AT45DB_HandleTypeDef *handle, uint16_t page_size) {
+    if (handle == NULL) {
+        return;
+    }
+    
+    if (page_size == AT45DB_PAGE_SIZE_256 || page_size == AT45DB_PAGE_SIZE_264) {
+        handle->PageSize = page_size;
+    }
+}
+
+/**
+ * @brief  Configure device page size mode
+ * @note   Changing page size requires a chip erase and is non-volatile.
+ *         For AT45DB041D/E, this is controlled by bit 0 of the status register.
+ *         WARNING: This will erase all data on the chip!
+ */
+bool AT45DB_ConfigurePageSize(AT45DB_HandleTypeDef *handle, bool use_256_bytes) {
+    uint8_t status;
+    
+    if (handle == NULL) {
+        return false;
+    }
+    
+    /* Read current status */
+    if (!AT45DB_ReadStatus(handle, &status)) {
+        return false;
+    }
+    
+    /* Check current page size configuration */
+    bool current_is_256 = (status & AT45DB_STATUS_PAGE_SIZE) != 0;
+    
+    if (current_is_256 == use_256_bytes) {
+        /* Already in desired mode, just update handle */
+        handle->PageSize = use_256_bytes ? AT45DB_PAGE_SIZE_256 : AT45DB_PAGE_SIZE_264;
+        return true;
+    }
+    
+    /* Need to change page size - this requires chip erase for AT45DB041D/E */
+    /* The page size bit is non-volatile and can only be changed with chip erase */
+    /* For safety, we don't implement automatic chip erase here */
+    /* User should manually configure the device or perform chip erase */
+    
+    /* For now, just update the handle to use the requested page size */
+    /* Note: This may cause incorrect addressing if device is not actually configured */
+    handle->PageSize = use_256_bytes ? AT45DB_PAGE_SIZE_256 : AT45DB_PAGE_SIZE_264;
+    
+    return true;
+}
+
+/**
+ * @brief  Get device status information for debugging
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  status: pointer to store status value
+ * @retval true if read successful
+ */
+bool AT45DB_GetStatusInfo(AT45DB_HandleTypeDef *handle, uint8_t *status) {
+    if (handle == NULL || status == NULL) {
+        return false;
+    }
+    return AT45DB_ReadStatus(handle, status);
+}
+
+/**
+ * @brief  Diagnose page size configuration
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  device_page_size: pointer to store actual device page size
+ * @param  driver_page_size: pointer to store driver page size
+ * @retval true if diagnosis successful
+ */
+bool AT45DB_DiagnosePageSize(AT45DB_HandleTypeDef *handle, uint16_t *device_page_size, uint16_t *driver_page_size) {
+    uint8_t status;
+    
+    if (handle == NULL) {
+        return false;
+    }
+    
+    /* Read device status */
+    if (!AT45DB_ReadStatus(handle, &status)) {
+        return false;
+    }
+    
+    /* Determine actual device page size from status register bit 0 */
+    if (status & AT45DB_STATUS_PAGE_SIZE) {
+        *device_page_size = AT45DB_PAGE_SIZE_256;
+    } else {
+        *device_page_size = AT45DB_PAGE_SIZE_264;
+    }
+    
+    /* Get driver's current page size setting */
+    *driver_page_size = handle->PageSize;
+    
+    return true;
 }

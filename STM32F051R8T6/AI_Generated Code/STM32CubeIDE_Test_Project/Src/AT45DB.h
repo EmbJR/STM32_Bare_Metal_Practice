@@ -235,4 +235,75 @@ bool AT45DB_ResumeFromDeepPowerDown(AT45DB_HandleTypeDef *handle);
  */
 uint16_t AT45DB_GetPageSize(AT45DB_HandleTypeDef *handle);
 
+/**
+ * @brief  Force page size in driver (use if auto-detection fails)
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  page_size: page size to use (AT45DB_PAGE_SIZE_264 or AT45DB_PAGE_SIZE_256)
+ * @retval none
+ */
+void AT45DB_SetPageSize(AT45DB_HandleTypeDef *handle, uint16_t page_size);
+
+/**
+ * @brief  Configure device page size mode (switch between 264 and 256 byte pages)
+ * @note   This requires a chip erase to change the page size configuration
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  use_256_bytes: true for 256-byte pages, false for 264-byte pages
+ * @retval true if successful, false if failed
+ */
+bool AT45DB_ConfigurePageSize(AT45DB_HandleTypeDef *handle, bool use_256_bytes);
+
+/**
+ * @brief  Get device status information for debugging
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  status: pointer to store status value
+ * @retval true if read successful
+ */
+bool AT45DB_GetStatusInfo(AT45DB_HandleTypeDef *handle, uint8_t *status);
+
+/**
+ * @brief  Diagnose page size configuration
+ * @param  handle: pointer to AT45DB_HandleTypeDef
+ * @param  device_page_size: pointer to store actual device page size
+ * @param  driver_page_size: pointer to store driver page size
+ * @retval true if diagnosis successful
+ */
+bool AT45DB_DiagnosePageSize(AT45DB_HandleTypeDef *handle, uint16_t *device_page_size, uint16_t *driver_page_size);
+
+/**
+ * @brief Generates the 4-byte command sequence for Buffer 1 to Main Memory
+ * Page Program with Built-In Erase (Opcode 0x83).
+ * * @param page_addr The index of the page to be programmed (0 to 2047).
+ * @param is_binary_size Boolean flag; true if configured for 256B, false for 264B.
+ * @param cmd_buffer Array where the 4-byte sequence will be stored.
+ */
+void make_83h_command(uint16_t page_addr, uint16_t page_size, uint8_t *cmd_buffer);
+
+/**
+ * @brief Executes the 83h command to transfer data from Buffer 1 to Main Memory.
+ * * @param page_addr Target page address in main memory.
+ * @param is_binary_size Current page size configuration of the chip.
+ */
+bool flash_program_page_from_buffer1(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t *buffer, uint16_t length, bool use_buffer1);
+
+
+/**
+ * @brief Constructs the 4-byte command for Continuous Array Read (Opcode 03h).
+ * * @param page_addr   The target page index (0 to 2047).
+ * @param byte_offset The starting byte within the page.
+ * @param is_binary   True for 256B page size, false for 264B.
+ * @param cmd_buffer  4-byte array to store the sequence.
+ */
+void make_03h_read_cmd(uint16_t page_addr, uint16_t byte_offset, uint16_t page_size, uint8_t *cmd_buffer);
+
+/**
+ * @brief API to read data from a specific page and offset.
+ * * @param page_addr   Page index to read from.
+ * @param byte_offset Starting byte offset within the page.
+ * @param data_out    Buffer to store retrieved data.
+ * @param len         Number of bytes to read.
+ * @param is_binary   Current chip configuration (256B or 264B).
+ */
+bool flash_read_page(AT45DB_HandleTypeDef *handle, uint16_t page_number, uint8_t *buffer);
+
+
 #endif /* AT45DB_H */

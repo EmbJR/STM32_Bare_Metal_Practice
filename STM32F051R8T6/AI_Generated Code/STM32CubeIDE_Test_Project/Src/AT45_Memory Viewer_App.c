@@ -415,7 +415,7 @@ void UART_DisableRxTxInterrupts(USART_TypeDef *USARTx)
     UART_DisableInterrupt(USARTx, USART_CR3_EIE | USART_CR3_CTSIE);
 }
 
-uint8_t identifyReceiveData(uint8_t *Str)
+uint8_t identifyReceiveData(volatile uint8_t *Str)
 {
     bool retVal = FAIL;
     uint8_t dataval = 0;
@@ -447,7 +447,7 @@ uint8_t identifyReceiveData(uint8_t *Str)
         {
             UART_ReceiveDataIT(USART1, &Str[i+2]);
         }
-        crc16_2 = CalculateCRC16(Str, length+2);
+        crc16_2 = CalculateCRC16((uint8_t*)Str, length+2);
         if(crc16_2 == crc16)
         {
             //StrData[length] = 0;
@@ -585,10 +585,10 @@ uint16_t encodeData(volatile uint8_t *encodedData, uint16_t PageAdd)
     encodedData[TxRx_PA_POS + 1] = (uint8_t)((PageAdd & 0xFF00) >> 8);
     length = length + 2;
 
-    success = AT45DB_PageRead(&at45db_handle,
+    success = flash_read_page(&at45db_handle,
                               (uint16_t)PageAdd,
                               (uint8_t *)&encodedData[TxRx_Data_POS]);
-    length = length + 264;
+    length = length + at45db_handle.PageSize;
     if(success == false)
     {
         return 0;
@@ -631,24 +631,29 @@ uint16_t encodeErrro(volatile uint8_t *encodedData, uint8_t errorVal)
  * @brief  Example: Read and Write operations
  */
 static void AT45DB_Example_ReadWrite(void) {
-    uint16_t page_num = 30;
+    uint16_t page_num = 158;
     uint16_t i;
     bool success;
 
 
     /* Prepare test data */
     for (i = 0; i < at45db_handle.PageSize; i++) {
-    			TxData[i] = (uint8_t)(i & 0xFF);
+    			//TxData[i] = (uint8_t)(i & 0xFF);
+    			  TxData[i] = (uint8_t)(0x44);
     }
 
-    success = AT45DB_ProgramPage(&at45db_handle, page_num,
-    		(uint8_t *)TxData, at45db_handle.PageSize, true);
-    if (success) {
-        printf("Write successful!\r\n");
-    } else {
-        printf("Write FAILED!\r\n");
-        return;
+    for(uint16_t u=2000; u < 2030; u++)
+    {
+    	success = flash_program_page_from_buffer1(&at45db_handle, u,
+    	    		(uint8_t *)TxData, at45db_handle.PageSize, true);
+		if (success) {
+
+		} else {
+
+			return;
+		}
     }
+
 
     /* Clear read buffer */
     for (i = 0; i < at45db_handle.PageSize; i++) {
@@ -717,7 +722,8 @@ int main(void)
     			At45available = 2;
     		}
     	}
-    	*/
+*/
+
     	AT45DB_Example_ReadWrite();		// write sample data to memory
 
         // successfully configured AT45DB
@@ -762,7 +768,7 @@ int main(void)
 
                         for(MemPagecnt = 0; MemPagecnt < 2048; MemPagecnt++)
                         {
-                            memset(TxData, 0x00, sizeof(TxData));
+                            memset((uint8_t*)TxData, 0x00, sizeof(TxData));
                             if(len == 0)
                             {
                             	retryCnt++;
@@ -770,7 +776,9 @@ int main(void)
                             	{
                                 	encodeErrro(TxData, TXRX_ERROR_READ);
                                     for(len=0; len < 5; len++)
+                                    {
                                         UART_SendDataIT(USART1, TxData[len]);
+                                    }
                             		break;
                             	}
                             	if(MemPagecnt > 0)
@@ -797,7 +805,7 @@ int main(void)
                                         UART_SendDataIT(USART1, TxData[len]);
                                     break;
                                 }
-                                for(int l; l < 4000; l++);
+                                for(int l; l < 1000; l++);
                             }
                         }
                     }
