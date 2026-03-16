@@ -2,6 +2,7 @@
 
 This file provides guidance to agents when working with code in this repository.
 
+
 ## Documents required to understand befor code generation.
 - nRF52832 Product Specification (Documentation/nRF52832_PS_v1.9.pdf)
 - nRF52832 Errata (Documentation/nRF52832_Rev_3_Errata_v1.3.pdf)

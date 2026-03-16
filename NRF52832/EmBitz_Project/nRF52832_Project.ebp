@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<EmBitz_project_file>
+	<EmBitzVersion release="2.65" revision="0" />
+	<FileVersion major="2" minor="0" />
+	<Project>
+		<Option title="nRF52832_BareMetal" />
+		<Option pch_mode="2" />
+		<Option compiler="armgcc_eb" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin\Debug\nRF52832_BareMetal.elf" />
+				<Option object_output="obj\Debug\" />
+				<Option type="0" />
+				<Option compiler="armgcc_eb" />
+				<Option projectDeviceOptionsRelation="0" />
+				<Compiler>
+					<Add option="-g2" />
+					<Add option="-O0" />
+					<Add option="-Wall" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-ffunction-sections" />
+					<Add option="-fdata-sections" />
+					<Add option="-std=c11" />
+					<Add option="-DNRF52832_XXAA" />
+					<Add option="-D__CORTEX_M" />
+					<Add option="-DARM_MATH_CM4" />
+				</Compiler>
+				<Assembler>
+					<Add option="-g" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+				</Assembler>
+				<Linker>
+					<Add option="-g2" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-m-specs=nosys.specs" />
+					<Add option="-mspecs=nano.specs" />
+					<Add option="-Wl,-Map=bin\Debug\nRF52832_BareMetal.map" />
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-Wl,--print-memory-usage" />
+					<Add option="-Wl,-Tnrf52832.ld" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin\Release\nRF52832_BareMetal.elf" />
+				<Option object_output="obj\Release\" />
+				<Option type="0" />
+				<Option compiler="armgcc_eb" />
+				<Option projectDeviceOptionsRelation="0" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wall" />
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-ffunction-sections" />
+					<Add option="-fdata-sections" />
+					<Add option="-std=c11" />
+					<Add option="-DNDEBUG" />
+					<Add option="-DNRF52832_XXAA" />
+					<Add option="-D__CORTEX_M" />
+					<Add option="-DARM_MATH_CM4" />
+				</Compiler>
+				<Assembler>
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+				</Assembler>
+				<Linker>
+					<Add option="-mcpu=cortex-m4" />
+					<Add option="-mthumb" />
+					<Add option="-mfpu=fpv4-sp-d16" />
+					<Add option="-mfloat-abi=hard" />
+					<Add option="-mspecs=nosys.specs" />
+					<Add option="-mspecs=nano.specs" />
+					<Add option="-Wl,-Map=bin\Release\nRF52832_BareMetal.map" />
+					<Add option="-Wl,--gc-sections" />
+					<Add option="-Wl,--print-memory-usage" />
+					<Add option="-Wl,-Tnrf52832.ld" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add option="-Wl,--no-undefined" />
+		</Linker>
+		<Unit filename="inc\cknRF52.h" />
+		<Unit filename="inc\Common.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="inc\gpioRF52.h" />
+		<Unit filename="src\cknRF52.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\cknRF52_Example.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\gpioRF52.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="startup_nrf52832.s">
+			<Option compilerVar="ASM" />
+			<Option weight="0" />
+		</Unit>
+		<Unit filename="system_nrf52832.c">
+			<Option compilerVar="CC" />
+			<Option weight="0" />
+		</Unit>
+		<Unit filename="system_nrf52832.h" />
+		<Extensions>
+			<code_completion />
+			<debugger>
+				<target_debugging_settings target="Debug">
+					<debug_interface description="J-Link" options="0" reg_filter="0" probe="" device="nRF52832_AA" speed="4000" bus_address="" serial="" defines="" scripts="" flash_size="524288" ram_size="65536" vcc_voltage="3300" verbose="7728492" unwind="1641417720" rstType="125349676" use_jtag="false" disable_cache="false" enable_semi="false" close_eblink="false" gdb_reset="" gdb_reset_remote="reset" gdb_before_conn="" gdb_after_conn="" use_remote="false" ip_address="" ip_port="" path="" executable="" start_server="false" arguments="" flash_verify="false" flash_run="false" />
+				</target_debugging_settings>
+			</debugger>
+			<envvars />
+		</Extensions>
+	</Project>
+</EmBitz_project_file>
