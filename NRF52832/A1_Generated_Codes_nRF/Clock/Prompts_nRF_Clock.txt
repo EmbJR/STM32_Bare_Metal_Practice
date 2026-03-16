@@ -1,0 +1,14 @@
+------------------------------------------------------------------
+I want to develop the Clock driver for the nRF52832 controller.
+I need you to understand the Clock register structure and other important imformation about Clock from the below documents placed in the repository.
+1 NRF52832\Documentation\nRF52832_PS_v1.9.pdf
+
+Please provide the Clock driver code for the nRF52832 controller.
+Also provide the example codes for the driver.
+
+Please note that the driver code should not have any other library dependencies like (CMSIS, HAL, etc)
+
+I want you to generate the cknRF52.c anf cknRF52.h files for the driver code
+inside the folder NRF52832\A1_Generated_Codes_nRF\Clock\code
+
+Please make the code as simple as possible, modular and easy to understand.
