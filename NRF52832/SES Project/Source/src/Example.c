@@ -179,14 +179,17 @@ int main(void)
     GPIO_Init();
 
     /* Configure LED1 pin as output */
-    GPIO_SetDirection(LED1_PIN, GPIO_DIR_OUTPUT);
+    GPIO_SetDirection(LED2_PIN, GPIO_DIR_OUTPUT);
+
+    /* Configure LED1 pin as output */
+    GPIO_SetDirection(LED2_PIN, GPIO_DIR_OUTPUT);
 
     printf("All examples completed!\n");
 
     while(1)
     {
         /* Toggle LED1 on button press */
-        GPIO_TogglePin(LED1_PIN);
+        GPIO_TogglePin(LED2_PIN);
         for(int i = 0 ; i < 2000000; i++);
     }
 
