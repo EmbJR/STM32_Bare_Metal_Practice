@@ -1,0 +1,36 @@
+# depslib dependency file v1.0
+1773672425 source:g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\startup_nrf52832.s
+
+1773672559 source:g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\system_nrf52832.c
+	"system_nrf52832.h"
+
+1773732558 g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\system_nrf52832.h
+	<stdint.h>
+	<stdbool.h>
+
+1773673679 source:g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\src\gpiorf52.c
+	"gpioRF52.h"
+	"Common.h"
+
+1773670965 g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\inc\gpiorf52.h
+	<stdint.h>
+	<stdbool.h>
+
+1773673622 g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\inc\common.h
+	<stddef.h>
+
+1773732575 source:g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\src\example.c
+	"cknRF52.h"
+	"gpioRF52.h"
+	<stdio.h>
+	<stdint.h>
+	<stdbool.h>
+
+1773668741 g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\inc\cknrf52.h
+	<stdint.h>
+	<stdbool.h>
+
+1773732170 source:g:\new\microcontrollers\stm32\git_repo\nrf52832\embitz_project\src\cknrf52.c
+	"cknRF52.h"
+	"Common.h"
+

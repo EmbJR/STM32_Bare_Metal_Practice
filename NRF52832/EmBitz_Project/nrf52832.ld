@@ -27,6 +27,7 @@ SECTIONS
         *(.rodata*)
         . = ALIGN(4);
         _etext = .;
+        _sidata = _etext;
     } >FLASH
 
     .data :
@@ -42,10 +43,12 @@ SECTIONS
     {
         . = ALIGN(4);
         _sbss = .;
-        *(.bss)
+        *(.bss*)
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
+        end = .;
+        _end = .;
     } >RAM
 
     .heap :
@@ -65,13 +68,6 @@ SECTIONS
         . = ALIGN(4);
         _stack_top = .;
     } >RAM
-
-    /DISCARD/ :
-    {
-        libc.a (*)
-        libm.a (*)
-        libgcc.a (*)
-    }
 }
 
 _prog_start = ORIGIN(FLASH);

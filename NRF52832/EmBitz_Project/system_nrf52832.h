@@ -5,7 +5,9 @@
 #define SYSTEM_NRF52832_H
 
 /* nRF52832 Device Definitions */
+#ifndef NRF52832_XXAA
 #define NRF52832_XXAA
+#endif
 #define __CM4_REV                 0x0001U
 #define __MPU_PRESENT             1
 #define __VTOR_PRESENT            1
@@ -14,8 +16,12 @@
 #define __FPU_PRESENT             1
 
 /* ARM Cortex-M4F Core Configuration */
+#ifndef __CORTEX_M
 #define __CORTEX_M                4
+#endif
+#ifndef ARM_MATH_CM4
 #define ARM_MATH_CM4
+#endif
 
 /* System Clock Configuration */
 #define SYSTEM_CLOCK              64000000UL  /* 64 MHz */

@@ -1,0 +1,44 @@
+-------------------------------------------------------------------------------------------------------
+I am using the emBitz IDE to compile the codes for nordic. Please give me the total settings for the project to compile the code including the Startup file and ld script for the nRF52832 microcontroller.
+-------------------------------------------------------------------------------------------------------
+I cannot able to program/debug the EmBitz code. Please check the setting for target debugger and correct the same. I am using nRF52832 DK board.
+
+I am attaching the build log. Please review it and resolve the errors if any.
+
+
+-------------- Clean: Debug in nRF52832_BareMetal ---------------
+
+Cleaned "nRF52832_BareMetal - Debug"
+
+-------------- Build: Debug in nRF52832_BareMetal ---------------
+
+Assembling: startup_nrf52832.s
+Compiling: system_nrf52832.c
+Compiling: src\gpioRF52.c
+Compiling: src\Example.c
+Compiling: src\cknRF52.c
+In file included from system_nrf52832.c:4:0:
+system_nrf52832.h:8:0: warning: "NRF52832_XXAA" redefined
+ #define NRF52832_XXAA
+ ^
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from system_nrf52832.c:4:0:
+system_nrf52832.h:17:0: warning: "__CORTEX_M" redefined
+ #define __CORTEX_M                4
+ ^
+<command-line>:0:0: note: this is the location of the previous definition
+In file included from system_nrf52832.c:4:0:
+system_nrf52832.h:18:0: warning: "ARM_MATH_CM4" redefined
+ #define ARM_MATH_CM4
+ ^
+<command-line>:0:0: note: this is the location of the previous definition
+Linking executable: bin\Debug\nRF52832_BareMetal.elf
+Creating Hex-file.
+arm-none-eabi-gcc.exe: error: unrecognized command line option '-m-specs=nosys.specs'
+arm-none-eabi-gcc.exe: error: unrecognized command line option '-mspecs=nano.specs'
+arm-none-eabi-objcopy.exe: 'bin\Debug\nRF52832_BareMetal.elf': No such file
+Process terminated with status 1 (0 minutes, 1 seconds)
+0 errors, 3 warnings (0 minutes, 1 seconds)
+
+-------------------------------------------------------------------------------------------------------
+

@@ -15,7 +15,24 @@
  * INCLUDES
  *============================================================================*/
 #include "cknRF52.h"
+#include "gpioRF52.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+/*============================================================================
+ * EXAMPLE CONFIGURATION
+ *============================================================================*/
+/* Define LED and Button pins based on nRF52 DK default layout */
+#define LED1_PIN               GPIO_PIN_17
+#define LED2_PIN               GPIO_PIN_18
+#define LED3_PIN               GPIO_PIN_19
+#define LED4_PIN               GPIO_PIN_20
+
+#define BUTTON1_PIN            GPIO_PIN_13
+#define BUTTON2_PIN            GPIO_PIN_14
+#define BUTTON3_PIN            GPIO_PIN_15
+#define BUTTON4_PIN            GPIO_PIN_16
 
 /*============================================================================
  * PRIVATE VARIABLES FOR EXAMPLES
@@ -24,6 +41,9 @@ static volatile bool g_HFCLKStarted = false;
 static volatile bool g_LFCLKStarted = false;
 static volatile bool g_CalibrationDone = false;
 
+static volatile bool g_ButtonPressed = false;
+static volatile uint32_t g_InterruptCount = 0;
+
 /*============================================================================
  * PRIVATE FUNCTION PROTOTYPES
  *============================================================================*/
@@ -31,53 +51,16 @@ static void Example_WaitForHFCLK(void);
 static void Example_WaitForLFCLK(void);
 static void Example_Delay(volatile uint32_t count);
 
+void Example_BasicIO(void);
+
 /*============================================================================
  * PRIVATE VARIABLES
  *============================================================================*/
-/* Callback function pointers */
-static Clock_Callback_t s_HFCLKStartedCallback = NULL;
-static Clock_Callback_t s_LFCLKStartedCallback = NULL;
-static Clock_Callback_t s_CalibrationDoneCallback = NULL;
-static Clock_Callback_t s_CalibrationTimeoutCallback = NULL;
-
 /*============================================================================
  * CALLBACK FUNCTION IMPLEMENTATIONS
  *============================================================================*/
 
 
-/**
- * @brief Clear all Clock events
- */
-static void Clock_ClearAllEvents(void)
-{
-    CLOCK_EVENT_CLEAR(CLOCK_EVENT_HFCLKSTARTED);
-    CLOCK_EVENT_CLEAR(CLOCK_EVENT_LFCLKSTARTED);
-    CLOCK_EVENT_CLEAR(CLOCK_EVENT_DONE);
-    CLOCK_EVENT_CLEAR(CLOCK_EVENT_CTTO);
-}
-
-/**
- * @brief Initialize the Clock driver
- */
-void Clock_Init(void)
-{
-    /* Clear all events */
-    Clock_ClearAllEvents();
-
-    /* Initialize callback pointers to NULL */
-    s_HFCLKStartedCallback = NULL;
-    s_LFCLKStartedCallback = NULL;
-    s_CalibrationDoneCallback = NULL;
-    s_CalibrationTimeoutCallback = NULL;
-}
-
-/**
- * @brief Start the High-Frequency Clock (HFCLK)
- */
-void Clock_HFCLK_Start(void)
-{
-    CLOCK_TASK_TRIGGER(CLOCK_TASK_HFCLKSTART);
-}
 
 /**
  * @brief Simple delay function
@@ -192,7 +175,20 @@ int main(void)
     /* Run all examples */
     Example_Clock_BasicControl();
 
+    /* Initialize GPIO driver */
+    GPIO_Init();
+
+    /* Configure LED1 pin as output */
+    GPIO_SetDirection(LED1_PIN, GPIO_DIR_OUTPUT);
+
     printf("All examples completed!\n");
+
+    while(1)
+    {
+        /* Toggle LED1 on button press */
+        GPIO_TogglePin(LED1_PIN);
+        for(int i = 0 ; i < 20000; i++);
+    }
 
     return 0;
 }
