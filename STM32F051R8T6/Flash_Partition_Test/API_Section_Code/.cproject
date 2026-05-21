@@ -70,8 +70,11 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.1810738392" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1068484216.780441465" name="startup_stm32f051r8tx.s" rcbsApplicability="disable" resourcePath="Core/Startup/startup_stm32f051r8tx.s" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.126849974.1997126348">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.126849974.1997126348" name="MCU GCC Assembler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.126849974"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
+						<entry excluding="Startup/startup_stm32f051r8tx.s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 					</sourceEntries>
 				</configuration>
@@ -166,5 +169,13 @@
 		<scannerConfigBuildInfo instanceId="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1014638246;com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1014638246.;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.371107056;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.867433388">
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/Mem_Part_API_Sec"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/Mem_Part_API_Sec"/>
+		</configuration>
 	</storageModule>
 </cproject>

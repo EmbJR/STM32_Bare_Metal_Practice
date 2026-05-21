@@ -41,8 +41,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define MY_FIXED_ADDRESS   0x08004E30
-#define my_fixed_variable  ((const MyStruct *)MY_FIXED_ADDRESS)
+// Point a struct pointer to the fixed API address
+const api_table_t* api = (const api_table_t*)API_TABLE_ADDRESS;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,20 +84,25 @@ int main(void)
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
+  // 1. (Optional) Verify the API section is actually flashed
+  if (api->magic_number == 0xDEADBEEF) {
 
+	  // 2. Call the API functions via function pointers!
+	  api->init_peripheral();
+
+	  int32_t result = api->process_data(5, 10);
+	  if(result != 0)
+	  {
+		  printf("value is %d", result);
+	  }
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    uint32_t valueData = my_fixed_variable->value;
-    uint8_t dataByte0 = my_fixed_variable->data[0];
-    uint8_t dataByte1 = my_fixed_variable->data[1];
 
-    uint32_t defined = 0;
-    defined = valueData + dataByte0 + dataByte1; // Use the variables to prevent optimization
-    printf("Defined value: %lu\n", defined); // Print the defined variable to prevent optimization
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

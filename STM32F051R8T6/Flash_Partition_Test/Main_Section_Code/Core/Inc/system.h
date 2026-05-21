@@ -8,10 +8,18 @@
 
 #include <stdint.h>
 
-typedef struct
-{
-    uint8_t data[10];
-    uint32_t value;
-} MyStruct;
+// Define the function signatures for your API
+typedef void (*void_func_t)(void);
+typedef int32_t (*math_func_t)(int32_t, int32_t);
+
+// The Jump Table Structure
+typedef struct {
+    uint32_t magic_number;    // Optional: To verify API is valid/present
+    void_func_t init_peripheral;
+    math_func_t process_data;
+} api_table_t;
+
+// The fixed flash address where the API table will live
+#define API_TABLE_ADDRESS    ((uint32_t)0x0800C000)
 
 #endif // SYSTEM_H

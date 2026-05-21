@@ -45,20 +45,18 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
   RAM    (xrw)      : ORIGIN = 0x20000000,   LENGTH = 8K
-  FLASH    (rx)     : ORIGIN = 0x08004E80,   LENGTH = 43k
-  MY_FIXED (rwx)    : ORIGIN = 0x08004E30,   LENGTH = 1k
+  FLASH    (rx)     : ORIGIN = 0x0800C000,   LENGTH = 16K
 }
 
 /* Sections */
 SECTIONS
 {
   /* my_fixed_section placed in MY_FIXED memory region (0x08004E30, 64 bytes) */
-  .my_fixed_section :
+  .my_fixed_section 0x0800C000:
   {
     KEEP(*(.my_fixed_section))
     . = ALIGN(4);
-  } >MY_FIXED
-
+  } >FLASH
   /* The startup code into "FLASH" Rom type memory */
   .isr_vector :
   {
