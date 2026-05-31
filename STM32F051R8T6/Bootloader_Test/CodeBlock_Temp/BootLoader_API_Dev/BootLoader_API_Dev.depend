@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1780059084 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\stm32f051r8t6\bootloader_test\codeblock_temp\bootloader_api_dev\cirbuffer.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"CirBuffer.h"
+
+1779864874 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\stm32f051r8t6\bootloader_test\codeblock_temp\bootloader_api_dev\cirbuffer.h
+	<stddef.h>
+
