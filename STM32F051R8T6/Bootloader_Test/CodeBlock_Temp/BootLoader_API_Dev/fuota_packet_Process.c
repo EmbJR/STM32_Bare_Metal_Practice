@@ -2,7 +2,8 @@
 #include "CirBuffer.h"
 #include "crc.h"
 
-void user_fuota_reply(uint8_t *data, uint16_t size)     __attribute__((weak));
+__attribute__((weak))
+void user_fuota_reply(uint8_t *data, uint16_t size)
 {
     // Implement the function to send data back to the sender
     // This is a placeholder for actual implementation
@@ -13,6 +14,29 @@ void user_fuota_reply(uint8_t *data, uint16_t size)     __attribute__((weak));
         printf("%02X ", data[i]);
     }
     printf("\n");
+}
+
+
+__attribute__((weak))void user_fuota_get_info(fw_up_str *fw_info)
+{
+    // Implement the function to fill the fw_info structure with actual firmware information
+    // This is a placeholder for actual implementation
+    fw_info->cpu_Type = 0x01; // Example CPU type
+    fw_info->hw_ver[0] = 0x01; // Example hardware version
+    fw_info->hw_ver[1] = 0x00;
+    fw_info->hw_ver[2] = 0x00;
+    fw_info->fw_Ver[0] = 0x01; // Example firmware version
+    fw_info->fw_Ver[1] = 0x00;
+    fw_info->fw_Ver[2] = 0x00;
+    fw_info->fw_Ver[3] = 0x00;
+    fw_info->fw_Ver[4] = 0x00;
+    fw_info->fw_Ver[5] = 0x00;
+    fw_info->fw_Ver[6] = 0x00;
+    fw_info->fw_Ver[7] = 0x00;
+    fw_info->fw_crc16 = 0x1234; // Example CRC16 of the firmware
+    fw_info->chunk_size = 256; // Example chunk size
+    fw_info->chunk_addr = 0x8000; // Example chunk address
+    fw_info->fw_addr = 0x08000000; // Example firmware address
 }
 
 
@@ -170,7 +194,7 @@ fw_err fuota_process_Data(void)
         }
         else
         {
-            crc16_Generated = CalculateCRC16((uint8_t*)Str, length+2);  // total length + length data bytes
+            crc16_Generated = CalculateCRC16((uint8_t*)Fudata, length+2);  // total length + length data bytes
             if(crc16_Generated == crc16_Received)
             {
                 length = fuota_encodeErrro(Fudata, Fudata[0], FOTA_ERROR_CRC);
@@ -188,8 +212,10 @@ fw_err fuota_process_Data(void)
         user_fuota_reply(Fudata, replylen);
         break;
     default:
+        return P_ERR;
         break;
     }
+    return P_ERR;
     //Check if buffer has data using API
 }
 
@@ -218,8 +244,7 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
             // Handle FW_DATA command
             break;
         default:
-            length = fuota_encodeErrro(Fudata, Fudata[0], CMD_ERR);
-            return P_ERR;  // Unknown command
+            return fuota_encodeErrro(Fudata, Fudata[0], CMD_ERR);;  // Unknown command
     }
 
     return SUC;  // Return success or appropriate error code based on processing result
@@ -230,7 +255,6 @@ uint16_t fuota_encodeData(volatile uint8_t *encodedData, uint8_t commandVal, con
 {
     uint16_t length = 0;
     uint16_t crc16 = 0;
-    bool success = false;
 
     if(encodedData == NULL)
         return 0;
@@ -245,7 +269,7 @@ uint16_t fuota_encodeData(volatile uint8_t *encodedData, uint8_t commandVal, con
 
     encodedData[TxRx_CMD_POS] = commandVal;
     length = length + 1;
-    
+
     memcpy((char*)(encodedData + TxRx_ADR_STA_POS), (char*)datatoencode, sizeofData);
     length = length + sizeofData;
 
@@ -276,7 +300,7 @@ uint16_t fuota_encodeErrro(volatile uint8_t *encodedData, uint8_t commandVal, ui
     encodedData[TxRx_CMD_POS] = commandVal;
     length = length + 1;        // CMD
 
-    encodedData[TxRx_CMD_STA_POS] = errorVal;
+    encodedData[TxRx_ADR_STA_POS] = errorVal;
     length = length + 1;        // Status position
 
     crc16 = CalculateCRC16((uint8_t *)&encodedData[TxRx_Len_POS], (length - 1));
