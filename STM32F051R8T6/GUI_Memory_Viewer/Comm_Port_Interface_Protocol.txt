@@ -1,6 +1,9 @@
 
 # Protocol details
-
+## Notes
+>> Synchronisation mechanisem have been applied by only move to the other command by receiving the reply from the other side.
+>> If the reply failed for ~5 seconds, the last command will be retransmitted. 
+>> If the subsecuence retransmittion failed after 5 tries, the application will halt the transmittion and becomes idle for waiting the user actions.
 ##List of Commands.
 _________________________
 |No		Command		Info
@@ -31,7 +34,7 @@ Length:-   						   | 1 byte | 2 bytes | 2 bytes |1 bytes | n bytes|
 --------------------------------------------------------------------------------------------------
 >> Info about the protocol
 - Header:- Fixed value 0xA5.
-- CRC16:- CRC or the subsequent data.
+- CRC16:- CRC or the subsequent data without length bytes.
 - Length:- length of the subsequent data.
 - Cmd:- Command. The list of the commands are as follows.
 	1> Read entire Memory 		(0x01)

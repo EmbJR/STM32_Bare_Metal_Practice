@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "fuota_packat_Process.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -84,7 +84,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   /* Unlock the Flash to enable the flash control register access *************/
-
+  fuota_test_Case();
   /* USER CODE END Init */
 
   /* Configure the system clock */

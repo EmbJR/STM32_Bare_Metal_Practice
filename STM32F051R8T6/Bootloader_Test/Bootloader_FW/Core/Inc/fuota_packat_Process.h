@@ -11,7 +11,7 @@
 #define    CPU_32Bit    2       // memory with 32bit address increment.
 #define    CPU_16Bit    3       // memory with 16bit address increment.
 
-#define CPU_VAL  CPU_16Bit
+#define CPU_VAL  CPU_8Bit
 
 #if (CPU_VAL == CPU_8Bit)
 #define FOTA_BUFFER_SIZE    128

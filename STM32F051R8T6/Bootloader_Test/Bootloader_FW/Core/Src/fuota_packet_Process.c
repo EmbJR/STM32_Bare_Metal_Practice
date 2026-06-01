@@ -20,6 +20,7 @@ fw_up_str fw_info;
 __attribute__((weak))
 void user_fuota_reply(uint8_t *data, uint16_t size)
 {
+#if 0
     // Implement the function to send data back to the sender
     // This is a placeholder for actual implementation
     // You can use UART, SPI, or any other communication interface to send the data
@@ -29,6 +30,7 @@ void user_fuota_reply(uint8_t *data, uint16_t size)
         printf("%02X ", data[i]);
     }
     printf("\n");
+#endif
 }
 
 
@@ -360,6 +362,7 @@ int fuota_test_Case(void)
 {
 
     fw_err err;
+#if 1
     //----------- Ex1 --------------//
     uint8_t buf1[512];
     uint16_t n1 = make_packet(0x02, NULL, 0, buf1); // cmd=0x02, no payload
@@ -385,11 +388,6 @@ int fuota_test_Case(void)
             printf("Error occured..");
         }
     }
-
+#endif
     return 0;
-}
-
-int main(void)
-{
-    fuota_test_Case();
 }
