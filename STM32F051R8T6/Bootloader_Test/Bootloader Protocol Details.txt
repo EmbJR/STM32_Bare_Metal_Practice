@@ -1,0 +1,127 @@
+
+# Protocol details
+
+## Notes
+>> Synchronisation mechanisem have been applied by only move to the other command by receiving the reply from the other side.
+>> If the reply failed for ~5 seconds, the last command will be retransmitted. 
+>> If the subsecuence retransmittion failed after 5 tries, the application will halt the transmittion and becomes idle for waiting the user actions.
+##List of Commands.
+_________________________
+|No		Command		Info
+-------------------------
+1>		0x01		Read entire memory		
+2>		0x02		Get information data.
+2>		0x03		Set Transfer units	// mainly used for changing the chunk sizes information in case of changing the protocol.
+4>		0x04		Set Start address.
+5>		0x05		Fw data
+-------------------------
+
+##List of error and status codes.
+_________________________
+|No		Command		Info
+-------------------------
+1>		0x64		Successfull
+2>		0x65		Internal Error	
+3>		0x66		Command Error
+4>		0x67		Data not available
+5>		0x68		Error in Length	
+5>		0x69		Error in CRC
+5>		0x6A		Error in Flash Write		
+-------------------------
+______________________________________________________________________________
+*****************************************************************************
+**************************** Transmit/Reeive command *******************************
+*****************************************************************************
+______________________________________________________________________________
+- Below is the protocol for transmitted/receive command from/to GUI and Controller.
+-------------------------------------------------------------------------------------------------
+Transmitt Data format:- 		   |<Header>| <CRC16> | <Length>| <Cmd>	 | <Data> |
+Length:-   						   | 1 byte | 2 bytes | 2 bytes |1 bytes | n bytes|
+                                                                |<- Data for CRC->|
+--------------------------------------------------------------------------------------------------
+
+## Protocol examples
+*****************************************************************************
+************************* Set Start address ********************************
+*****************************************************************************
+-------------------------------------------------------------------------------------------------
+							
+GUI to controller:- 	
+					|  0xA5  |  CRC16 |0x00,0x03|  0x04 |0x0,0xD0 |
+					|<Header>| <CRC16>| <Length>| <Cmd> |<Address>|
+					| 1 byte | 2 bytes| 2 bytes |1 bytes| 2 bytes |
+	
+controller to GUI in case of successfull operation:- 	
+					|  0xA5  |  CRC16 |0x00,0x01|  0x04 |  0x64 |
+					|<Header>| <CRC16>| <Length>| <Cmd> | <Err> |
+					| 1 byte | 2 bytes| 2 bytes |1 bytes|1 bytes|
+								
+controller to GUI in case of CRC errors:- 	
+					|  0xA5  |  CRC16 |0x00,0x01|  0x04 |  0x69 |
+					|<Header>| <CRC16>| <Length>| <Cmd> | <Err> |
+					| 1 byte | 2 bytes| 2 bytes |1 bytes|1 bytes|								
+--------------------------------------------------------------------------------------------------
+
+>> Info about the protocol
+- Header:- Fixed value 0xA5.
+- CRC16:- CRC or the subsequent data without length bytes.
+- Length:- length of the subsequent data.
+- Cmd:- Command. See the list ob commands above.	
+- Data:- The data can be the sub command or data related to the perticular command or any error codes.	
+
+
+
+*****************************************************************************
+************************* Sample FW Update **********************************
+*****************************************************************************
+- The below example shows the command fired by GUI to microcontroler for the FW update starting from synch command and supplying the chunks of data to controller.
+-------------------------------------------------------------------------------------------------
+C:: GUI to controller for information block:- 	|0xA5|CRC16|0x00,0x01|0x02|
+R:: Controller to GUI for intormation data:- 	|0xA5|CRC16|--nb+1---|0x02|-- nb bytes information block --|
+--------------------
+C:: GUI to controller for transer setup:-	 	|0xA5|CRC16|0x00,0x05|0x03| 0xXX,0xXX||----0xXX,0xXX---|
+																		  |Chunk Size||Number of Chinks|
+R:: Controller to GUI for status data:- 		|0xA5|CRC16|0x00,0x02|0x03|0x64|
+--------------------
+C:: GUI to controller for transer setup:-	 	|0xA5|CRC16|0x00,0x07|0x04|0xXX,0xXX,0xXX,0xXX||_0xXX,0xXX|
+																		  |--<Start address>--||Chunk Size|
+R:: Controller to GUI for status data:- 		|0xA5|CRC16|0x00,0x02|0x04|0x64|
+--------------------																 
+C:: GUI to controller for requesting memory:- 	|0xA5|CRC16|0x01,0x03|0x05|256 bytes of data|
+R:: Controller to GUI for status data:- 		|0xA5|CRC16|0x00,0x02|0x05|0x64|
+													  :	:	:	:	:	:	:	:	:	:	:	:	:
+													  :	:	:	:	:	:	:	:	:	:	:	:	:
+													  :	:	:	:	:	:	:	:	:	:	:	:	:
+C:: GUI to controller for memory data:- 		|0xA5|CRC16|0x00,0x3C|0x05|50 bytes of data|
+R:: Controller to GUI for status data:- 		|0x01|CRC16|0x00,0x02|0x05|0x64|
+
+R:: Controller to GUI for length error:- 		|0xA5|CRC16|0x00,0x02|0xXX|0x68|
+--------------------------------------------------------------------------------------------------
+
+
+### Bootloader information block structure
+----------------------------------------------------
+typedef struct
+{
+    uint8_t cpu_Type;
+    uint8_t hw_ver[3];
+    uint8_t fw_Ver[8];
+    uint16_t fw_crc16;
+    uint16_t chunk_size;
+    uint16_t nb_chunk;
+    uint16_t chunk_addr;
+    uint32_t flash_start_addr;
+} fw_up_str;
+
+
+### Sample commands for the testing.
+1> Set memory location to write the data from.
+0xA50xA00xC90x000x050x040x080x000x280x00
+2> Write the FW chunk with 192 bytes of data.
+0xA50x680xA10x000xC10x050x010x020x030x040x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x010x020x030x040x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x010x020x030x040x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x010x020x030x040x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x010x020x030x040x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x060x070x080x090x0A0x0B0x0C0x0D0x0E0x0F0x100x110x120x130x140x150x160x170x180x190x1A0x1B0x1C0x1D0x1E0x1F0x050x010x020x030x040x05
+
+
+//------------------------- Below are the functionality to be implemented in Controller firmware -----------------------
+-> Malloc to define the buffer.
+-> Configurable chunk sizes instead of fix.
+-> 

@@ -11,14 +11,14 @@
 #define    CPU_32Bit    2       // memory with 32bit address increment.
 #define    CPU_16Bit    3       // memory with 16bit address increment.
 
-#define CPU_VAL  CPU_8Bit
+#define CPU_VAL  CPU_16Bit
 
 #if (CPU_VAL == CPU_8Bit)
 #define FOTA_BUFFER_SIZE    128
 #define RECV_BUFFER_SIZE    100
 #elif ((CPU_VAL == CPU_16Bit) || (CPU_VAL == CPU_32Bit))
 #define FOTA_BUFFER_SIZE    512
-#define RECV_BUFFER_SIZE    200
+#define RECV_BUFFER_SIZE    60
 #endif
 
 #define TxRx_CRC_POS			    1	// 1 byte
@@ -57,6 +57,7 @@ typedef enum
     DATA_NA,
     FOTA_ERROR_LEN,
     FOTA_ERROR_CRC,
+	FOTA_ERROR_FLASH_WR,
 } fw_err;
 
 typedef struct
@@ -68,7 +69,7 @@ typedef struct
     uint16_t chunk_size;
     uint16_t nb_chunk;
     uint16_t chunk_addr;
-    uint32_t fw_addr;
+    uint32_t flash_start_addr;
 } fw_up_str;
 
 enum
@@ -83,6 +84,8 @@ enum
     ST_DATA_VALIDATION,
     ST_CM_PROCESS,
 };
+
+extern fw_up_str fw_info;
 
 //--------------------------------------------------------------------//
 fw_err fuota_init(void);
@@ -99,6 +102,8 @@ int fuota_test_Case(void);
 //----------- User Functions --------------------/
 void user_fuota_reply(uint8_t *data, uint16_t size);
 void user_fuota_get_info(fw_up_str *fw_info);
+fw_err use_Flash_Write(uint8_t *data, uint16_t size);
+
 
 
 #endif /* PACKET_PROCESS_H */

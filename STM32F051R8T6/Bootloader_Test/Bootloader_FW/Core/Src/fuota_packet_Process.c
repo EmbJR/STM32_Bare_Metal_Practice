@@ -4,10 +4,10 @@
 
 #if (CPU_VAL == CPU_8Bit)
 #define DATA_SIZE (FOTA_BUFFER_SIZE + TxRx_Data_POS)
-uint8_t Fudata[DATA_SIZE] = {0};
+volatile uint8_t Fudata[DATA_SIZE] = {0};
 #elif ((CPU_VAL == CPU_16Bit) || (CPU_VAL == CPU_32Bit))
 #define DATA_SIZE (FOTA_BUFFER_SIZE + TxRx_Data_POS)
-uint8_t Fudata[DATA_SIZE] = {0};
+volatile uint8_t Fudata[DATA_SIZE] = {0};
 #endif
 
 ///static CircularBuffer *txBuffer = NULL;
@@ -15,6 +15,12 @@ static CircularBuffer *rxBuffer = NULL;
 
 
 fw_up_str fw_info;
+
+__attribute__((weak))
+fw_err use_Flash_Write(uint8_t *data, uint16_t size)
+{
+
+}
 
 
 __attribute__((weak))
@@ -37,6 +43,7 @@ void user_fuota_reply(uint8_t *data, uint16_t size)
 __attribute__((weak))
 void user_fuota_get_info(fw_up_str *fw_info)
 {
+#if 0
     // Implement the function to fill the fw_info structure with actual firmware information
     // This is a placeholder for actual implementation
     fw_info->cpu_Type = 0x01; // Example CPU type
@@ -54,7 +61,8 @@ void user_fuota_get_info(fw_up_str *fw_info)
     fw_info->fw_crc16 = 0x1234; // Example CRC16 of the firmware
     fw_info->chunk_size = 256; // Example chunk size
     fw_info->chunk_addr = 0x8000; // Example chunk address
-    fw_info->fw_addr = 0x08000000; // Example firmware address
+    fw_info->flash_start_addr = 0x08000000; // Example firmware address
+#endif
 }
 
 
@@ -115,6 +123,7 @@ fw_err fuota_incomming_buffer_process(char *data, uint16_t size)
     return SUC;
 }
 
+uint16_t crc16_Generated = 0;
 fw_err fuota_process_Data(void)
 {
     fw_err err;
@@ -122,7 +131,7 @@ fw_err fuota_process_Data(void)
     uint16_t replylen = 0;
 
     static uint16_t length = 0, rcvlen=0;
-    static uint16_t crc16_Received = 0, crc16_Generated = 0;
+    static uint16_t crc16_Received = 0;
 
     static uint8_t status = ST_INIT;
     static uint8_t substate = ST_INIT;
@@ -161,7 +170,7 @@ fw_err fuota_process_Data(void)
             }
             else
             {
-                crc16_Received = data;
+                crc16_Received = (data << 8);
                 substate = ST_CRC_DEC_SUB2;
             }
             break;
@@ -173,7 +182,7 @@ fw_err fuota_process_Data(void)
             }
             else
             {
-                crc16_Received |= (data << 8);
+                crc16_Received |= data;
                 status = ST_LEN_DEC;
                 substate = ST_LEN_DEC_SUB1;
             }
@@ -192,7 +201,7 @@ fw_err fuota_process_Data(void)
             }
             else
             {
-                length = data;
+                length = (data << 8);
                 substate = ST_LEN_DEC_SUB2;
                 memset(Fudata, 0x00, sizeof(Fudata));
             }
@@ -205,7 +214,7 @@ fw_err fuota_process_Data(void)
             }
             else
             {
-                length |= (data << 8);
+                length |= data;
                 if(length == 0)
                 {
                     length = fuota_encodeErrro(Fudata, 0x00, FOTA_ERROR_LEN);
@@ -228,7 +237,11 @@ fw_err fuota_process_Data(void)
             {
                 err = FOTA_ERROR_LEN;
             }
-            Fudata[rcvlen++] = data;
+            else
+            {
+                Fudata[rcvlen++] = (uint8_t)data;
+            }
+
         }
         else
         {
@@ -261,6 +274,7 @@ fw_err fuota_process_Data(void)
 
 uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
 {
+	fw_err err;
     uint16_t replen = 0;
     uint8_t replyData[10]={0};
     if(!cmdData || cmdLength == 0)
@@ -285,10 +299,25 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
         //fw_info.nb_chunk = (uint16_t)(cmdData[1]);
         break;
     case CMD_SET_ADDR:
-        // Handle SET_ADDR command
+        // Handle SET_ADDR command//0x08002800;
+		fw_info.flash_start_addr =  0x00000000;
+    	fw_info.flash_start_addr = (uint32_t)((cmdData[1] << 24) | (cmdData[2] << 16) | (cmdData[3] << 8) | cmdData[4]);
+    	replyData[0] = SUC;
+    	replen = fuota_encodeData(Fudata, cmdData[0], (const uint8_t*)replyData, 1);
         break;
     case CMD_FW_DATA:
         // Handle FW_DATA command
+    	err = use_Flash_Write((uint8_t *)&cmdData[1], (cmdLength - 1));
+    	if(err == SUC)
+    	{
+    		replyData[0] = SUC;
+    		replen = fuota_encodeData(Fudata, cmdData[0], (const uint8_t*)replyData, 1);
+        	fw_info.flash_start_addr = fw_info.flash_start_addr + (cmdLength - 1);
+    	}
+    	else
+    	{
+    		replen = fuota_encodeErrro(Fudata, cmdData[0], err);
+    	}
         break;
     default:
         return fuota_encodeErrro(Fudata, Fudata[0], CMD_ERR);;  // Unknown command
@@ -360,7 +389,7 @@ uint16_t fuota_encodeErrro(volatile uint8_t *encodedData, uint8_t commandVal, ui
 
 int fuota_test_Case(void)
 {
-
+#if 0
     fw_err err;
 #if 1
     //----------- Ex1 --------------//
@@ -390,4 +419,5 @@ int fuota_test_Case(void)
     }
 #endif
     return 0;
+#endif
 }
