@@ -196,6 +196,67 @@ uint32_t RCC_GetSystemClockFrequency(void) {
 }
 
 
+// Enable peripheral clock
+void RCC_EnablePeripheralClock(uint8_t peripheral_type, uint8_t peripheral_num) {
+    uint8_t peripheral_group = peripheral_type >> 4;
+    uint8_t peripheral_index = peripheral_type & 0x0F;
+
+    switch (peripheral_group) {
+        case 0x0: // GPIOs
+            if (peripheral_index >= 1 && peripheral_index <= 6) {
+                RCC_AHBENR |= (1UL << (17 + peripheral_index - 1));
+            }
+            break;
+
+        case 0x8: // DMA
+            if (peripheral_num == 1) RCC_AHBENR |= (1UL << 0);
+            else if (peripheral_num == 2 && RCC_IsDeviceF04xF07xF09x())
+                RCC_AHBENR |= (1UL << 1);
+            break;
+
+        case 0x9: // Timers
+            switch (peripheral_num) {
+                case 1: RCC_APB2ENR |= (1UL << 11); break;
+                case 2: RCC_APB1ENR |= (1UL << 0); break;
+                case 3: RCC_APB1ENR |= (1UL << 1); break;
+                case 14: RCC_APB1ENR |= (1UL << 8); break;
+                case 15: RCC_APB2ENR |= (1UL << 16); break;
+                case 16: RCC_APB2ENR |= (1UL << 17); break;
+                case 17: RCC_APB2ENR |= (1UL << 18); break;
+            }
+            break;
+
+        case 0xA: // USARTs
+            switch (peripheral_num) {
+                case 1: RCC_APB2ENR |= (1UL << 14); break;
+                case 2: RCC_APB1ENR |= (1UL << 17); break;
+                case 3: RCC_APB1ENR |= (1UL << 18); break;
+            }
+            break;
+
+        case 0xB: // SPI
+            if (peripheral_num == 1) RCC_APB2ENR |= (1UL << 12);
+            else if (peripheral_num == 2) RCC_APB1ENR |= (1UL << 14);
+            break;
+
+        case 0xC: // I2C
+            if (peripheral_num == 1) RCC_APB1ENR |= (1UL << 21);
+            else if (peripheral_num == 2) RCC_APB1ENR |= (1UL << 22);
+            break;
+
+        case 0xD: // ADC/DAC
+            if (peripheral_num == 0) RCC_APB2ENR |= (1UL << 9); // ADC
+            else if (peripheral_num == 1) RCC_APB1ENR |= (1UL << 29); // DAC
+            break;
+
+        case 0xE: // USB (F04x/F07x only)
+            if (RCC_IsDeviceF04xF07xF09x()) {
+                RCC_APB1ENR |= (1UL << 23);
+            }
+            break;
+    }
+}
+
 // Disable peripheral clock
 void RCC_DisablePeripheralClock(uint8_t peripheral_type, uint8_t peripheral_num) {
     uint8_t peripheral_group = peripheral_type >> 4;
@@ -203,53 +264,55 @@ void RCC_DisablePeripheralClock(uint8_t peripheral_type, uint8_t peripheral_num)
 
     switch (peripheral_group) {
         case 0x0: // GPIOs
-            RCC_AHBENR &= ~(1 << (17 + peripheral_index));
+            if (peripheral_index >= 1 && peripheral_index <= 6) {
+                RCC_AHBENR &= ~(1UL << (17 + peripheral_index - 1));
+            }
             break;
 
         case 0x8: // DMA
-            if (peripheral_num == 1) RCC_AHBENR &= ~(1 << 0);
+            if (peripheral_num == 1) RCC_AHBENR &= ~(1UL << 0);
             else if (peripheral_num == 2 && RCC_IsDeviceF04xF07xF09x())
-                RCC_AHBENR &= ~(1 << 1);
+                RCC_AHBENR &= ~(1UL << 1);
             break;
 
         case 0x9: // Timers
             switch (peripheral_num) {
-                case 1: RCC_APB2ENR &= ~(1 << 11); break;
-                case 2: RCC_APB1ENR &= ~(1 << 0); break;
-                case 3: RCC_APB1ENR &= ~(1 << 1); break;
-                case 14: RCC_APB1ENR &= ~(1 << 8); break;
-                case 15: RCC_APB2ENR &= ~(1 << 16); break;
-                case 16: RCC_APB2ENR &= ~(1 << 17); break;
-                case 17: RCC_APB2ENR &= ~(1 << 18); break;
+                case 1: RCC_APB2ENR &= ~(1UL << 11); break;
+                case 2: RCC_APB1ENR &= ~(1UL << 0); break;
+                case 3: RCC_APB1ENR &= ~(1UL << 1); break;
+                case 14: RCC_APB1ENR &= ~(1UL << 8); break;
+                case 15: RCC_APB2ENR &= ~(1UL << 16); break;
+                case 16: RCC_APB2ENR &= ~(1UL << 17); break;
+                case 17: RCC_APB2ENR &= ~(1UL << 18); break;
             }
             break;
 
         case 0xA: // USARTs
             switch (peripheral_num) {
-                case 1: RCC_APB2ENR &= ~(1 << 14); break;
-                case 2: RCC_APB1ENR &= ~(1 << 17); break;
-                case 3: RCC_APB1ENR &= ~(1 << 18); break;
+                case 1: RCC_APB2ENR &= ~(1UL << 14); break;
+                case 2: RCC_APB1ENR &= ~(1UL << 17); break;
+                case 3: RCC_APB1ENR &= ~(1UL << 18); break;
             }
             break;
 
         case 0xB: // SPI
-            if (peripheral_num == 1) RCC_APB2ENR &= ~(1 << 12);
-            else if (peripheral_num == 2) RCC_APB1ENR &= ~(1 << 14);
+            if (peripheral_num == 1) RCC_APB2ENR &= ~(1UL << 12);
+            else if (peripheral_num == 2) RCC_APB1ENR &= ~(1UL << 14);
             break;
 
         case 0xC: // I2C
-            if (peripheral_num == 1) RCC_APB1ENR &= ~(1 << 21);
-            else if (peripheral_num == 2) RCC_APB1ENR &= ~(1 << 22);
+            if (peripheral_num == 1) RCC_APB1ENR &= ~(1UL << 21);
+            else if (peripheral_num == 2) RCC_APB1ENR &= ~(1UL << 22);
             break;
 
         case 0xD: // ADC/DAC
-            if (peripheral_num == 0) RCC_APB2ENR &= ~(1 << 9); // ADC
-            else if (peripheral_num == 1) RCC_APB1ENR &= ~(1 << 29); // DAC
+            if (peripheral_num == 0) RCC_APB2ENR &= ~(1UL << 9); // ADC
+            else if (peripheral_num == 1) RCC_APB1ENR &= ~(1UL << 29); // DAC
             break;
 
-        case 0xE: // USB (F04x/F07x only)
+        case 0xE: // USB (F04x/F07x/F09x only)
             if (RCC_IsDeviceF04xF07xF09x()) {
-                RCC_APB1ENR &= ~(1 << 23);
+                RCC_APB1ENR &= ~(1UL << 23);
             }
             break;
     }
