@@ -62,6 +62,14 @@ fw_err use_Flash_Write(uint8_t *data, uint16_t size)
 	return FOTA_ERROR_FLASH_WR;
 }
 
+void user_fuota_reply(uint8_t *data, uint16_t size)
+{
+	for(uint16_t i = 0; i < size; i++)
+	{
+		UART_SendDataIT(USART1, data[i]);
+	}
+}
+
 #endif
 int main(void) {
     // Configure system clock
@@ -76,7 +84,7 @@ int main(void) {
     while (1) {
     	//UART_SendStringIT(USART1, "Hello\n");
     	fuota_process_Data();
-    	for(int i=0; i < 20; i++);
+    	//for(int i=0; i < 20; i++);
         // Application code here
     }
 

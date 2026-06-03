@@ -127,14 +127,14 @@ uint16_t crc16_Generated = 0;
 fw_err fuota_process_Data(void)
 {
     fw_err err;
-    uint8_t data = 0;
-    uint16_t replylen = 0;
+    volatile uint8_t data = 0;
+    volatile uint16_t replylen = 0;
 
-    static uint16_t length = 0, rcvlen=0;
-    static uint16_t crc16_Received = 0;
+    static volatile uint16_t length = 0, rcvlen=0;
+    static volatile uint16_t crc16_Received = 0;
 
-    static uint8_t status = ST_INIT;
-    static uint8_t substate = ST_INIT;
+    static volatile uint8_t status = ST_INIT;
+    static volatile uint8_t substate = ST_INIT;
 
     if(!circular_buffer_available(rxBuffer) && (length == 0))
     {
@@ -272,6 +272,14 @@ fw_err fuota_process_Data(void)
     return err;
 }
 
+static uint16_t reply_success(uint8_t command, uint8_t reply)
+{
+	uint8_t replystr[2] = {0};
+	replystr[0] = reply;
+    return fuota_encodeData(Fudata, command, (const uint8_t*)replystr, 1);
+}
+
+uint16_t gllength = 0;
 uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
 {
 	fw_err err;
@@ -280,6 +288,7 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
     if(!cmdData || cmdLength == 0)
         return 0;
 
+    gllength = cmdLength;
     // Process the command data and perform necessary actions
     // This is a placeholder for actual command processing logic
     // You can implement your specific command handling here
@@ -294,24 +303,21 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
         // Handle SET_CHUNK_SIZE command
         fw_info.chunk_size = (uint16_t)(cmdData[1]&((cmdData[2]<<8)|0x00FF));
         fw_info.nb_chunk = (uint16_t)(cmdData[3]&((cmdData[4]<<8)|0x00FF));
-        replyData[0] = SUC;
-        replen = fuota_encodeData(Fudata, cmdData[0], (const uint8_t*)replyData, 1);
+        replen = reply_success(cmdData[0], SUC);
         //fw_info.nb_chunk = (uint16_t)(cmdData[1]);
         break;
     case CMD_SET_ADDR:
         // Handle SET_ADDR command//0x08002800;
 		fw_info.flash_start_addr =  0x00000000;
     	fw_info.flash_start_addr = (uint32_t)((cmdData[1] << 24) | (cmdData[2] << 16) | (cmdData[3] << 8) | cmdData[4]);
-    	replyData[0] = SUC;
-    	replen = fuota_encodeData(Fudata, cmdData[0], (const uint8_t*)replyData, 1);
+    	replen = reply_success(cmdData[0], SUC);
         break;
     case CMD_FW_DATA:
         // Handle FW_DATA command
     	err = use_Flash_Write((uint8_t *)&cmdData[1], (cmdLength - 1));
     	if(err == SUC)
     	{
-    		replyData[0] = SUC;
-    		replen = fuota_encodeData(Fudata, cmdData[0], (const uint8_t*)replyData, 1);
+    		replen = reply_success(cmdData[0], SUC);
         	fw_info.flash_start_addr = fw_info.flash_start_addr + (cmdLength - 1);
     	}
     	else

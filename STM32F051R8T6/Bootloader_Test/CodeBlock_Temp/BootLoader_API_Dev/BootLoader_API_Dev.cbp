@@ -35,10 +35,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="CirBuffer.h" />
-		<Unit filename="Test.c">
+		<Unit filename="crc.h" />
+		<Unit filename="fuota_packat_Process.h" />
+		<Unit filename="fuota_packet_Process.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="crc.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>
