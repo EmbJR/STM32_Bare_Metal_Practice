@@ -9,7 +9,7 @@
 /* ============================================================================
    Private Macros and Timeout Configuration
    ========================================================================== */
-#define FLASH_OPERATION_TIMEOUT    1000000U    /* Loop timeout for busy wait */
+#define FLASH_OPERATION_TIMEOUT    10000000U    /* Increased loop timeout for busy wait */
 
 /* ============================================================================
    Private Helper Functions
@@ -449,6 +449,9 @@ Flash_Status_t FLASH_ProgramBuffer(uint32_t dest_addr, const uint8_t *src_data, 
         if (status != FLASH_STATUS_OK) {
             break;
         }
+
+        /* Clear EOP flag after each half-word for hardware state consistency */
+        FLASH_ClearEOP();
     }
     
     /* Clear Programming bit */

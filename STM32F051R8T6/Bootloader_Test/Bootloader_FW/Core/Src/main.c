@@ -4,7 +4,10 @@
 #include "uart_API.h"
 #include "fuota_packat_Process.h"
 #include "FlashF051.h"
+#include "boot_jump.h"
 
+#define INFO_BLOCK_ADD	0x8002400u
+#define APPLICATION_START_ADDR  0x08002800U // Example address for F0
 
 // Example configuration for 48MHz system clock using PLL from HSE
 void SystemClock_Config_48MHz(void) {
@@ -54,7 +57,15 @@ Flash_Status_t Example_SafeProgramWithRetry(uint32_t flash_addr,
 
 fw_err use_Flash_Write(uint8_t *data, uint16_t size)
 {
-	Flash_Status_t status = Example_SafeProgramWithRetry(fw_info.flash_start_addr, data, size, 4);
+    uint32_t current_addr = fw_info.flash_start_addr;
+
+    /* Automatically erase the page if we are starting at a 1KB boundary */
+    /* This allows sequential chunks to be written without manual erase commands */
+    if ((current_addr % FLASH_PAGE_SIZE) == 0) {
+        FLASH_ErasePage(current_addr);
+    }
+
+	Flash_Status_t status = Example_SafeProgramWithRetry(current_addr, data, size, 4);
 	if(FLASH_STATUS_OK == status)
 	{
 		return SUC;
@@ -70,6 +81,31 @@ void user_fuota_reply(uint8_t *data, uint16_t size)
 	}
 }
 
+
+fw_err user_fuota_get_info(fw_up_str *fw_info)
+{
+    /* Fix: sizeof(fw_info) was returning 4 because it is a pointer. 
+       Use the struct type to copy the entire block. */
+	memcpy((uint8_t*)fw_info, (const uint8_t *)INFO_BLOCK_ADD, sizeof(fw_up_str));
+
+	return SUC;
+}
+
+fw_err user_fuota_set_info(fw_up_str *fw_info)
+{
+    /* Fix: FLASH_ErasePage takes a memory address, not a page index number. */
+	FLASH_ErasePage(INFO_BLOCK_ADD);
+
+    Flash_Status_t status = Example_SafeProgramWithRetry(INFO_BLOCK_ADD, (const uint8_t *)fw_info, sizeof(fw_up_str), 4);
+	if(FLASH_STATUS_OK == status)
+	{
+		return SUC;
+	}
+	return FOTA_ERROR_FLASH_WR;
+}
+
+
+
 #endif
 int main(void) {
     // Configure system clock
@@ -80,6 +116,21 @@ int main(void) {
 
     Bt_Uart_Init();
     fuota_init();
+
+
+    user_fuota_get_info(&fw_info);
+    if(fw_info.flash_start_addr == 0x08002800)
+    {
+		// ... Bootloader system init and verification ...
+
+		// Attempt to jump
+		boot_jump_status_t result = boot_jump_to_app(APPLICATION_START_ADDR);
+
+		if (result != BOOT_JUMP_OK) {
+			// Jump failed. Stay in bootloader, signal an error, or wait.
+			while(1);
+		}
+    }
 
     while (1) {
     	//UART_SendStringIT(USART1, "Hello\n");

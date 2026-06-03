@@ -58,8 +58,8 @@ class BootloaderProtocol:
             if len(meta) < 4:
                 return None, "Incomplete response header"
 
-            resp_crc = int.from_bytes(meta[0:2], 'big')
-            payload_length = int.from_bytes(meta[2:4], 'big')
+            resp_crc = int.from_bytes(meta[0:2], 'little')
+            payload_length = int.from_bytes(meta[2:4], 'little')
             if payload_length <= 0:
                 return None, "Invalid response length"
 

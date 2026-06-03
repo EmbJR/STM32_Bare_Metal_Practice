@@ -47,6 +47,7 @@ typedef enum
     CMD_SET_CHUNK_SIZE,
     CMD_SET_ADDR,
     CMD_FW_DATA,
+	ST_CM_APP_JUMP
 } cmd_type;
 
 typedef enum
@@ -86,6 +87,7 @@ enum
 };
 
 extern fw_up_str fw_info;
+extern uint8_t FuComplete;
 
 //--------------------------------------------------------------------//
 fw_err fuota_init(void);
@@ -101,8 +103,10 @@ int fuota_test_Case(void);
 
 //----------- User Functions --------------------/
 void user_fuota_reply(uint8_t *data, uint16_t size);
-void user_fuota_get_info(fw_up_str *fw_info);
+fw_err user_fuota_get_info(fw_up_str *fw_info);
+fw_err  user_fuota_set_info(fw_up_str *fw_info);
 fw_err use_Flash_Write(uint8_t *data, uint16_t size);
+
 
 
 

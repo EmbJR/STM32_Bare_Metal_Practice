@@ -124,4 +124,6 @@ typedef struct
 //------------------------- Below are the functionality to be implemented in Controller firmware -----------------------
 -> Malloc to define the buffer.
 -> Configurable chunk sizes instead of fix.
--> 
+-> Erase command apply befor writing memory.
+-> Add the CRC checking logic.
+-> Add jump to application logic.

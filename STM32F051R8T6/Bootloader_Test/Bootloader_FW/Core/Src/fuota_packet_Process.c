@@ -15,6 +15,7 @@ static CircularBuffer *rxBuffer = NULL;
 
 
 fw_up_str fw_info;
+uint8_t FuComplete = 0;
 
 __attribute__((weak))
 fw_err use_Flash_Write(uint8_t *data, uint16_t size)
@@ -41,7 +42,7 @@ void user_fuota_reply(uint8_t *data, uint16_t size)
 
 
 __attribute__((weak))
-void user_fuota_get_info(fw_up_str *fw_info)
+fw_err user_fuota_get_info(fw_up_str *fw_info)
 {
 #if 0
     // Implement the function to fill the fw_info structure with actual firmware information
@@ -63,6 +64,11 @@ void user_fuota_get_info(fw_up_str *fw_info)
     fw_info->chunk_addr = 0x8000; // Example chunk address
     fw_info->flash_start_addr = 0x08000000; // Example firmware address
 #endif
+}
+
+__attribute__((weak))
+fw_err user_fuota_set_info(fw_up_str *fw_info)
+{
 }
 
 
@@ -215,7 +221,7 @@ fw_err fuota_process_Data(void)
             else
             {
                 length |= data;
-                if(length == 0)
+                if((length == 0) | (length > DATA_SIZE))
                 {
                     length = fuota_encodeErrro(Fudata, 0x00, FOTA_ERROR_LEN);
                     user_fuota_reply(Fudata, length);
@@ -241,7 +247,6 @@ fw_err fuota_process_Data(void)
             {
                 Fudata[rcvlen++] = (uint8_t)data;
             }
-
         }
         else
         {
@@ -263,6 +268,14 @@ fw_err fuota_process_Data(void)
     case ST_CM_PROCESS:
         replylen = fuota_cmd_process(Fudata, rcvlen);
         user_fuota_reply(Fudata, replylen);
+        if(FuComplete == 0x66)
+        {
+            fw_info.fw_crc16 = 0x1234; // Example CRC16 of the firmware
+            fw_info.chunk_size = 256; // Example chunk size
+            fw_info.chunk_addr = 0x8000; // Example chunk address
+            fw_info.flash_start_addr = 0x08002800; // Example firmware address
+            user_fuota_set_info(&fw_info);
+        }
         status = ST_INIT;
         break;
     default:
@@ -301,8 +314,8 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
         break;
     case CMD_SET_CHUNK_SIZE:
         // Handle SET_CHUNK_SIZE command
-        fw_info.chunk_size = (uint16_t)(cmdData[1]&((cmdData[2]<<8)|0x00FF));
-        fw_info.nb_chunk = (uint16_t)(cmdData[3]&((cmdData[4]<<8)|0x00FF));
+        fw_info.chunk_size = (uint16_t)((cmdData[1] << 8) | cmdData[2]);
+        fw_info.nb_chunk = (uint16_t)((cmdData[3] << 8) | cmdData[4]);
         replen = reply_success(cmdData[0], SUC);
         //fw_info.nb_chunk = (uint16_t)(cmdData[1]);
         break;
@@ -325,6 +338,9 @@ uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength)
     		replen = fuota_encodeErrro(Fudata, cmdData[0], err);
     	}
         break;
+    case ST_CM_APP_JUMP:
+    	FuComplete = 0x66;
+    	replen = reply_success(cmdData[0], SUC);
     default:
         return fuota_encodeErrro(Fudata, Fudata[0], CMD_ERR);;  // Unknown command
     }
