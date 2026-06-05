@@ -23,7 +23,7 @@ typedef enum {
 
 /* Circular Buffer Structure */
 typedef struct {
-    char *buffer;      /* Pointer to the data buffer */
+    uint8_t *buffer;      /* Pointer to the data buffer */
     size_t capacity;  /* Maximum number of elements */
     size_t size;       /* Current number of elements */
     size_t read_idx;   /* Index for reading */

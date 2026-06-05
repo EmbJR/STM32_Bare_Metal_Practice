@@ -86,7 +86,7 @@ enum
 
 //--------------------------------------------------------------------//
 fw_err fuota_init(void);
-fw_err fuota_incomming_buffer_process(char *data, uint16_t size);
+fw_err fuota_incomming_buffer_process(const uint8_t *data, uint16_t size);
 fw_err fuota_process_Data(void);
 uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength);
 uint16_t fuota_encodeData(volatile uint8_t *encodedData, uint8_t commandVal, const uint8_t *datatoencode, uint16_t sizeofData);

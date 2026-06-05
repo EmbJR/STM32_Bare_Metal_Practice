@@ -9,6 +9,7 @@
 #define GPIO_H
 
 #include <stdint.h>
+#include "rcc.h"
 
 /*============================================================================
  * GPIO Base Addresses
@@ -197,7 +198,6 @@ typedef enum {
 #define RCC_AHBENR_IOPEEN  (0x00200000UL)  /*!< GPIOE clock enable */
 #define RCC_AHBENR_IOPFEN  (0x00400000UL)  /*!< GPIOF clock enable */
 
-#define RCC_BASE           (0x40021000UL)
 #define RCC_AHBENR         (*(volatile uint32_t *)(RCC_BASE + 0x14))
 
 /*============================================================================

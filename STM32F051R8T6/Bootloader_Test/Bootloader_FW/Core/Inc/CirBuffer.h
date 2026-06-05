@@ -11,6 +11,7 @@
 #define CIRBUFFER_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /* Return codes for buffer operations */
 typedef enum {
@@ -23,22 +24,23 @@ typedef enum {
 
 /* Circular Buffer Structure */
 typedef struct {
-    char *buffer;      /* Pointer to the data buffer */
-    size_t capacity;  /* Maximum number of elements */
-    size_t size;       /* Current number of elements */
-    size_t read_idx;   /* Index for reading */
-    size_t write_idx;  /* Index for writing */
+    uint8_t *buffer;      /* Pointer to the data buffer */
+    size_t capacity;      /* Maximum number of elements */
+    volatile size_t size;       /* Current number of elements (volatile for ISR safety) */
+    volatile size_t read_idx;   /* Index for reading (volatile for ISR safety) */
+    volatile size_t write_idx;  /* Index for writing (volatile for ISR safety) */
 } CircularBuffer;
 
 /* Function Prototypes */
 CircularBuffer* circular_buffer_create(size_t capacity);
 void circular_buffer_destroy(CircularBuffer *cb);
-BufferStatus circular_buffer_write(CircularBuffer *cb, char data);
-BufferStatus circular_buffer_read(CircularBuffer *cb, char *data);
-void circular_buffer_clear(CircularBuffer *cb);
-int circular_buffer_is_full(const CircularBuffer *cb);
-int circular_buffer_is_empty(const CircularBuffer *cb);
-size_t circular_buffer_available(const CircularBuffer *cb);
-const char* circular_buffer_error_msg(BufferStatus status);
+BufferStatus circular_buffer_write(volatile CircularBuffer *cb, volatile uint8_t data);
+BufferStatus circular_buffer_read(volatile CircularBuffer *cb, volatile uint8_t *data);
+int circular_buffer_is_full(CircularBuffer *cb);
+int circular_buffer_is_empty(CircularBuffer *cb);
+size_t circular_buffer_available(CircularBuffer *cb);
+
+void circular_buffer_clear(volatile CircularBuffer *cb);
+
 
 #endif /* CIRBUFFER_H */

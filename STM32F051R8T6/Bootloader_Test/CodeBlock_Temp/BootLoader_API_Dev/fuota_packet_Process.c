@@ -90,7 +90,7 @@ fw_err fuota_init(void)
 }
 
 
-fw_err fuota_incomming_buffer_process(char *data, uint16_t size)
+fw_err fuota_incomming_buffer_process(const uint8_t *data, uint16_t size)
 {
     if(!data)
         return P_ERR;
@@ -374,7 +374,7 @@ int fuota_test_Case(void)
 
     fuota_init();
 
-    fuota_incomming_buffer_process((char *)buf2, n2);
+    fuota_incomming_buffer_process(((const uint8_t*))buf2, n2);
     int len = circular_buffer_available(rxBuffer);
 
     for(int i=0; i <= len+2; i++)

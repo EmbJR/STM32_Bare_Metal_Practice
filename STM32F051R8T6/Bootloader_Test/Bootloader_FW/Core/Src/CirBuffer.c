@@ -39,7 +39,7 @@
     }
 
     //Write data to circular buffer using API
-    if (circular_buffer_write(txBuffer, (char)data) != BUFFER_OK)
+    if (circular_buffer_write(txBuffer, data) != BUFFER_OK)
     {
         return false;  //Write failed
     }
@@ -55,7 +55,7 @@
         }
 
         // Read data from circular buffer using API
-        if (circular_buffer_read(rxBuffer, (char *)data) != BUFFER_OK)
+        if (circular_buffer_read(rxBuffer, &data) != BUFFER_OK)
         {
             return false;  // Read failed
         }
@@ -66,6 +66,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "CirBuffer.h"
+#include <stdint.h>
 
 
 /**
@@ -84,7 +85,7 @@ CircularBuffer* circular_buffer_create(size_t capacity) {
         return NULL;
     }
 
-    cb->buffer = (char*)malloc(capacity * sizeof(char));
+    cb->buffer = (uint8_t*)malloc(capacity * sizeof(uint8_t));
     if (cb->buffer == NULL) {
         free(cb);
         return NULL;
@@ -118,7 +119,7 @@ void circular_buffer_destroy(CircularBuffer *cb) {
  *
  * @param cb - Pointer to the circular buffer
  */
-void circular_buffer_clear(CircularBuffer *cb) {
+void circular_buffer_clear(volatile CircularBuffer *cb) {
     if (cb != NULL) {
         cb->size = 0;
         cb->read_idx = 0;
@@ -132,7 +133,7 @@ void circular_buffer_clear(CircularBuffer *cb) {
  * @param cb - Pointer to the circular buffer
  * @return 1 if full, 0 if not full, -1 if NULL buffer
  */
-int circular_buffer_is_full(const CircularBuffer *cb) {
+int circular_buffer_is_full(CircularBuffer *cb) {
     if (cb == NULL) {
         return -1;
     }
@@ -145,7 +146,7 @@ int circular_buffer_is_full(const CircularBuffer *cb) {
  * @param cb - Pointer to the circular buffer
  * @return 1 if empty, 0 if not empty, -1 if NULL buffer
  */
-int circular_buffer_is_empty(const CircularBuffer *cb) {
+int circular_buffer_is_empty(CircularBuffer *cb) {
     if (cb == NULL) {
         return -1;
     }
@@ -159,12 +160,13 @@ int circular_buffer_is_empty(const CircularBuffer *cb) {
  * @param cb - Pointer to the circular buffer
  * @return Number of elements available for reading, 0 if NULL buffer
  */
-size_t circular_buffer_available(const CircularBuffer *cb) {
+size_t circular_buffer_available(CircularBuffer *cb) {
     if (cb == NULL) {
         return 0;
     }
     return cb->size;
 }
+
 
 /**
  * Write a single byte to the circular buffer
@@ -174,7 +176,7 @@ size_t circular_buffer_available(const CircularBuffer *cb) {
  * @return BUFFER_OK on success, BUFFER_OVERFLOW if buffer is full,
  *         BUFFER_NULL if NULL buffer provided
  */
-BufferStatus circular_buffer_write(CircularBuffer *cb, char data) {
+BufferStatus circular_buffer_write(volatile CircularBuffer *cb, volatile uint8_t data) {
     /* Validate buffer pointer */
     if (cb == NULL) {
         return BUFFER_NULL;
@@ -205,7 +207,7 @@ BufferStatus circular_buffer_write(CircularBuffer *cb, char data) {
  * @return BUFFER_OK on success, BUFFER_UNDERFLOW if buffer is empty,
  *         BUFFER_NULL if NULL buffer provided, BUFFER_PARAM_ERROR if data is NULL
  */
-BufferStatus circular_buffer_read(CircularBuffer *cb, char *data) {
+BufferStatus circular_buffer_read(volatile CircularBuffer *cb, volatile uint8_t *data) {
     /* Validate buffer pointer */
     if (cb == NULL) {
         return BUFFER_NULL;
@@ -229,6 +231,10 @@ BufferStatus circular_buffer_read(CircularBuffer *cb, char *data) {
 
     /* Decrement size */
     cb->size--;
+    if(cb->size==0)
+    {
+    	cb->read_idx = cb->write_idx;
+    }
 
     return BUFFER_OK;
 }
@@ -239,15 +245,6 @@ BufferStatus circular_buffer_read(CircularBuffer *cb, char *data) {
  * @param status - Buffer status code
  * @return Human-readable error message
  */
-const char* circular_buffer_error_msg(BufferStatus status) {
-    switch (status) {
-        case BUFFER_OK:          return "Success";
-        case BUFFER_OVERFLOW:    return "Buffer overflow - cannot write to full buffer";
-        case BUFFER_UNDERFLOW:   return "Buffer underflow - cannot read from empty buffer";
-        case BUFFER_NULL:        return "NULL buffer pointer provided";
-        case BUFFER_PARAM_ERROR: return "Invalid parameter provided";
-        default:                 return "Unknown error";
-    }
-}
+/* circular_buffer_error_msg removed to reduce code size (unused) */
 
 /* ==================== MAIN FUNCTION FOR TESTING ==================== */

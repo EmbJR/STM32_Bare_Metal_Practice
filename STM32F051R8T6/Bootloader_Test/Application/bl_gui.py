@@ -4,6 +4,7 @@ import os
 import threading
 import time
 import tkinter as tk
+from bl_crc import calculate_crc16
 from tkinter import filedialog, messagebox, ttk
 
 from bl_protocol import BootloaderProtocol
@@ -38,28 +39,33 @@ class BootloaderGUI:
         self.chunk_entry.insert(0, "256")
         self.chunk_entry.grid(row=3, column=1, padx=(0, 10), sticky="ew")
 
+        tk.Label(root, text="Delay Between Commands (ms):").grid(row=4, column=0, padx=10, sticky="w")
+        self.delay_entry = tk.Entry(root)
+        self.delay_entry.insert(0, "0")
+        self.delay_entry.grid(row=4, column=1, padx=(0, 10), sticky="ew")
+
         self.file_btn = ttk.Button(root, text="Select Bin File", command=self.select_file)
-        self.file_btn.grid(row=4, column=0, columnspan=3, pady=12, padx=10, sticky="ew")
+        self.file_btn.grid(row=5, column=0, columnspan=3, pady=12, padx=10, sticky="ew")
 
         self.file_label = tk.Label(root, text="No file selected", anchor="w", fg="#333333")
-        self.file_label.grid(row=5, column=0, columnspan=3, padx=10, sticky="ew")
+        self.file_label.grid(row=6, column=0, columnspan=3, padx=10, sticky="ew")
 
         self.progress = ttk.Progressbar(root, orient="horizontal", length=420, mode="determinate", maximum=100)
-        self.progress.grid(row=6, column=0, columnspan=2, pady=14, padx=10, sticky="ew")
+        self.progress.grid(row=7, column=0, columnspan=2, pady=14, padx=10, sticky="ew")
 
         self.progress_percent_var = tk.StringVar(value="0.0 %")
         self.progress_label = tk.Label(root, textvariable=self.progress_percent_var, width=8)
-        self.progress_label.grid(row=6, column=2, padx=10, sticky="e")
+        self.progress_label.grid(row=7, column=2, padx=10, sticky="e")
 
         self.status_var = tk.StringVar(value="Ready")
         self.status_label = tk.Label(root, textvariable=self.status_var, anchor="w", fg="#1a1a1a")
-        self.status_label.grid(row=7, column=0, columnspan=3, padx=10, sticky="ew")
+        self.status_label.grid(row=8, column=0, columnspan=3, padx=10, sticky="ew")
 
         self.update_btn = ttk.Button(root, text="Start Update", command=self.start_update, state="disabled")
-        self.update_btn.grid(row=8, column=0, columnspan=1, pady=12, padx=(10, 5), sticky="ew")
+        self.update_btn.grid(row=9, column=0, columnspan=1, pady=12, padx=(10, 5), sticky="ew")
 
         self.cancel_btn = ttk.Button(root, text="Cancel", command=self.cancel_update, state="disabled")
-        self.cancel_btn.grid(row=8, column=1, columnspan=2, pady=12, padx=(5, 10), sticky="ew")
+        self.cancel_btn.grid(row=9, column=1, columnspan=2, pady=12, padx=(5, 10), sticky="ew")
 
         self.file_path = ""
         self.cancel_event = threading.Event()
@@ -98,6 +104,9 @@ class BootloaderGUI:
             baudrate = int(self.baud_entry.get().strip())
             start_addr = int(self.addr_entry.get().strip(), 16)
             chunk_size = int(self.chunk_entry.get().strip())
+            delay_ms = int(self.delay_entry.get().strip())
+            if delay_ms < 0:
+                raise ValueError("Delay must be zero or positive")
         except ValueError as exc:
             messagebox.showerror("Invalid Input", f"Please verify serial configuration and numeric fields.\n{exc}")
             return
@@ -111,7 +120,7 @@ class BootloaderGUI:
 
         update_thread = threading.Thread(
             target=self._run_update,
-            args=(port, baudrate, start_addr, chunk_size),
+            args=(port, baudrate, start_addr, chunk_size, delay_ms / 1000.0),
             daemon=True,
         )
         update_thread.start()
@@ -120,9 +129,9 @@ class BootloaderGUI:
         self.cancel_event.set()
         self._set_status("Cancel requested, stopping after current chunk...")
 
-    def _run_update(self, port, baudrate, start_addr, chunk_size):
+    def _run_update(self, port, baudrate, start_addr, chunk_size, command_delay):
         try:
-            bl = BootloaderProtocol(port, baudrate)
+            bl = BootloaderProtocol(port, baudrate, command_delay=command_delay)
             file_size = os.path.getsize(self.file_path)
             num_chunks = math.ceil(file_size / chunk_size)
 
@@ -154,6 +163,16 @@ class BootloaderGUI:
                     percent_complete = ((chunk_index + 1) / num_chunks) * 100
                     self._set_progress(percent_complete)
 
+            self._set_status("Calculating firmware CRC...")
+            # Re-open the file to calculate the CRC of the entire firmware
+            with open(self.file_path, 'rb') as firmware_full:
+                full_firmware_data = firmware_full.read()
+                firmware_crc = calculate_crc16(full_firmware_data)
+
+            self._set_status("Sending transfer done command with CRC...")
+            if not bl.send_and_wait(bl.CMD_TRANSFER_DONE_UPLOAD, firmware_crc.to_bytes(2, 'big')):
+                raise RuntimeError("Failed to send transfer done command or CRC mismatch")
+
             self._finish(True, "Firmware update completed successfully!")
         except Exception as exc:
             self._finish(False, str(exc))
@@ -173,6 +192,7 @@ class BootloaderGUI:
         self.baud_entry.config(state=state)
         self.addr_entry.config(state=state)
         self.chunk_entry.config(state=state)
+        self.delay_entry.config(state=state)
 
     def _set_progress(self, percent: float):
         self.root.after(0, self.progress.configure, value=percent)

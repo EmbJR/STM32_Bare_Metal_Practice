@@ -55,7 +55,7 @@ Flash_Status_t Example_SafeProgramWithRetry(uint32_t flash_addr,
     return FLASH_STATUS_PGERR;
 }
 
-fw_err use_Flash_Write(uint8_t *data, uint16_t size)
+fw_err use_Flash_Write(const uint8_t *data, uint16_t size)
 {
     uint32_t current_addr = fw_info.flash_start_addr;
 
@@ -108,6 +108,8 @@ fw_err user_fuota_set_info(fw_up_str *fw_info)
 
 #endif
 int main(void) {
+	fw_err stt = SUC;
+	volatile uint32_t repeat = 0;
     // Configure system clock
 	SystemClock_Config_48MHz();
 
@@ -117,25 +119,33 @@ int main(void) {
     Bt_Uart_Init();
     fuota_init();
 
-
     user_fuota_get_info(&fw_info);
-    if(fw_info.flash_start_addr == 0x08002800)
-    {
-		// ... Bootloader system init and verification ...
-
-		// Attempt to jump
-		boot_jump_status_t result = boot_jump_to_app(APPLICATION_START_ADDR);
-
-		if (result != BOOT_JUMP_OK) {
-			// Jump failed. Stay in bootloader, signal an error, or wait.
-			while(1);
-		}
-    }
 
     while (1) {
     	//UART_SendStringIT(USART1, "Hello\n");
-    	fuota_process_Data();
-    	//for(int i=0; i < 20; i++);
+    	stt = fuota_process_Data();
+    	if(stt == DATA_NA)
+    	{
+    		repeat++;
+    		if((repeat > 500000) && (fw_info.flash_start_addr == APPLICATION_START_ADDR))
+    		{
+    			Bt_Uart_deinit();
+    			fuota_Deinit();
+    			// ... Bootloader system init and verification ...
+    			// Attempt to jump
+    			boot_jump_status_t result = boot_jump_to_app(APPLICATION_START_ADDR);
+
+    			if (result != BOOT_JUMP_OK) {
+    				// Jump failed. Stay in bootloader, signal an error, or wait.
+    				while(1);
+    			}
+    		}
+    	}
+    	else
+    	{
+    		repeat = 0;
+    	}
+    	for(int i=0; i < 200; i++);
         // Application code here
     }
 

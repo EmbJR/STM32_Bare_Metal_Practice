@@ -9,6 +9,7 @@ class BootloaderProtocol:
     CMD_SET_CHUNK_SIZE = 0x03
     CMD_SET_START_ADDR = 0x04
     CMD_FW_DATA = 0x05
+    CMD_TRANSFER_DONE_UPLOAD = 0x06
     STATUS_SUCCESS = 0x64
 
     STATUS_MAP = {
@@ -21,10 +22,12 @@ class BootloaderProtocol:
         0x6A: "Flash Write Error"
     }
 
-    def __init__(self, port, baudrate=115200, timeout=0.1, response_timeout=1.0):
+    def __init__(self, port, baudrate=115200, timeout=1.2, response_timeout=4.5, retry_delay=1.2, command_delay=1.0):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
         self.retry_limit = 5
         self.response_timeout = response_timeout
+        self.retry_delay = retry_delay
+        self.command_delay = float(command_delay)
 
     def make_packet(self, cmd: int, payload: bytes = b"") -> bytes:
         length = 1 + len(payload)
@@ -77,6 +80,10 @@ class BootloaderProtocol:
         packet = self.make_packet(cmd, payload)
 
         for attempt in range(1, self.retry_limit + 1):
+            if attempt > 1:
+                # Wait before retrying to allow hardware catch-up
+                time.sleep(self.retry_delay)
+
             self.ser.reset_input_buffer()
             self.ser.write(packet)
 
@@ -96,6 +103,8 @@ class BootloaderProtocol:
                         f"payload={payload_rx.hex()}"
                     )
                     if status == self.STATUS_SUCCESS:
+                        if self.command_delay > 0:
+                            time.sleep(self.command_delay)
                         return True
                     reason = status_text
             else:

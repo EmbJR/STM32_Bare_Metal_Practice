@@ -123,7 +123,6 @@ void UART_Init(USART_TypeDef *USARTx, UART_InitTypeDef *UART_InitStruct) {
     uint32_t cr2 = 0;
     uint32_t cr3 = 0;
     uint32_t clock_freq = 0;
-    uint32_t brr = 0;
     uint8_t index = UART_GetPeripheralIndex(USARTx);
     
     /* Enable UART clock */
@@ -375,8 +374,6 @@ uint16_t UART_ReceiveData(USART_TypeDef *USARTx) {
  * @return true if flag reached desired state, false if timeout
  */
 bool UART_WaitForFlag(USART_TypeDef *USARTx, uint32_t Flag, bool State, uint32_t Timeout) {
-    uint32_t tickstart = 0;
-    
     /* Get current tick (would need SysTick or similar) */
     /* For simplicity, use a simple counter loop */
     uint32_t counter = 0;

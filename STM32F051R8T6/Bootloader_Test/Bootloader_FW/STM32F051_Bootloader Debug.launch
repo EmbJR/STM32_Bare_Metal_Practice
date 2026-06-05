@@ -73,7 +73,7 @@
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
         <listEntry value="4"/>
     </listAttribute>
-    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;&gt;&lt;gdbmemoryBlockExpression address=&quot;536879069&quot; label=&quot;&amp;amp;(nbiterations)&quot;/&gt;&lt;gdbmemoryBlockExpression address=&quot;134249528&quot; label=&quot;FLASH_USER_END_ADDR&quot;/&gt;&lt;/memoryBlockExpressionList&gt;"/>
+    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;&gt;&lt;gdbmemoryBlockExpression address=&quot;536879069&quot; label=&quot;&amp;amp;(nbiterations)&quot;/&gt;&lt;gdbmemoryBlockExpression address=&quot;134249528&quot; label=&quot;FLASH_USER_END_ADDR&quot;/&gt;&lt;gdbmemoryBlockExpression address=&quot;536871052&quot; label=&quot;Fudata&quot;/&gt;&lt;/memoryBlockExpressionList&gt;"/>
     <stringAttribute key="process_factory_id" value="com.st.stm32cube.ide.mcu.debug.launch.HardwareDebugProcessFactory"/>
-    <stringAttribute key="saved_expressions&lt;seperator&gt;Unknown" value="8000000,0x08000000,0x8002740"/>
+    <stringAttribute key="saved_expressions&lt;seperator&gt;Unknown" value="8000000,0x08000000,0x8002740,0x20000408,Fudata"/>
 </launchConfiguration>
