@@ -15,10 +15,10 @@
 
 #if (CPU_VAL == CPU_8Bit)
 #define FOTA_BUFFER_SIZE    128
-#define RECV_BUFFER_SIZE    100
+#define UART_RECV_BUFFER_SIZE    100
 #elif ((CPU_VAL == CPU_16Bit) || (CPU_VAL == CPU_32Bit))
 #define FOTA_BUFFER_SIZE    512
-#define RECV_BUFFER_SIZE    200
+#define UART_RECV_BUFFER_SIZE    256
 #endif
 
 #define TxRx_CRC_POS			    1	// 1 byte
@@ -47,6 +47,7 @@ typedef enum
     CMD_SET_CHUNK_SIZE,
     CMD_SET_ADDR,
     CMD_FW_DATA,
+	ST_CM_APP_JUMP
 } cmd_type;
 
 typedef enum
@@ -57,6 +58,7 @@ typedef enum
     DATA_NA,
     FOTA_ERROR_LEN,
     FOTA_ERROR_CRC,
+	FOTA_ERROR_FLASH_WR,
 } fw_err;
 
 typedef struct
@@ -68,7 +70,7 @@ typedef struct
     uint16_t chunk_size;
     uint16_t nb_chunk;
     uint16_t chunk_addr;
-    uint32_t fw_addr;
+    uint32_t flash_start_addr;
 } fw_up_str;
 
 enum
@@ -84,13 +86,17 @@ enum
     ST_CM_PROCESS,
 };
 
+extern fw_up_str fw_info;
+extern volatile uint8_t FuComplete;
+
 //--------------------------------------------------------------------//
 fw_err fuota_init(void);
-fw_err fuota_incomming_buffer_process(const uint8_t *data, uint16_t size);
+void fuota_Deinit(void);
+fw_err fuota_incomming_buffer_process(volatile uint8_t *data, uint16_t size);
 fw_err fuota_process_Data(void);
 uint16_t fuota_cmd_process(volatile uint8_t *cmdData, uint16_t cmdLength);
 uint16_t fuota_encodeData(volatile uint8_t *encodedData, uint8_t commandVal, const uint8_t *datatoencode, uint16_t sizeofData);
-uint16_t fuota_encodeErrro(volatile uint8_t *encodedData, uint8_t commandVal, uint8_t errorVal);
+uint16_t fuota_encodeErrro(volatile uint8_t *encodedData, volatile uint8_t commandVal, volatile uint8_t errorVal);
 
 //----- Test function -------------//
 uint16_t make_packet(uint8_t cmd, const uint8_t *payload, uint16_t payload_len, uint8_t *out);
@@ -98,7 +104,11 @@ int fuota_test_Case(void);
 
 //----------- User Functions --------------------/
 void user_fuota_reply(uint8_t *data, uint16_t size);
-void user_fuota_get_info(fw_up_str *fw_info);
+fw_err user_fuota_get_info(fw_up_str *fw_info);
+fw_err  user_fuota_set_info(fw_up_str *fw_info);
+fw_err use_Flash_Write(const uint8_t *data, uint16_t size);
+
+
 
 
 #endif /* PACKET_PROCESS_H */
