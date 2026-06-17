@@ -26,9 +26,9 @@ typedef enum {
 typedef struct {
     uint8_t *buffer;      /* Pointer to the data buffer */
     size_t capacity;      /* Maximum number of elements */
-    volatile size_t size;       /* Current number of elements (volatile for ISR safety) */
-    volatile size_t read_idx;   /* Index for reading (volatile for ISR safety) */
-    volatile size_t write_idx;  /* Index for writing (volatile for ISR safety) */
+    size_t size;       /* Current number of elements (volatile for ISR safety) */
+    size_t read_idx;   /* Index for reading (volatile for ISR safety) */
+    size_t write_idx;  /* Index for writing (volatile for ISR safety) */
 } CircularBuffer;
 
 /* Function Prototypes */

@@ -22,7 +22,7 @@ class BootloaderProtocol:
         0x6A: "Flash Write Error"
     }
 
-    def __init__(self, port, baudrate=115200, timeout=1.2, response_timeout=4.5, retry_delay=1.2, command_delay=1.0):
+    def __init__(self, port, baudrate=115200, timeout=0.5, response_timeout=0.5, retry_delay=0.5, command_delay=0.5):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
         self.retry_limit = 5
         self.response_timeout = response_timeout

@@ -127,7 +127,7 @@ int main(void) {
     	if(stt == DATA_NA)
     	{
     		repeat++;
-    		if((repeat > 50000) && (fw_info.flash_start_addr == APPLICATION_START_ADDR))
+    		if((repeat > 200000) && (fw_info.flash_start_addr == APPLICATION_START_ADDR))
     		{
     			Bt_Uart_deinit();
     			fuota_Deinit();

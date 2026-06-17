@@ -174,7 +174,7 @@ fw_err fuota_process_Data(void)
     switch (status)
     {
     case ST_INIT:
-        length = crc16_Received = crc16_Generated = rcvlen = 0;
+        length = crc16_Received = crc16_Generated = rcvlen = retrycnt = 0;
         // Read data from circular buffer using API
         if (circular_buffer_read(rxBuffer, &data) != BUFFER_OK)
         {
@@ -265,7 +265,7 @@ fw_err fuota_process_Data(void)
 		{
 			// implement retry timeout.
 			retrycnt++;
-			if(retrycnt > 500)
+			if(retrycnt > 5000)
 			{
 				length = Clear_And_Build_reply((volatile uint8_t)FudataTx[0], (volatile uint8_t)FOTA_ERROR_LEN);
 				user_fuota_reply((uint8_t *)FudataTx, length);
