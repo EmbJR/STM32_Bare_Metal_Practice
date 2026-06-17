@@ -1,0 +1,9 @@
+@pm0215-stm32f0-series-cortexm0-programming-manual-stmicroelectronics.pdf , 
+@stm32f051r8.pdf 
+- Please generate the srivers for the timers for STM32F051R8T6. 
+- Also generate the driver API rich and easy to configure Timers. 
+- Use interrupts for the driver codes. 
+- There should not any third party code dependency like HAL or CMSIS. 
+- Generate the drivers under folder "E:\New\Microcontrollers\STM32\STM32_Bare_Metal_Practice\STM32F051R8T6\AI_Generated Code\Timers" 
+    with file names "STM32F0Time.c" and "STM32F0Time.h". 
+- Also give some examples to use this drivers under the same folder with name "STM32F0TimerExample.c"
