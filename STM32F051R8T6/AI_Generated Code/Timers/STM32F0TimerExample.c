@@ -14,38 +14,28 @@ static void Timer3_Callback(void) {
 }
 
 int main(void) {
-    TimerConfig timer2Config = {
-        .timer = TIMER2,
-        .prescaler = 4799,      // 48 MHz / (4799 + 1) = 10 kHz timer clock
-        .autoReload = 9999,     // 10 kHz / (9999 + 1) = 1 Hz update event
-        .updateInterrupt = true,
-        .irqPriority = 2,
-        .countMode = TIMER_MODE_UP,
-        .onePulseMode = false,
-        .autoReloadPreload = false
-    };
+    // Compute actual timer input clock (accounts APB prescaler)
+    uint32_t t2clk = STM32F0Timer_GetTimerClockHz(TIMER2);
+    uint32_t t3clk = STM32F0Timer_GetTimerClockHz(TIMER3);
 
-    TimerConfig timer3Config = {
-        .timer = TIMER3,
-        .prescaler = 4799,
-        .autoReload = 4999,     // 10 kHz / (4999 + 1) = 2 Hz update event
-        .updateInterrupt = true,
-        .irqPriority = 3,
-        .countMode = TIMER_MODE_UP,
-        .onePulseMode = false,
-        .autoReloadPreload = false
-    };
+    // Configure timers by period in microseconds for clarity
+    // TIMER2: 1 second = 1,000,000 us (1 Hz)
+    if (!STM32F0Timer_ConfigurePeriodUs(TIMER2, t2clk, 1000000U)) {
+        while (1);
+    }
+    // TIMER3: 0.5 second = 500,000 us (2 Hz)
+    if (!STM32F0Timer_ConfigurePeriodUs(TIMER3, t3clk, 500000U)) {
+        while (1);
+    }
 
     STM32F0Timer_SetUpdateCallback(TIMER2, Timer2_Callback);
     STM32F0Timer_SetUpdateCallback(TIMER3, Timer3_Callback);
 
-    if (!STM32F0Timer_Init(&timer2Config)) {
-        while (1);
-    }
-    if (!STM32F0Timer_Init(&timer3Config)) {
-        while (1);
-    }
+    // Enable update interrupts (NVIC priority in helper)
+    STM32F0Timer_EnableUpdateInterrupt(TIMER2, true);
+    STM32F0Timer_EnableUpdateInterrupt(TIMER3, true);
 
+    // Start timers
     STM32F0Timer_Start(TIMER2);
     STM32F0Timer_Start(TIMER3);
 

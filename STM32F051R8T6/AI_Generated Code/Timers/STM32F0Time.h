@@ -3,15 +3,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "rcc.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // RCC register addresses
-#define RCC_BASE          0x40021000UL
-#define RCC_APB1ENR       (*(volatile uint32_t *)(RCC_BASE + 0x1CUL))
-#define RCC_APB2ENR       (*(volatile uint32_t *)(RCC_BASE + 0x18UL))
+//#define RCC_BASE          0x40021000UL
+//#define RCC_APB1ENR       (*(volatile uint32_t *)(RCC_BASE + 0x1CUL))
+//#define RCC_APB2ENR       (*(volatile uint32_t *)(RCC_BASE + 0x18UL))
 
 // NVIC registers
 #define NVIC_ISER0        (*(volatile uint32_t *)0xE000E100UL)
@@ -98,6 +99,8 @@ bool STM32F0Timer_Init(const TimerConfig *config);
 bool STM32F0Timer_ConfigurePeriodUs(TimerId timer, uint32_t timerClockHz, uint32_t periodUs);
 void STM32F0Timer_SetPeriod(TimerId timer, uint32_t prescaler, uint32_t autoReload);
 void STM32F0Timer_SetUpdateCallback(TimerId timer, TimerCallback callback);
+// Returns the input clock (Hz) used by the timer peripheral (accounts APB prescaler behavior)
+uint32_t STM32F0Timer_GetTimerClockHz(TimerId timer);
 
 // Control
 void STM32F0Timer_Start(TimerId timer);

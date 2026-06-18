@@ -1,6 +1,9 @@
 #include "STM32F0Time.h"
 #include <stddef.h>
 
+// Use RCC helper to get system clock
+extern uint32_t RCC_GetSystemClockFrequency(void);
+
 static TimerCallback TimerCallbacks[TIMER_COUNT] = { 0 };
 
 static TIM_TypeDef *const TimerRegisters[TIMER_COUNT] = {
@@ -79,6 +82,36 @@ static inline TIM_TypeDef *GetTimer(uint32_t timerId) {
         return NULL;
     }
     return TimerRegisters[timerId];
+}
+
+uint32_t STM32F0Timer_GetTimerClockHz(TimerId timer) {
+    if (timer <= TIMER_INVALID || timer >= TIMER_COUNT) {
+        return 0;
+    }
+
+    uint32_t sysclk = RCC_GetSystemClockFrequency();
+    uint32_t ppre = (RCC_CFGR >> 8) & 0x7U; // APB prescaler encoding
+
+    uint32_t apb_div = 1;
+    if ((ppre & 0x4U) == 0) {
+        apb_div = 1;
+    } else {
+        switch (ppre) {
+            case 4: apb_div = 2; break;
+            case 5: apb_div = 4; break;
+            case 6: apb_div = 8; break;
+            case 7: apb_div = 16; break;
+            default: apb_div = 1; break;
+        }
+    }
+
+    uint32_t pclk = sysclk / apb_div;
+
+    // On STM32 families timers on APB run at PCLK when APB prescaler == 1,
+    // otherwise they run at PCLK * 2. This matches standard STM32 behaviour.
+    uint32_t timerclk = (apb_div == 1) ? pclk : (pclk * 2U);
+
+    return timerclk;
 }
 
 static inline int GetTimerIRQn(TimerId timer) {
