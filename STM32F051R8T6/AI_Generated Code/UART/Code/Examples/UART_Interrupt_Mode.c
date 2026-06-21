@@ -77,6 +77,18 @@ static void NVIC_DisableUARTInterrupt(uint8_t irq) {
     }
 }
 
+/**
+ * @brief  Set interrupt priority.
+ * @param  IRQn: interrupt number
+ * @param  Priority: priority value (0-3 for STM32F0xx)
+ */
+void NVIC_SetPriority(IRQn_Type IRQn, uint32_t Priority) {
+    uint8_t reg_index = IRQn >> 2;
+    uint8_t shift = (IRQn & 0x03) * 8;
+    NVIC_IPR[reg_index] &= ~(0xFF << shift);
+    NVIC_IPR[reg_index] |= (Priority << (shift + 6));  /* Bits 6-7 for priority */
+}
+
 /*============================================================================
  * Buffer Management Functions
  *============================================================================*/

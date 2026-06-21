@@ -1,0 +1,32 @@
+I want to develop the RCC/Clockdriver for the STM32H743ZIT6 controller.
+I need you to understand the RCC register structure, RCC modes and other important imformation about RCC from the below documents placed in the repository.
+1> STM32H743ZI\Documents_H7\Datasheet_stm32h743vi.pdf
+2> STM32H743ZI\Documents_H7\Reference_Manual_stm32h742-stm32h743-753-and-stm32h750.pdf
+3> https://www.st.com/resource/en/reference_manual/rm0433-stm32h742-stm32h743753-and-stm32h750-value-line-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+
+Please provide the RCC/Clock driver code for the STM32H743ZIT6 controller.
+Also provide the example codes for below requirement.
+1> Running on system clock speed of 4MHz.
+    a> HSI clock source
+    b> PLL clock source
+    c> MSI clock source
+    d> HSI clock source
+2> Running on system clock speed of 16MHz.
+    a> HSE clock source
+    b> PLL clock source
+    c> MSI clock source
+    d> HSI clock source
+3> Running on system clock speed of 480MHz (Maximum system clock speed)
+    a> HSE clock source
+    b> PLL clock source
+    c> MSI clock source
+    d> HSI clock source
+
+Please note that the driver code should not have anny other library dependencies like (CMSIS, HAL, etc)
+
+I want you to generate the RCCH743ZI.c anf RCCH743ZI.h files for the driver code 
+inside the folder "\STM32H743ZI\Bare_Metal_Drivers\RCC"
+
+and the example codes inside the folder "\STM32H743ZI\Bare_Metal_Drivers\RCC\Examples"
+
+Please make the code as simple as possible, modular and easy to understand.
