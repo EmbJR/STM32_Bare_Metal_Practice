@@ -1,471 +1,431 @@
 #include "RCCH743ZI.h"
 
-#define TIMEOUT_MAX             0xFFFFU
-
-static volatile uint32_t s_delay_counter = 0;
-
-static void delay(volatile uint32_t cycles) {
-    while (cycles--) {
-        __asm__ volatile ("nop");
-    }
+/* =========================================================================
+ *  PWR / Flash helpers
+ * ========================================================================= */
+static void pwr_unlock_backup_domain(void)
+{
+    SET_BIT(PWR_REG(PWR_CR1), PWR_CR1_DBP);
 }
 
-void RCC_EnableHSI(void) {
-    RCC_CR |= CR_HSION;
+void RCC_SetFlashLatency(uint32_t wait_states)
+{
+    uint32_t reg = FLASH_REG(FLASH_ACR);
+    reg &= ~FLASH_ACR_LATENCY_Msk;
+    reg |= (wait_states << FLASH_ACR_LATENCY_Pos) & FLASH_ACR_LATENCY_Msk;
+    FLASH_REG(FLASH_ACR) = reg;
 }
 
-void RCC_DisableHSI(void) {
-    RCC_CR &= ~CR_HSION;
+/* =========================================================================
+ *  LSE / LSI / RTC
+ * ========================================================================= */
+void RCC_LSEConfig(uint8_t enable, uint8_t bypass, uint8_t drive)
+{
+    uint32_t reg;
+    pwr_unlock_backup_domain();
+
+    reg = RCC_REG(RCC_BDCR);
+    reg &= ~(RCC_BDCR_LSEBYP | RCC_BDCR_LSEDRV_Msk | RCC_BDCR_LSEON);
+
+    if (bypass) reg |= RCC_BDCR_LSEBYP;
+    reg |= ((uint32_t)drive << RCC_BDCR_LSEDRV_Pos) & RCC_BDCR_LSEDRV_Msk;
+    if (enable) reg |= RCC_BDCR_LSEON;
+
+    RCC_REG(RCC_BDCR) = reg;
 }
 
-uint32_t RCC_IsHSIReady(void) {
-    return (RCC_CR & CR_HSIRDY) != 0;
+uint8_t RCC_LSEReady(void)
+{
+    return (RCC_REG(RCC_BDCR) & RCC_BDCR_LSERDY) ? 1U : 0U;
 }
 
-void RCC_EnableCSI(void) {
-    RCC_CR |= CR_CSION;
+void RCC_LSIEnable(uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_CSR), RCC_CSR_LSION);
+    else         CLEAR_BIT(RCC_REG(RCC_CSR), RCC_CSR_LSION);
 }
 
-void RCC_DisableCSI(void) {
-    RCC_CR &= ~CR_CSION;
+uint8_t RCC_LSIRdy(void)
+{
+    return (RCC_REG(RCC_CSR) & RCC_CSR_LSIRDY) ? 1U : 0U;
 }
 
-uint32_t RCC_IsCSIReady(void) {
-    return (RCC_CR & CR_CSIRDY) != 0;
+void RCC_RTCConfig(uint32_t rtcsel)
+{
+    pwr_unlock_backup_domain();
+    uint32_t reg = RCC_REG(RCC_BDCR);
+    reg &= ~RCC_BDCR_RTCSEL_Msk;
+    reg |= (rtcsel & RCC_BDCR_RTCSEL_Msk);
+    RCC_REG(RCC_BDCR) = reg;
 }
 
-void RCC_EnableHSE(void) {
-    RCC_CR |= CR_HSEON;
+void RCC_RTCEnable(uint8_t enable)
+{
+    pwr_unlock_backup_domain();
+    if (enable) SET_BIT(RCC_REG(RCC_BDCR), RCC_BDCR_RTCEN);
+    else         CLEAR_BIT(RCC_REG(RCC_BDCR), RCC_BDCR_RTCEN);
 }
 
-void RCC_DisableHSE(void) {
-    RCC_CR &= ~CR_HSEON;
+/* =========================================================================
+ *  HSI
+ * ========================================================================= */
+void RCC_HSIEnable(uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_CR), RCC_CR_HSION);
+    else         CLEAR_BIT(RCC_REG(RCC_CR), RCC_CR_HSION);
 }
 
-uint32_t RCC_IsHSEReady(void) {
-    return (RCC_CR & CR_HSERDY) != 0;
+uint8_t RCC_HSIRdy(void)
+{
+    return (RCC_REG(RCC_CR) & RCC_CR_HSIRDY) ? 1U : 0U;
 }
 
-void RCC_EnableLSI(void) {
-    RCC_CSR |= CSR_LSION;
+void RCC_HSIConfig(uint32_t div_code)
+{
+    uint32_t reg = RCC_REG(RCC_CR);
+    reg &= ~RCC_CR_HSIDIV_Msk;
+    reg |= (div_code << RCC_CR_HSIDIV_Pos) & RCC_CR_HSIDIV_Msk;
+    RCC_REG(RCC_CR) = reg;
+
+    /* wait for HSIDIVF to confirm new ratio is in effect */
+    while ((RCC_REG(RCC_CR) & RCC_CR_HSIDIVF) == 0U) { /* spin */ }
 }
 
-void RCC_DisableLSI(void) {
-    RCC_CSR &= ~CSR_LSION;
+/* =========================================================================
+ *  CSI
+ * ========================================================================= */
+void RCC_CSIEnable(uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_CR), RCC_CR_CSION);
+    else         CLEAR_BIT(RCC_REG(RCC_CR), RCC_CR_CSION);
 }
 
-uint32_t RCC_IsLSIReady(void) {
-    return (RCC_CSR & CSR_LSIRDY) != 0;
+uint8_t RCC_CSIRdy(void)
+{
+    return (RCC_REG(RCC_CR) & RCC_CR_CSIRDY) ? 1U : 0U;
 }
 
-void RCC_EnableLSE(void) {
-    RCC_BDCR |= BDCR_LSEON;
+/* =========================================================================
+ *  HSE
+ * ========================================================================= */
+void RCC_HSEBypass(uint8_t bypass)
+{
+    if (bypass) SET_BIT(RCC_REG(RCC_CR), RCC_CR_HSEBYP);
+    else         CLEAR_BIT(RCC_REG(RCC_CR), RCC_CR_HSEBYP);
 }
 
-void RCC_DisableLSE(void) {
-    RCC_BDCR &= ~BDCR_LSEON;
+void RCC_HSEEnable(uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_CR), RCC_CR_HSEON);
+    else         CLEAR_BIT(RCC_REG(RCC_CR), RCC_CR_HSEON);
 }
 
-uint32_t RCC_IsLSEReady(void) {
-    return (RCC_BDCR & BDCR_LSERDY) != 0;
+uint8_t RCC_HSERdy(void)
+{
+    return (RCC_REG(RCC_CR) & RCC_CR_HSERDY) ? 1U : 0U;
 }
 
-void RCC_EnableHSI48(void) {
-    RCC_CR |= CR_HSI48ON;
+/* =========================================================================
+ *  PLL1
+ * ========================================================================= */
+void RCC_PLL1Config(const RCC_PLL1_Init_t *cfg)
+{
+    /* 1) select PLL source and prescaler (PLL must be disabled) */
+    uint32_t sel = RCC_REG(RCC_PLLCKSELR);
+    sel &= ~(RCC_PLLCKSELR_PLLSRC_Msk |
+             RCC_PLLCKSELR_DIVM1_Msk);
+    sel |= (cfg->pll_src & RCC_PLLCKSELR_PLLSRC_Msk);
+    sel |= ((cfg->divm << RCC_PLLCKSELR_DIVM1_Pos) & RCC_PLLCKSELR_DIVM1_Msk);
+    RCC_REG(RCC_PLLCKSELR) = sel;
+
+    /* 2) program PLL1 VCO settings (RGE / VCOSEL / FRACEN / output enables) */
+    uint32_t cf = RCC_REG(RCC_PLLCFGR);
+    cf &= ~(RCC_PLLCFGR_PLL1RGE_Msk |
+            RCC_PLLCFGR_PLL1VCOSEL |
+            RCC_PLLCFGR_PLL1FRACEN |
+            RCC_PLLCFGR_DIVP1EN |
+            RCC_PLLCFGR_DIVQ1EN |
+            RCC_PLLCFGR_DIVR1EN);
+    cf |= ((cfg->pll_rge    << RCC_PLLCFGR_PLL1RGE_Pos) & RCC_PLLCFGR_PLL1RGE_Msk);
+    if (cfg->pll_vcosel)   cf |= RCC_PLLCFGR_PLL1VCOSEL;
+    /* no fractional mode for our examples */
+    if (cfg->enable_p)     cf |= RCC_PLLCFGR_DIVP1EN;
+    if (cfg->enable_q)     cf |= RCC_PLLCFGR_DIVQ1EN;
+    if (cfg->enable_r)     cf |= RCC_PLLCFGR_DIVR1EN;
+    RCC_REG(RCC_PLLCFGR) = cf;
+
+    /* 3) program PLL1 dividers (DIVN, DIVP, DIVQ, DIVR) */
+    uint32_t d = 0;
+    d |= ((cfg->divp << RCC_PLLDIVR_DIVP_Pos) & RCC_PLLDIVR_DIVP_Msk);
+    d |= ((cfg->divq << RCC_PLLDIVR_DIVQ_Pos) & RCC_PLLDIVR_DIVQ_Msk);
+    d |= ((cfg->divr << RCC_PLLDIVR_DIVR_Pos) & RCC_PLLDIVR_DIVR_Msk);
+    d |= ((cfg->divn << RCC_PLLDIVR_DIVN_Pos) & RCC_PLLDIVR_DIVN_Msk);
+    RCC_REG(RCC_PLL1DIVR) = d;
+
+    /* 4) disable fractional latch */
+    RCC_REG(RCC_PLL1FRACR) = 0U;
 }
 
-void RCC_DisableHSI48(void) {
-    RCC_CR &= ~CR_HSI48ON;
+void RCC_PLL1Enable(uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_CR), RCC_CR_PLL1ON);
+    else         CLEAR_BIT(RCC_REG(RCC_CR), RCC_CR_PLL1ON);
 }
 
-uint32_t RCC_IsHSI48Ready(void) {
-    return (RCC_CR & CR_HSI48RDY) != 0;
+uint8_t RCC_PLL1Ready(void)
+{
+    return (RCC_REG(RCC_CR) & RCC_CR_PLL1RDY) ? 1U : 0U;
 }
 
-void RCC_EnablePLL1(void) {
-    RCC_CR |= CR_PLL1ON;
+/* =========================================================================
+ *  Bus prescalers
+ * ========================================================================= */
+void RCC_SetAHBPrescaler(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D1CFGR);
+    r &= ~RCC_D1CFGR_HPRE_Msk;
+    r |= (code << RCC_D1CFGR_HPRE_Pos) & RCC_D1CFGR_HPRE_Msk;
+    RCC_REG(RCC_D1CFGR) = r;
 }
 
-void RCC_DisablePLL1(void) {
-    RCC_CR &= ~CR_PLL1ON;
+void RCC_SetD1CPRE(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D1CFGR);
+    r &= ~RCC_D1CFGR_D1CPRE_Msk;
+    r |= (code << RCC_D1CFGR_D1CPRE_Pos) & RCC_D1CFGR_D1CPRE_Msk;
+    RCC_REG(RCC_D1CFGR) = r;
 }
 
-uint32_t RCC_IsPLL1Ready(void) {
-    return (RCC_CR & CR_PLL1RDY) != 0;
+void RCC_SetD1PPRE(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D1CFGR);
+    r &= ~RCC_D1CFGR_D1PPRE_Msk;
+    r |= (code << RCC_D1CFGR_D1PPRE_Pos) & RCC_D1CFGR_D1PPRE_Msk;
+    RCC_REG(RCC_D1CFGR) = r;
 }
 
-void RCC_EnablePLL2(void) {
-    RCC_CR |= CR_PLL2ON;
+void RCC_SetD2PPRE1(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D2CFGR);
+    r &= ~RCC_D2CFGR_D2PPRE1_Msk;
+    r |= (code << RCC_D2CFGR_D2PPRE1_Pos) & RCC_D2CFGR_D2PPRE1_Msk;
+    RCC_REG(RCC_D2CFGR) = r;
 }
 
-void RCC_DisablePLL2(void) {
-    RCC_CR &= ~CR_PLL2ON;
+void RCC_SetD2PPRE2(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D2CFGR);
+    r &= ~RCC_D2CFGR_D2PPRE2_Msk;
+    r |= (code << RCC_D2CFGR_D2PPRE2_Pos) & RCC_D2CFGR_D2PPRE2_Msk;
+    RCC_REG(RCC_D2CFGR) = r;
 }
 
-uint32_t RCC_IsPLL2Ready(void) {
-    return (RCC_CR & CR_PLL2RDY) != 0;
+void RCC_SetD3PPRE(uint32_t code)
+{
+    uint32_t r = RCC_REG(RCC_D3CFGR);
+    r &= ~RCC_D3CFGR_D3PPRE_Msk;
+    r |= (code << RCC_D3CFGR_D3PPRE_Pos) & RCC_D3CFGR_D3PPRE_Msk;
+    RCC_REG(RCC_D3CFGR) = r;
 }
 
-void RCC_EnablePLL3(void) {
-    RCC_CR |= CR_PLL3ON;
+/* =========================================================================
+ *  System clock switch
+ * ========================================================================= */
+void RCC_SetSysClockSrc(RCC_SysClkSrc_t src)
+{
+    uint32_t r = RCC_REG(RCC_CFGR);
+    r &= ~RCC_CFGR_SW_Msk;
+    r |= ((uint32_t)src << RCC_CFGR_SW_Pos) & RCC_CFGR_SW_Msk;
+    RCC_REG(RCC_CFGR) = r;
+
+    /* wait until SWS reflects the new source */
+    while (((RCC_REG(RCC_CFGR) & RCC_CFGR_SWS_Msk) >> RCC_CFGR_SWS_Pos) != (uint32_t)src)
+    { /* spin */ }
 }
 
-void RCC_DisablePLL3(void) {
-    RCC_CR &= ~CR_PLL3ON;
+RCC_SysClkSrc_t RCC_GetSysClockSrc(void)
+{
+    return (RCC_SysClkSrc_t)((RCC_REG(RCC_CFGR) & RCC_CFGR_SWS_Msk) >> RCC_CFGR_SWS_Pos);
 }
 
-uint32_t RCC_IsPLL3Ready(void) {
-    return (RCC_CR & CR_PLL3RDY) != 0;
+/* =========================================================================
+ *  MCO configuration
+ * ========================================================================= */
+void RCC_MCO1Config(uint32_t sel, uint32_t prescaler)
+{
+    uint32_t r = RCC_REG(RCC_CFGR);
+    r &= ~(RCC_CFGR_MCO1_Msk | RCC_CFGR_MCO1PRE_Msk);
+    r |= ((sel & 7U) << RCC_CFGR_MCO1_Pos);
+    r |= ((prescaler & 0xFU) << RCC_CFGR_MCO1PRE_Pos);
+    RCC_REG(RCC_CFGR) = r;
 }
 
-void RCC_ConfigurePLL1(const PLL_Config *config) {
-    uint32_t reg = RCC_PLLCFGR;
-    
-    reg &= ~(PLLCFGR_PLLSRC_MASK << PLLCFGR_PLLSRC_Pos);
-    reg |= (config->pll_source & PLLCFGR_PLLSRC_MASK) << PLLCFGR_PLLSRC_Pos;
-    
-    reg &= ~(PLLCFGR_PLL1M_MASK << PLLCFGR_PLL1M_Pos);
-    reg |= (config->pll_m & PLLCFGR_PLL1M_MASK) << PLLCFGR_PLL1M_Pos;
-    
-    reg &= ~(PLLCFGR_PLL1N_MASK << PLLCFGR_PLL1N_Pos);
-    reg |= (config->pll_n & PLLCFGR_PLL1N_MASK) << PLLCFGR_PLL1N_Pos;
-    
-    reg &= ~(PLLCFGR_PLL1P_MASK << PLLCFGR_PLL1P_Pos);
-    reg |= (((config->pll_p >> 1) - 1) & PLLCFGR_PLL1P_MASK) << PLLCFGR_PLL1P_Pos;
-    
-    reg &= ~(0xFU << PLLCFGR_PLL1Q_Pos);
-    reg |= ((config->pll_q & 0xFU) << PLLCFGR_PLL1Q_Pos);
-    
-    reg &= ~(0x7U << PLLCFGR_PLL1R_Pos);
-    reg |= ((config->pll_r & 0x7U) << PLLCFGR_PLL1R_Pos);
-    
-    RCC_PLLCFGR = reg;
+void RCC_MCO2Config(uint32_t sel, uint32_t prescaler)
+{
+    uint32_t r = RCC_REG(RCC_CFGR);
+    r &= ~(RCC_CFGR_MCO2_Msk | RCC_CFGR_MCO2PRE_Msk);
+    r |= ((sel & 7U) << RCC_CFGR_MCO2_Pos);
+    r |= ((prescaler & 0xFU) << RCC_CFGR_MCO2PRE_Pos);
+    RCC_REG(RCC_CFGR) = r;
 }
 
-void RCC_ConfigurePLL2(const PLL_Config *config) {
-    uint32_t reg = RCC_PLLCFGR;
-    
-    reg &= ~(0x3FU << 4);
-    reg |= (config->pll_m & 0x3FU) << 4;
-    
-    reg &= ~(0x1FFU << 8);
-    reg |= (config->pll_n & 0x1FFU) << 8;
-    
-    reg &= ~(0x7FU << 16);
-    reg |= (((config->pll_p >> 1) - 1) & 0x7FU) << 16;
-    
-    reg &= ~(0xFU << 20);
-    reg |= (config->pll_q & 0xFU) << 20;
-    
-    reg &= ~(0x7U << 24);
-    reg |= (config->pll_r & 0x7U) << 24;
-    
-    RCC_PLLCFGR = reg;
+/* =========================================================================
+ *  Generic AHB / APB clock enable / reset
+ * ========================================================================= */
+void RCC_AHB1_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_AHB1ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_AHB1ENR), mask);
+}
+void RCC_AHB1_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_AHB1RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_AHB1RSTR), mask);
 }
 
-void RCC_ConfigurePLL3(const PLL_Config *config) {
-    uint32_t reg = RCC_PLLCFGR;
-    
-    reg &= ~(0x3FU << 4);
-    reg |= (config->pll_m & 0x3FU) << 4;
-    
-    reg &= ~(0x1FFU << 8);
-    reg |= (config->pll_n & 0x1FFU) << 8;
-    
-    reg &= ~(0x7FU << 16);
-    reg |= (((config->pll_p >> 1) - 1) & 0x7FU) << 16;
-    
-    reg &= ~(0xFU << 20);
-    reg |= (config->pll_q & 0xFU) << 20;
-    
-    reg &= ~(0x7U << 24);
-    reg |= (config->pll_r & 0x7U) << 24;
-    
-    RCC_PLLCFGR = reg;
+void RCC_AHB2_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_AHB2ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_AHB2ENR), mask);
+}
+void RCC_AHB2_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_AHB2RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_AHB2RSTR), mask);
 }
 
-void RCC_SetSystemClock(SystemClockSource source) {
-    uint32_t reg = RCC_CFGR;
-    reg &= ~(CFGR_SW_MASK << CFGR_SW_Pos);
-    reg |= (source & CFGR_SW_MASK) << CFGR_SW_Pos;
-    RCC_CFGR = reg;
-    
-    while (((RCC_CFGR >> CFGR_SWS_Pos) & CFGR_SWS_MASK) != source) {
-    }
+void RCC_AHB3_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_AHB3ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_AHB3ENR), mask);
+}
+void RCC_AHB3_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_AHB3RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_AHB3RSTR), mask);
 }
 
-SystemClockSource RCC_GetSystemClockSource(void) {
-    return (SystemClockSource)((RCC_CFGR >> CFGR_SWS_Pos) & CFGR_SWS_MASK);
+void RCC_AHB4_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_AHB4ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_AHB4ENR), mask);
+}
+void RCC_AHB4_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_AHB4RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_AHB4RSTR), mask);
 }
 
-void RCC_SetAHBPrescaler(AHBPrescaler prescaler) {
-    uint32_t reg = RCC_D1CFGR;
-    reg &= ~(0xFU << D1CFGR_HPRE_Pos);
-    reg |= (prescaler & 0xFU) << D1CFGR_HPRE_Pos;
-    RCC_D1CFGR = reg;
+void RCC_APB1L_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_APB1LENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_APB1LENR), mask);
+}
+void RCC_APB1L_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_APB1LRSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_APB1LRSTR), mask);
 }
 
-void RCC_SetAPB1Prescaler(APBPrescaler prescaler) {
-    uint32_t reg = RCC_D2CFGR;
-    reg &= ~(D2CFGR_D2PPRE1_MASK << D2CFGR_D2PPRE1_Pos);
-    reg |= (prescaler & D2CFGR_D2PPRE1_MASK) << D2CFGR_D2PPRE1_Pos;
-    RCC_D2CFGR = reg;
+void RCC_APB1H_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_APB1HENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_APB1HENR), mask);
+}
+void RCC_APB1H_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_APB1HRSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_APB1HRSTR), mask);
 }
 
-void RCC_SetAPB2Prescaler(APBPrescaler prescaler) {
-    uint32_t reg = RCC_D2CFGR;
-    reg &= ~(D2CFGR_D2PPRE2_MASK << D2CFGR_D2PPRE2_Pos);
-    reg |= (prescaler & D2CFGR_D2PPRE2_MASK) << D2CFGR_D2PPRE2_Pos;
-    RCC_D2CFGR = reg;
+void RCC_APB2_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_APB2ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_APB2ENR), mask);
+}
+void RCC_APB2_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_APB2RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_APB2RSTR), mask);
 }
 
-void RCC_SetAPB3Prescaler(APBPrescaler prescaler) {
-    uint32_t reg = RCC_D3CFGR;
-    reg &= ~(D3CFGR_D3PPRE_MASK << D3CFGR_D3PPRE_Pos);
-    reg |= (prescaler & D3CFGR_D3PPRE_MASK) << D3CFGR_D3PPRE_Pos;
-    RCC_D3CFGR = reg;
+void RCC_APB3_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_APB3ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_APB3ENR), mask);
+}
+void RCC_APB3_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_APB3RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_APB3RSTR), mask);
 }
 
-void RCC_SetAPB4Prescaler(APBPrescaler prescaler) {
-    uint32_t reg = RCC_D3CFGR;
-    reg &= ~(D3CFGR_D3PPRE_MASK << D3CFGR_D3PPRE_Pos);
-    reg |= (prescaler & D3CFGR_D3PPRE_MASK) << D3CFGR_D3PPRE_Pos;
-    RCC_D3CFGR = reg;
+void RCC_APB4_ClkEnable(uint32_t mask, uint8_t enable)
+{
+    if (enable) SET_BIT(RCC_REG(RCC_APB4ENR), mask);
+    else         CLEAR_BIT(RCC_REG(RCC_APB4ENR), mask);
+}
+void RCC_APB4_ClkReset(uint32_t mask)
+{
+    SET_BIT(RCC_REG(RCC_APB4RSTR), mask);
+    CLEAR_BIT(RCC_REG(RCC_APB4RSTR), mask);
 }
 
-uint32_t RCC_GetSYSCLKFrequency(void) {
-    SystemClockSource source = RCC_GetSystemClockSource();
-    uint32_t freq = 0;
-    
-    switch (source) {
-        case CLOCK_SOURCE_HSI:
-            freq = HSI_FREQUENCY;
-            break;
-        case CLOCK_SOURCE_CSI:
-            freq = CSI_FREQUENCY;
-            break;
-        case CLOCK_SOURCE_HSE:
-            freq = HSE_FREQUENCY_MIN;
-            break;
-        case CLOCK_SOURCE_PLL1:
-            freq = RCC_GetSYSCLKFrequency();
-            break;
-    }
-    
-    return freq;
+/* =========================================================================
+ *  Per-peripheral dispatch (RCC_Periph_t -> bus)
+ *  Each peripheral in the enum is tagged with a small bit-band marker:
+ *      bit 31 set  => use the AHB1..AHB4 / APB.. dispatch
+ *  We use the numeric *value* of the enum (i.e. the (1U << n) bit) and
+ *  compare against each bus' own "is-this-mine" check implemented in the
+ *  function below.  The simplest robust approach: try each bus and accept
+ *  the first that contains the bit.
+ * ========================================================================= */
+static uint8_t bit_in_mask(uint32_t mask, uint32_t bit)
+{
+    return (mask & bit) ? 1U : 0U;
 }
 
-uint32_t RCC_GetHCLKFrequency(void) {
-    uint32_t sysclk = RCC_GetSYSCLKFrequency();
-    uint32_t hpre = (RCC_D1CFGR >> D1CFGR_HPRE_Pos) & 0xFU;
-    
-    if (hpre < 8) {
-        return sysclk;
-    }
-    
-    uint32_t divisor = 1 << (hpre - 7);
-    return sysclk / divisor;
+void RCC_PeriphEnable(RCC_Periph_t p)
+{
+    uint32_t b = (uint32_t)p;
+
+    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkEnable(b, 1);
+    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkEnable(b, 1);
+    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkEnable (b, 1);
+    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkEnable (b, 1);
 }
 
-uint32_t RCC_GetPCLK1Frequency(void) {
-    uint32_t hclk = RCC_GetHCLKFrequency();
-    uint32_t ppre1 = (RCC_D2CFGR >> D2CFGR_D2PPRE1_Pos) & D2CFGR_D2PPRE1_MASK;
-    
-    if (ppre1 < 4) {
-        return hclk;
-    }
-    
-    uint32_t divisor = 1 << (ppre1 - 3);
-    return hclk / divisor;
+void RCC_PeriphDisable(RCC_Periph_t p)
+{
+    uint32_t b = (uint32_t)p;
+
+    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkEnable(b, 0);
+    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkEnable(b, 0);
+    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkEnable (b, 0);
+    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkEnable (b, 0);
 }
 
-uint32_t RCC_GetPCLK2Frequency(void) {
-    uint32_t hclk = RCC_GetHCLKFrequency();
-    uint32_t ppre2 = (RCC_D2CFGR >> D2CFGR_D2PPRE2_Pos) & D2CFGR_D2PPRE2_MASK;
-    
-    if (ppre2 < 4) {
-        return hclk;
-    }
-    
-    uint32_t divisor = 1 << (ppre2 - 3);
-    return hclk / divisor;
-}
+void RCC_PeriphReset(RCC_Periph_t p)
+{
+    uint32_t b = (uint32_t)p;
 
-void RCC_SetVoltageScale(VoltageScale scale) {
-    uint32_t reg = PWR_CR1;
-    reg &= ~(PWR_CR1_VOS_MASK << PWR_CR1_VOS_Pos);
-    reg |= (scale & PWR_CR1_VOS_MASK) << PWR_CR1_VOS_Pos;
-    PWR_CR1 = reg;
-}
-
-VoltageScale RCC_GetVoltageScale(void) {
-    return (VoltageScale)((PWR_CR1 >> PWR_CR1_VOS_Pos) & PWR_CR1_VOS_MASK);
-}
-
-void RCC_ConfigureFlashLatency(uint32_t sysclk_freq) {
-    uint32_t wait_states = 0;
-    
-    if (sysclk_freq <= 20000000UL) {
-        wait_states = FLASH_ACR_LATENCY_0WS;
-    } else if (sysclk_freq <= 40000000UL) {
-        wait_states = FLASH_ACR_LATENCY_1WS;
-    } else if (sysclk_freq <= 60000000UL) {
-        wait_states = FLASH_ACR_LATENCY_2WS;
-    } else if (sysclk_freq <= 80000000UL) {
-        wait_states = FLASH_ACR_LATENCY_3WS;
-    } else if (sysclk_freq <= 100000000UL) {
-        wait_states = FLASH_ACR_LATENCY_4WS;
-    } else if (sysclk_freq <= 120000000UL) {
-        wait_states = FLASH_ACR_LATENCY_5WS;
-    } else if (sysclk_freq <= 140000000UL) {
-        wait_states = FLASH_ACR_LATENCY_6WS;
-    } else {
-        wait_states = FLASH_ACR_LATENCY_7WS;
-    }
-    
-    uint32_t reg = FLASH_ACR;
-    reg &= ~(FLASH_ACR_LATENCY_MASK << FLASH_ACR_LATENCY_Pos);
-    reg |= (wait_states & FLASH_ACR_LATENCY_MASK) << FLASH_ACR_LATENCY_Pos;
-    FLASH_ACR = reg;
-    
-    reg = FLASH_ACR;
-    reg &= ~(0x3U << FLASH_ACR_WRHIGHFREQ_Pos);
-    reg |= (0x2U << FLASH_ACR_WRHIGHFREQ_Pos);
-    FLASH_ACR = reg;
-}
-
-void RCC_SetPowerMode(VoltageScale voltage_scale) {
-    RCC_SetVoltageScale(voltage_scale);
-    
-    while (RCC_GetVoltageScale() != voltage_scale) {
-    }
-    
-    if (voltage_scale == VOLTAGE_SCALE1) {
-        PWR_CR5 &= ~(1U << PWR_CR5_R1MODE_Pos);
-    }
-}
-
-void RCC_SystemClockConfig_HSI(uint32_t sysclk) {
-    RCC_EnableHSI();
-    while (!RCC_IsHSIReady());
-    
-    RCC_SetAHBPrescaler(AHB_DIV_1);
-    RCC_SetAPB1Prescaler(APB_DIV_1);
-    RCC_SetAPB2Prescaler(APB_DIV_1);
-    
-    if (sysclk > HSI_FREQUENCY) {
-        sysclk = HSI_FREQUENCY;
-    }
-    
-    RCC_ConfigureFlashLatency(sysclk);
-    RCC_SetSystemClock(CLOCK_SOURCE_HSI);
-}
-
-void RCC_SystemClockConfig_HSE(uint32_t sysclk) {
-    RCC_EnableHSE();
-    while (!RCC_IsHSEReady());
-    
-    RCC_SetAHBPrescaler(AHB_DIV_1);
-    RCC_SetAPB1Prescaler(APB_DIV_1);
-    RCC_SetAPB2Prescaler(APB_DIV_1);
-    
-    RCC_ConfigureFlashLatency(sysclk);
-    RCC_SetSystemClock(CLOCK_SOURCE_HSE);
-}
-
-void RCC_SystemClockConfig_PLL(PLL_Config *pll_config, uint32_t sysclk) {
-    RCC_EnableHSI();
-    while (!RCC_IsHSIReady());
-    
-    RCC_ConfigureFlashLatency(sysclk);
-    
-    RCC_ConfigurePLL1(pll_config);
-    
-    RCC_EnablePLL1();
-    while (!RCC_IsPLL1Ready());
-    
-    RCC_SetSystemClock(CLOCK_SOURCE_PLL1);
-}
-
-void RCC_SystemClockConfig_MSI(void) {
-    RCC_EnableCSI();
-    while (!RCC_IsCSIReady());
-    
-    RCC_SetAHBPrescaler(AHB_DIV_1);
-    RCC_SetAPB1Prescaler(APB_DIV_1);
-    RCC_SetAPB2Prescaler(APB_DIV_1);
-    
-    RCC_ConfigureFlashLatency(CSI_FREQUENCY);
-    RCC_SetSystemClock(CLOCK_SOURCE_CSI);
-}
-
-ClockStatus RCC_WaitForHSIReady(uint32_t timeout) {
-    uint32_t start = 0;
-    while (!RCC_IsHSIReady()) {
-        start++;
-        if (start >= timeout) {
-            return CLOCK_TIMEOUT;
-        }
-    }
-    return CLOCK_OK;
-}
-
-ClockStatus RCC_WaitForHSEReady(uint32_t timeout) {
-    uint32_t start = 0;
-    while (!RCC_IsHSEReady()) {
-        start++;
-        if (start >= timeout) {
-            return CLOCK_TIMEOUT;
-        }
-    }
-    return CLOCK_OK;
-}
-
-ClockStatus RCC_WaitForPLL1Ready(uint32_t timeout) {
-    uint32_t start = 0;
-    while (!RCC_IsPLL1Ready()) {
-        start++;
-        if (start >= timeout) {
-            return CLOCK_TIMEOUT;
-        }
-    }
-    return CLOCK_OK;
-}
-
-void RCC_EnablePeripheralClock(uint32_t periph_base) {
-    if (periph_base >= 0x40020000 && periph_base < 0x40030000) {
-        uint32_t bit = (periph_base - 0x40020000) >> 14;
-        if (bit < 32) {
-            RCC_AHB1ENR |= (1U << bit);
-        } else if (bit < 64) {
-            RCC_AHB2ENR |= (1U << (bit - 32));
-        }
-    } else if (periph_base >= 0x40000000 && periph_base < 0x40010000) {
-        uint32_t bit = (periph_base - 0x40000000) >> 10;
-        if (bit < 32) {
-            RCC_APB1LENR |= (1U << bit);
-        }
-    } else if (periph_base >= 0x40010000 && periph_base < 0x40020000) {
-        uint32_t bit = (periph_base - 0x40010000) >> 10;
-        RCC_APB2ENR |= (1U << bit);
-    }
-}
-
-void RCC_DisablePeripheralClock(uint32_t periph_base) {
-    if (periph_base >= 0x40020000 && periph_base < 0x40030000) {
-        uint32_t bit = (periph_base - 0x40020000) >> 14;
-        if (bit < 32) {
-            RCC_AHB1ENR &= ~(1U << bit);
-        } else if (bit < 64) {
-            RCC_AHB2ENR &= ~(1U << (bit - 32));
-        }
-    } else if (periph_base >= 0x40000000 && periph_base < 0x40010000) {
-        uint32_t bit = (periph_base - 0x40000000) >> 10;
-        if (bit < 32) {
-            RCC_APB1LENR &= ~(1U << bit);
-        }
-    } else if (periph_base >= 0x40010000 && periph_base < 0x40020000) {
-        uint32_t bit = (periph_base - 0x40010000) >> 10;
-        RCC_APB2ENR &= ~(1U << bit);
-    }
+    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkReset (b);
+    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkReset (b);
+    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkReset (b);
+    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkReset (b);
+    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkReset(b);
+    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkReset(b);
+    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkReset (b);
+    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkReset (b);
+    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkReset (b);
 }
