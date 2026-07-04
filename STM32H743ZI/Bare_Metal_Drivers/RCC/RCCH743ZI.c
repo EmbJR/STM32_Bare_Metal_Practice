@@ -373,59 +373,61 @@ void RCC_APB4_ClkReset(uint32_t mask)
 
 /* =========================================================================
  *  Per-peripheral dispatch (RCC_Periph_t -> bus)
- *  Each peripheral in the enum is tagged with a small bit-band marker:
- *      bit 31 set  => use the AHB1..AHB4 / APB.. dispatch
- *  We use the numeric *value* of the enum (i.e. the (1U << n) bit) and
- *  compare against each bus' own "is-this-mine" check implemented in the
- *  function below.  The simplest robust approach: try each bus and accept
- *  the first that contains the bit.
+ *
+ *  Each enum value is encoded as (bus_id << 24) | (1U << bit_position).
+ *  The dispatcher extracts the bus from the upper byte and the mask from
+ *  the lower 24 bits, then calls the appropriate bus-level helper.
  * ========================================================================= */
-static uint8_t bit_in_mask(uint32_t mask, uint32_t bit)
+static void apply_periph(RCC_Periph_t p, uint8_t enable, uint8_t do_reset)
 {
-    return (mask & bit) ? 1U : 0U;
+    uint32_t raw = (uint32_t)p;
+    uint32_t mask = RCC_PERIPH_BIT(raw);
+    RCC_PeriphBus_t bus = RCC_PERIPH_BUS(raw);
+
+    switch (bus)
+    {
+        case RCC_BUS_AHB1:
+            if (do_reset) RCC_AHB1_ClkReset(mask);
+            else          RCC_AHB1_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_AHB2:
+            if (do_reset) RCC_AHB2_ClkReset(mask);
+            else          RCC_AHB2_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_AHB3:
+            if (do_reset) RCC_AHB3_ClkReset(mask);
+            else          RCC_AHB3_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_AHB4:
+            if (do_reset) RCC_AHB4_ClkReset(mask);
+            else          RCC_AHB4_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_APB1L:
+            if (do_reset) RCC_APB1L_ClkReset(mask);
+            else          RCC_APB1L_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_APB1H:
+            if (do_reset) RCC_APB1H_ClkReset(mask);
+            else          RCC_APB1H_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_APB2:
+            if (do_reset) RCC_APB2_ClkReset(mask);
+            else          RCC_APB2_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_APB3:
+            if (do_reset) RCC_APB3_ClkReset(mask);
+            else          RCC_APB3_ClkEnable(mask, enable);
+            break;
+        case RCC_BUS_APB4:
+            if (do_reset) RCC_APB4_ClkReset(mask);
+            else          RCC_APB4_ClkEnable(mask, enable);
+            break;
+        default:
+            /* unknown bus: do nothing */
+            break;
+    }
 }
 
-void RCC_PeriphEnable(RCC_Periph_t p)
-{
-    uint32_t b = (uint32_t)p;
-
-    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkEnable(b, 1);
-    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkEnable(b, 1);
-    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkEnable (b, 1);
-    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkEnable (b, 1);
-}
-
-void RCC_PeriphDisable(RCC_Periph_t p)
-{
-    uint32_t b = (uint32_t)p;
-
-    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkEnable(b, 0);
-    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkEnable(b, 0);
-    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkEnable (b, 0);
-    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkEnable (b, 0);
-}
-
-void RCC_PeriphReset(RCC_Periph_t p)
-{
-    uint32_t b = (uint32_t)p;
-
-    if      (bit_in_mask(b, RCC_AHB1_DMA1))    RCC_AHB1_ClkReset (b);
-    else if (bit_in_mask(b, RCC_AHB2_DCMI))    RCC_AHB2_ClkReset (b);
-    else if (bit_in_mask(b, RCC_AHB3_MDMA))    RCC_AHB3_ClkReset (b);
-    else if (bit_in_mask(b, RCC_AHB4_GPIOA))   RCC_AHB4_ClkReset (b);
-    else if (bit_in_mask(b, RCC_APB1L_TIM2))   RCC_APB1L_ClkReset(b);
-    else if (bit_in_mask(b, RCC_APB1H_CRS))    RCC_APB1H_ClkReset(b);
-    else if (bit_in_mask(b, RCC_APB2_TIM1))    RCC_APB2_ClkReset (b);
-    else if (bit_in_mask(b, RCC_APB3_LTDC))    RCC_APB3_ClkReset (b);
-    else if (bit_in_mask(b, RCC_APB4_SYSCFG))  RCC_APB4_ClkReset (b);
-}
+void RCC_PeriphEnable(RCC_Periph_t p)  { apply_periph(p, 1U, 0U); }
+void RCC_PeriphDisable(RCC_Periph_t p) { apply_periph(p, 0U, 0U); }
+void RCC_PeriphReset(RCC_Periph_t p)   { apply_periph(p, 0U, 1U); }

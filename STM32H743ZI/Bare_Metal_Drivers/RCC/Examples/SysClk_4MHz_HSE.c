@@ -17,7 +17,7 @@ void SystemClock_4MHz_HSE(void)
 {
     /* Enable HSE and wait for it to be ready */
     RCC_HSEEnable(1);
-    while (!RCC_HSEReady()) { /* wait */ }
+    while (!RCC_HSERdy()) { /* wait */ }
 
     /* Flash latency = 0 wait states */
     RCC_SetFlashLatency(0);

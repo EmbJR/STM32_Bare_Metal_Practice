@@ -19,6 +19,11 @@
 #include <stdint.h>
 #include "RCCH743ZI.h"
 #include "GPIOH743ZI.h"
+#include "h7pwr.h"
+
+//------------ Power control -------------//
+
+//---------------------------------------//
 
 #define HSE_FREQUENCY_8MHZ       8000000UL
 #define TARGET_SYSCLK_4MHZ        4000000UL
@@ -28,8 +33,10 @@
  *   LED    -> PB14
  *   Switch -> PG0   (assumed active-low; pressed = pin reads LOW)
  */
-#define LED_PORT        GPIOB
-#define LED_PIN         14
+#define LED1_PORT        GPIOB
+#define LED1_PIN         14
+#define LED2_PORT        GPIOE
+#define LED2_PIN         1
 
 #define SW_PORT         GPIOG
 #define SW_PIN          0
@@ -38,52 +45,25 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
-volatile uint32_t g_tick = 0;
+void SystemClock_16MHz_HSI(void)
+{
+    RCC_HSIEnable(1);
+    while (!RCC_HSIRdy()) { /* wait */ }
 
-void SysTick_Init(uint32_t reload) {
-    SYSTICK_LOAD = reload;
-    SYSTICK_VAL = 0;
-    SYSTICK_CTRL = (1 << 2) | (1 << 1) | (1 << 0);
+    /* HSIDIV = /4  =>  hsi_ck = 16 MHz */
+    RCC_HSIConfig(2);          /* 2 = divide by 4 */
+
+    RCC_SetFlashLatency(0);
+
+    RCC_SetD1CPRE(AHB_PRESCALER_DIV1);
+    RCC_SetAHBPrescaler(AHB_PRESCALER_DIV1);
+    RCC_SetD1PPRE(APB_PRESCALER_DIV1);
+    RCC_SetD2PPRE1(APB_PRESCALER_DIV1);
+    RCC_SetD2PPRE2(APB_PRESCALER_DIV1);
+    RCC_SetD3PPRE(APB_PRESCALER_DIV1);
+
+    RCC_SetSysClockSrc(RCC_SYSCLK_HSI);
 }
-
-void SysTick_Handler(void) {
-    g_tick++;
-}
-
-void Delay_Init(void) {
-    SysTick_Init((RCC_GetSYSCLKFrequency() / 1000) - 1);
-}
-
-void Delay_ms(uint32_t ms) {
-    uint32_t start = g_tick;
-    while ((g_tick - start) < ms);
-}
-
-void RCC_PrintClockInfo(void) {
-    volatile uint32_t sysclk = RCC_GetSYSCLKFrequency();
-    volatile uint32_t hclk = RCC_GetHCLKFrequency();
-    volatile uint32_t pclk1 = RCC_GetPCLK1Frequency();
-    volatile uint32_t pclk2 = RCC_GetPCLK2Frequency();
-    volatile SystemClockSource src = RCC_GetSystemClockSource();
-
-    (void)sysclk;
-    (void)hclk;
-    (void)pclk1;
-    (void)pclk2;
-    (void)src;
-}
-
-void Example_1A_HSI_4MHz(void) {
-    PLL_Config pll_config;
-    pll_config.pll_source = PLL_SOURCE_HSI;
-    pll_config.pll_m = 16;
-    pll_config.pll_n = 16;
-    pll_config.pll_p = 2;
-    pll_config.pll_q = 2;
-    pll_config.pll_r = 2;
-    RCC_SystemClockConfig_PLL(&pll_config, TARGET_SYSCLK_4MHZ);
-}
-
 
 /* ---------------------------------------------------------------------
  *  Shared pin setup helpers, used by all examples to avoid duplicating
@@ -91,35 +71,36 @@ void Example_1A_HSI_4MHz(void) {
  * ------------------------------------------------------------------- */
 void LED_Init(void) {
     GPIO_PinConfig led;
-    led.pin       = LED_PIN;
+    led.pin       = LED1_PIN;
     led.mode      = GPIO_MODE_OUTPUT;
     led.otype     = GPIO_OTYPE_PUSHPULL;
     led.speed     = GPIO_SPEED_LOW;
     led.pull      = GPIO_PULL_NONE;
     led.alternate = 0;
-    GPIO_Init(LED_PORT, &led);
+    GPIO_Init(LED1_PORT, &led);
+
+    led.pin       = LED2_PIN;
+    GPIO_Init(LED2_PORT, &led);
 }
 
 int main(void) {
-    Delay_Init();
+	RCC_PeriphEnable(RCC_APB4_SYSCFG);
+	PWR_Init();
 
-    Example_1A_HSI_4MHz();
-    Delay_ms(100);
-    RCC_PrintClockInfo();
-//
-//    Example_2A_HSE_16MHz();
-//    Delay_ms(100);
-//    RCC_PrintClockInfo();
-//
-//    Example_3B_PLL_480MHz();
-//    Delay_ms(100);
-//    RCC_PrintClockInfo();
+	RCC_PeriphEnable(RCC_AHB4_GPIOB);
+	RCC_PeriphEnable(RCC_AHB4_GPIOE);
+
+
+	SystemClock_16MHz_HSI();
+
     LED_Init();
 
 
     while (1) {
-    	GPIO_TogglePin(LED_PORT, LED_PIN);
-        Delay_ms(1000);
+    	GPIO_TogglePin(LED1_PORT, LED1_PIN);
+    	GPIO_TogglePin(LED2_PORT, LED2_PIN);
+    	for(int i = 0; i < 500; i++)
+    		for(int j = 0; j < 500; j++);
     }
 
     return 0;

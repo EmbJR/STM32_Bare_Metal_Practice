@@ -9,9 +9,13 @@
  *      CSI (4 MHz)  -->  PLL1
  *                        DIVM = 1   (prescaler  /1)
  *                        DIVN = 120 (multiplier  x120)
- *                        DIVP = 1   (post divider /1)
+ *                        DIVP = 0   (encoding 0 -> output /1)
  *      VCO = 4 * 120 = 480 MHz
  *      PLL1_P = VCO / 1 = 480 MHz  -->  SYSCLK
+ *
+ *  NOTE on DIVP encoding (per RM0433):
+ *      0 -> /1,  1 -> /2,  2 -> NOT ALLOWED,  3 -> /4, ...
+ *  Only ODD encodings produce valid output divisions (/2, /4, /6 ... /128).
  *
  *  PLL input frequency range = 2-4 MHz   =>  PLL1RGE = 01
  *  VCO range 150-420 MHz     =>  PLL1VCOSEL = 1 (medium range)
@@ -27,7 +31,7 @@ void SystemClock_480MHz_CSI(void)
 {
     /* 1) Enable CSI and wait */
     RCC_CSIEnable(1);
-    while (!RCC_CSIReady()) { /* wait */ }
+    while (!RCC_CSIRdy()) { /* wait */ }
 
     /* 2) Flash latency: 4 wait states for 240 MHz AHB */
     RCC_SetFlashLatency(4);
@@ -45,7 +49,7 @@ void SystemClock_480MHz_CSI(void)
         .pll_src    = RCC_PLLSRC_CSI,
         .divm       = 1,
         .divn       = 120,
-        .divp       = 1,            /* VCO already 480 MHz */
+        .divp       = 0,            /* encoding 0 -> output /1 -> 480 MHz */
         .divq       = 0,
         .divr       = 0,
         .pll_rge    = 1,            /* 2-4 MHz reference     */

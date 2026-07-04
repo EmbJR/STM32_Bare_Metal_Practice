@@ -15,7 +15,7 @@
 void SystemClock_16MHz_CSI(void)
 {
     RCC_CSIEnable(1);
-    while (!RCC_CSIReady()) { /* wait */ }
+    while (!RCC_CSIRdy()) { /* wait */ }
 
     RCC_SetFlashLatency(0);
 

@@ -15,7 +15,7 @@
 void SystemClock_16MHz_HSE(void)
 {
     RCC_HSEEnable(1);
-    while (!RCC_HSEReady()) { /* wait */ }
+    while (!RCC_HSERdy()) { /* wait */ }
 
     RCC_SetFlashLatency(0);
 

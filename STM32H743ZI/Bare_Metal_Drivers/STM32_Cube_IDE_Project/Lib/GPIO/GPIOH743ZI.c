@@ -59,7 +59,7 @@ void GPIO_SetAlternate(GPIO_TypeDef *port, uint8_t pin, uint8_t af) {
  *  Full pin initialisation from a descriptor
  * ------------------------------------------------------------------- */
 void GPIO_Init(GPIO_TypeDef *port, const GPIO_PinConfig *config) {
-    GPIO_EnableClock(port);
+    //GPIO_EnableClock(port);
 
     GPIO_SetMode(port, config->pin, config->mode);
     GPIO_SetPull(port, config->pin, config->pull);

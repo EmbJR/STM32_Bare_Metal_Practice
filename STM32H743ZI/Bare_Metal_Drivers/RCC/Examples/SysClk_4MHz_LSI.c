@@ -20,7 +20,7 @@ void SystemClock_4MHz_LSI(void)
 {
     /* Enable LSI and wait for it to be ready */
     RCC_LSIEnable(1);
-    while (!RCC_LSIReady()) { /* wait */ }
+    while (!RCC_LSIRdy()) { /* wait */ }
 
     RCC_SetFlashLatency(0);
 

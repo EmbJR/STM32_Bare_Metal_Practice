@@ -13,7 +13,7 @@
 void SystemClock_16MHz_LSI(void)
 {
     RCC_LSIEnable(1);
-    while (!RCC_LSIReady()) { /* wait */ }
+    while (!RCC_LSIRdy()) { /* wait */ }
 
     /* LSI is not a valid SYSCLK source on H7. */
     /* The CPU therefore continues to run on HSI. */

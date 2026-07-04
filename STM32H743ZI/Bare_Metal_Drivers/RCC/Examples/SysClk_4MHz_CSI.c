@@ -18,7 +18,7 @@ void SystemClock_4MHz_CSI(void)
 {
     /* Enable CSI and wait for it to be ready */
     RCC_CSIEnable(1);
-    while (!RCC_CSIReady()) { /* wait */ }
+    while (!RCC_CSIRdy()) { /* wait */ }
 
     /* Flash latency = 0 wait states */
     RCC_SetFlashLatency(0);

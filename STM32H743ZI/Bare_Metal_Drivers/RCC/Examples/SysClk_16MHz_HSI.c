@@ -16,7 +16,7 @@
 void SystemClock_16MHz_HSI(void)
 {
     RCC_HSIEnable(1);
-    while (!RCC_HSIReady()) { /* wait */ }
+    while (!RCC_HSIRdy()) { /* wait */ }
 
     /* HSIDIV = /4  =>  hsi_ck = 16 MHz */
     RCC_HSIConfig(2);          /* 2 = divide by 4 */

@@ -83,8 +83,10 @@ void PeripheralClockEnable_Example(void)
     delay(100);
     RCC_PeriphEnable(RCC_AHB4_GPIOA);
 
-    /* Direct bus-level access (e.g. enable multiple peripherals at once) */
-    RCC_AHB1_ClkEnable(RCC_AHB1_DMA1 | RCC_AHB1_DMA2, 1);
-    RCC_APB1L_ClkEnable(RCC_APB1L_I2C1 | RCC_APB1L_I2C2 | RCC_APB1L_I2C3, 1);
-    RCC_APB4_ClkEnable(RCC_APB4_SYSCFG, 1);
+    /* Direct bus-level access (e.g. enable multiple peripherals at once).
+     * NOTE: the bus-level helpers take a RAW bit mask, not the encoded
+     *       RCC_Periph_t value. Use (1U << bit) directly. */
+    RCC_AHB1_ClkEnable((1U << 0) | (1U << 1), 1);     /* DMA1 | DMA2 */
+    RCC_APB1L_ClkEnable((1U << 21) | (1U << 22) | (1U << 23), 1); /* I2C1..3 */
+    RCC_APB4_ClkEnable((1U << 1), 1);                  /* SYSCFG */
 }

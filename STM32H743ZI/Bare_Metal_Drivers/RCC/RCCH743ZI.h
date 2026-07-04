@@ -358,127 +358,147 @@ void     RCC_MCO2Config(uint32_t sel, uint32_t prescaler);
  *  Each peripheral on the H743 sits on a specific bus:
  *      AHB1, AHB2, AHB3, AHB4, APB1L, APB1H, APB2, APB3, APB4
  *
- *  Encoding: bit position in the corresponding *_ENR register.
+ *  Encoding: 32-bit value = (bus_id << 24) | (1U << bit_position).
+ *      bus_id      (bits 31:24)   selects the bus (see RCC_PeriphBus_t)
+ *      bit_position(bits 23:0)    the bit position in the bus *_ENR register
+ *
  *  Reference: RM0433 Rev 7, Table 83 (register map and reset values).
  * ========================================================================= */
 typedef enum
 {
-    /* ---- AHB1 peripherals (offset 0xD8) ---- */
-    RCC_AHB1_DMA1      = (1U << 0),
-    RCC_AHB1_DMA2      = (1U << 1),
-    RCC_AHB1_ADC12     = (1U << 5),
-    RCC_AHB1_ETH1MAC   = (1U << 15),
-    RCC_AHB1_ETH1TX    = (1U << 16),
-    RCC_AHB1_ETH1RX    = (1U << 17),
-    RCC_AHB1_USB1OTGHS   = (1U << 25),
-    RCC_AHB1_USB1OTGHSULPI = (1U << 26),
-    RCC_AHB1_USB2OTGHS   = (1U << 27),
-    RCC_AHB1_USB2OTGHSULPI = (1U << 28),
+    RCC_BUS_AHB1 = 1,
+    RCC_BUS_AHB2 = 2,
+    RCC_BUS_AHB3 = 3,
+    RCC_BUS_AHB4 = 4,
+    RCC_BUS_APB1L = 5,
+    RCC_BUS_APB1H = 6,
+    RCC_BUS_APB2 = 7,
+    RCC_BUS_APB3 = 8,
+    RCC_BUS_APB4 = 9
+} RCC_PeriphBus_t;
 
-    /* ---- AHB2 peripherals (offset 0xDC) ---- */
-    RCC_AHB2_DCMI      = (1U << 0),
-    RCC_AHB2_CRYP      = (1U << 4),
-    RCC_AHB2_HASH      = (1U << 5),
-    RCC_AHB2_RNG       = (1U << 6),
-    RCC_AHB2_SDMMC2    = (1U << 9),
-    RCC_AHB2_SRAM1     = (1U << 29),
-    RCC_AHB2_SRAM2     = (1U << 30),
-    RCC_AHB2_SRAM3     = (1U << 31),
+#define RCC_PERIPH_ENCODE(bus, bit)  (((uint32_t)(bus) << 24) | (1U << (bit)))
+#define RCC_PERIPH_BUS(p)            ((RCC_PeriphBus_t)(((uint32_t)(p) >> 24) & 0xFFU))
+#define RCC_PERIPH_BIT(p)            ((uint32_t)((uint32_t)(p) & 0x00FFFFFFU))
 
-    /* ---- AHB3 peripherals (offset 0xD4) ---- */
-    RCC_AHB3_MDMA      = (1U << 0),
-    RCC_AHB3_DMA2D     = (1U << 4),
-    RCC_AHB3_JPGDEC    = (1U << 5),
-    RCC_AHB3_FLASH     = (1U << 8),
-    RCC_AHB3_FMC       = (1U << 12),
-    RCC_AHB3_QSPI      = (1U << 14),
-    RCC_AHB3_SDMMC1    = (1U << 16),
+typedef enum
+{
+    /* ---- AHB1 peripherals ---- */
+    RCC_AHB1_DMA1          = RCC_PERIPH_ENCODE(RCC_BUS_AHB1,  0),
+    RCC_AHB1_DMA2          = RCC_PERIPH_ENCODE(RCC_BUS_AHB1,  1),
+    RCC_AHB1_ADC12         = RCC_PERIPH_ENCODE(RCC_BUS_AHB1,  5),
+    RCC_AHB1_ETH1MAC       = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 15),
+    RCC_AHB1_ETH1TX        = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 16),
+    RCC_AHB1_ETH1RX        = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 17),
+    RCC_AHB1_USB1OTGHS     = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 25),
+    RCC_AHB1_USB1OTGHSULPI = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 26),
+    RCC_AHB1_USB2OTGHS     = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 27),
+    RCC_AHB1_USB2OTGHSULPI = RCC_PERIPH_ENCODE(RCC_BUS_AHB1, 28),
 
-    /* ---- AHB4 peripherals (offset 0xE0) ---- */
-    RCC_AHB4_GPIOA     = (1U << 0),
-    RCC_AHB4_GPIOB     = (1U << 1),
-    RCC_AHB4_GPIOC     = (1U << 2),
-    RCC_AHB4_GPIOD     = (1U << 3),
-    RCC_AHB4_GPIOE     = (1U << 4),
-    RCC_AHB4_GPIOF     = (1U << 5),
-    RCC_AHB4_GPIOG     = (1U << 6),
-    RCC_AHB4_GPIOH     = (1U << 7),
-    RCC_AHB4_GPIOI     = (1U << 8),
-    RCC_AHB4_GPIOJ     = (1U << 9),
-    RCC_AHB4_GPIOK     = (1U << 10),
-    RCC_AHB4_CRC       = (1U << 19),
-    RCC_AHB4_BDMA      = (1U << 21),
-    RCC_AHB4_ADC3      = (1U << 24),
-    RCC_AHB4_HSEM      = (1U << 25),
-    RCC_AHB4_BKPRAM    = (1U << 28),
+    /* ---- AHB2 peripherals ---- */
+    RCC_AHB2_DCMI          = RCC_PERIPH_ENCODE(RCC_BUS_AHB2,  0),
+    RCC_AHB2_CRYP          = RCC_PERIPH_ENCODE(RCC_BUS_AHB2,  4),
+    RCC_AHB2_HASH          = RCC_PERIPH_ENCODE(RCC_BUS_AHB2,  5),
+    RCC_AHB2_RNG           = RCC_PERIPH_ENCODE(RCC_BUS_AHB2,  6),
+    RCC_AHB2_SDMMC2        = RCC_PERIPH_ENCODE(RCC_BUS_AHB2,  9),
+    RCC_AHB2_SRAM1         = RCC_PERIPH_ENCODE(RCC_BUS_AHB2, 29),
+    RCC_AHB2_SRAM2         = RCC_PERIPH_ENCODE(RCC_BUS_AHB2, 30),
+    RCC_AHB2_SRAM3         = RCC_PERIPH_ENCODE(RCC_BUS_AHB2, 31),
 
-    /* ---- APB1L peripherals (offset 0xE8) ---- */
-    RCC_APB1L_TIM2     = (1U << 0),
-    RCC_APB1L_TIM3     = (1U << 1),
-    RCC_APB1L_TIM4     = (1U << 2),
-    RCC_APB1L_TIM5     = (1U << 3),
-    RCC_APB1L_TIM6     = (1U << 4),
-    RCC_APB1L_TIM7     = (1U << 5),
-    RCC_APB1L_TIM12    = (1U << 6),
-    RCC_APB1L_TIM13    = (1U << 7),
-    RCC_APB1L_TIM14    = (1U << 8),
-    RCC_APB1L_LPTIM1   = (1U << 9),
-    RCC_APB1L_SPI2     = (1U << 14),
-    RCC_APB1L_SPI3     = (1U << 15),
-    RCC_APB1L_SPDIFRX  = (1U << 16),
-    RCC_APB1L_USART2   = (1U << 17),
-    RCC_APB1L_USART3   = (1U << 18),
-    RCC_APB1L_UART4    = (1U << 19),
-    RCC_APB1L_UART5    = (1U << 20),
-    RCC_APB1L_I2C1     = (1U << 21),
-    RCC_APB1L_I2C2     = (1U << 22),
-    RCC_APB1L_I2C3     = (1U << 23),
-    RCC_APB1L_CEC      = (1U << 27),
-    RCC_APB1L_DAC12    = (1U << 29),
-    RCC_APB1L_UART7    = (1U << 30),
-    RCC_APB1L_UART8    = (1U << 31),
+    /* ---- AHB3 peripherals ---- */
+    RCC_AHB3_MDMA          = RCC_PERIPH_ENCODE(RCC_BUS_AHB3,  0),
+    RCC_AHB3_DMA2D         = RCC_PERIPH_ENCODE(RCC_BUS_AHB3,  4),
+    RCC_AHB3_JPGDEC        = RCC_PERIPH_ENCODE(RCC_BUS_AHB3,  5),
+    RCC_AHB3_FLASH         = RCC_PERIPH_ENCODE(RCC_BUS_AHB3,  8),
+    RCC_AHB3_FMC           = RCC_PERIPH_ENCODE(RCC_BUS_AHB3, 12),
+    RCC_AHB3_QSPI          = RCC_PERIPH_ENCODE(RCC_BUS_AHB3, 14),
+    RCC_AHB3_SDMMC1        = RCC_PERIPH_ENCODE(RCC_BUS_AHB3, 16),
 
-    /* ---- APB1H peripherals (offset 0xEC) ---- */
-    RCC_APB1H_CRS      = (1U << 1),
-    RCC_APB1H_SWP      = (1U << 2),
-    RCC_APB1H_OPAMP    = (1U << 4),
-    RCC_APB1H_MDIOS    = (1U << 5),
-    RCC_APB1H_FDCAN    = (1U << 8),
+    /* ---- AHB4 peripherals ---- */
+    RCC_AHB4_GPIOA         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  0),
+    RCC_AHB4_GPIOB         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  1),
+    RCC_AHB4_GPIOC         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  2),
+    RCC_AHB4_GPIOD         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  3),
+    RCC_AHB4_GPIOE         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  4),
+    RCC_AHB4_GPIOF         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  5),
+    RCC_AHB4_GPIOG         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  6),
+    RCC_AHB4_GPIOH         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  7),
+    RCC_AHB4_GPIOI         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  8),
+    RCC_AHB4_GPIOJ         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4,  9),
+    RCC_AHB4_GPIOK         = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 10),
+    RCC_AHB4_CRC           = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 19),
+    RCC_AHB4_BDMA          = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 21),
+    RCC_AHB4_ADC3          = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 24),
+    RCC_AHB4_HSEM          = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 25),
+    RCC_AHB4_BKPRAM        = RCC_PERIPH_ENCODE(RCC_BUS_AHB4, 28),
 
-    /* ---- APB2 peripherals (offset 0xF0) ---- */
-    RCC_APB2_TIM1      = (1U << 0),
-    RCC_APB2_TIM8      = (1U << 1),
-    RCC_APB2_USART1    = (1U << 4),
-    RCC_APB2_USART6    = (1U << 5),
-    RCC_APB2_SPI1      = (1U << 12),
-    RCC_APB2_SPI4      = (1U << 13),
-    RCC_APB2_TIM15     = (1U << 16),
-    RCC_APB2_TIM16     = (1U << 17),
-    RCC_APB2_TIM17     = (1U << 18),
-    RCC_APB2_SPI5      = (1U << 20),
-    RCC_APB2_SAI1      = (1U << 22),
-    RCC_APB2_SAI2      = (1U << 23),
-    RCC_APB2_SAI3      = (1U << 24),
-    RCC_APB2_DFSDM1    = (1U << 28),
-    RCC_APB2_HRTIM     = (1U << 29),
+    /* ---- APB1L peripherals ---- */
+    RCC_APB1L_TIM2         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  0),
+    RCC_APB1L_TIM3         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  1),
+    RCC_APB1L_TIM4         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  2),
+    RCC_APB1L_TIM5         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  3),
+    RCC_APB1L_TIM6         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  4),
+    RCC_APB1L_TIM7         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  5),
+    RCC_APB1L_TIM12        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  6),
+    RCC_APB1L_TIM13        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  7),
+    RCC_APB1L_TIM14        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  8),
+    RCC_APB1L_LPTIM1       = RCC_PERIPH_ENCODE(RCC_BUS_APB1L,  9),
+    RCC_APB1L_SPI2         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 14),
+    RCC_APB1L_SPI3         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 15),
+    RCC_APB1L_SPDIFRX      = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 16),
+    RCC_APB1L_USART2       = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 17),
+    RCC_APB1L_USART3       = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 18),
+    RCC_APB1L_UART4        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 19),
+    RCC_APB1L_UART5        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 20),
+    RCC_APB1L_I2C1         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 21),
+    RCC_APB1L_I2C2         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 22),
+    RCC_APB1L_I2C3         = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 23),
+    RCC_APB1L_CEC          = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 27),
+    RCC_APB1L_DAC12        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 29),
+    RCC_APB1L_UART7        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 30),
+    RCC_APB1L_UART8        = RCC_PERIPH_ENCODE(RCC_BUS_APB1L, 31),
 
-    /* ---- APB3 peripherals (offset 0xE4) ---- */
-    RCC_APB3_LTDC      = (1U << 3),
-    RCC_APB3_WWDG1     = (1U << 6),
+    /* ---- APB1H peripherals ---- */
+    RCC_APB1H_CRS          = RCC_PERIPH_ENCODE(RCC_BUS_APB1H,  1),
+    RCC_APB1H_SWP          = RCC_PERIPH_ENCODE(RCC_BUS_APB1H,  2),
+    RCC_APB1H_OPAMP        = RCC_PERIPH_ENCODE(RCC_BUS_APB1H,  4),
+    RCC_APB1H_MDIOS        = RCC_PERIPH_ENCODE(RCC_BUS_APB1H,  5),
+    RCC_APB1H_FDCAN        = RCC_PERIPH_ENCODE(RCC_BUS_APB1H,  8),
 
-    /* ---- APB4 peripherals (offset 0xF4) ---- */
-    RCC_APB4_SYSCFG    = (1U << 1),
-    RCC_APB4_LPUART1   = (1U << 3),
-    RCC_APB4_SPI6      = (1U << 5),
-    RCC_APB4_I2C4      = (1U << 7),
-    RCC_APB4_LPTIM2    = (1U << 9),
-    RCC_APB4_LPTIM3    = (1U << 10),
-    RCC_APB4_LPTIM4    = (1U << 11),
-    RCC_APB4_LPTIM5    = (1U << 12),
-    RCC_APB4_COMP12    = (1U << 14),
-    RCC_APB4_VREF      = (1U << 15),
-    RCC_APB4_RTCAPB    = (1U << 16),
-    RCC_APB4_SAI4      = (1U << 21)
+    /* ---- APB2 peripherals ---- */
+    RCC_APB2_TIM1          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,   0),
+    RCC_APB2_TIM8          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,   1),
+    RCC_APB2_USART1        = RCC_PERIPH_ENCODE(RCC_BUS_APB2,   4),
+    RCC_APB2_USART6        = RCC_PERIPH_ENCODE(RCC_BUS_APB2,   5),
+    RCC_APB2_SPI1          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  12),
+    RCC_APB2_SPI4          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  13),
+    RCC_APB2_TIM15         = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  16),
+    RCC_APB2_TIM16         = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  17),
+    RCC_APB2_TIM17         = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  18),
+    RCC_APB2_SPI5          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  20),
+    RCC_APB2_SAI1          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  22),
+    RCC_APB2_SAI2          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  23),
+    RCC_APB2_SAI3          = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  24),
+    RCC_APB2_DFSDM1        = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  28),
+    RCC_APB2_HRTIM         = RCC_PERIPH_ENCODE(RCC_BUS_APB2,  29),
+
+    /* ---- APB3 peripherals ---- */
+    RCC_APB3_LTDC          = RCC_PERIPH_ENCODE(RCC_BUS_APB3,   3),
+    RCC_APB3_WWDG1         = RCC_PERIPH_ENCODE(RCC_BUS_APB3,   6),
+
+    /* ---- APB4 peripherals ---- */
+    RCC_APB4_SYSCFG        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,   1),
+    RCC_APB4_LPUART1       = RCC_PERIPH_ENCODE(RCC_BUS_APB4,   3),
+    RCC_APB4_SPI6          = RCC_PERIPH_ENCODE(RCC_BUS_APB4,   5),
+    RCC_APB4_I2C4          = RCC_PERIPH_ENCODE(RCC_BUS_APB4,   7),
+    RCC_APB4_LPTIM2        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,   9),
+    RCC_APB4_LPTIM3        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  10),
+    RCC_APB4_LPTIM4        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  11),
+    RCC_APB4_LPTIM5        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  12),
+    RCC_APB4_COMP12        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  14),
+    RCC_APB4_VREF          = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  15),
+    RCC_APB4_RTCAPB        = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  16),
+    RCC_APB4_SAI4          = RCC_PERIPH_ENCODE(RCC_BUS_APB4,  21)
 } RCC_Periph_t;
 
 /* High level AHB / APB helpers */
