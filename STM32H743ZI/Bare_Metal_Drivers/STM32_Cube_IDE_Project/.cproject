@@ -48,6 +48,8 @@
 									<listOptionValue builtIn="false" value="../Lib/RCC"/>
 									<listOptionValue builtIn="false" value="../Lib/GPIO"/>
 									<listOptionValue builtIn="false" value="../Lib/PWR"/>
+									<listOptionValue builtIn="false" value="../Lib/Timer"/>
+									<listOptionValue builtIn="false" value="../Lib/NVIC"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.384580683" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -73,11 +75,18 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.855193792" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.779910042.1093145365" name="nvic.c" rcbsApplicability="disable" resourcePath="Lib/NVIC/nvic.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.273745652.1665437537">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.273745652.1665437537" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.273745652">
+							<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.563258899" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
+						</tool>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>
 						<entry excluding="Examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Lib/GPIO"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Lib/PWR"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Lib/NVIC"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Lib/PWR"/>
 						<entry excluding="Examples|Example.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Lib/RCC"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Lib/Timer"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Startup"/>
 					</sourceEntries>

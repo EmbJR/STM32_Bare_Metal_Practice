@@ -214,3 +214,62 @@ pwrExample2.c – use Standby mode with RTC wake‑up.
 pwrExample3.c – System full run mode with power to the basic functional peripherals are enabled.
 pwrExample4.c - write a demo like entering Stop mode with a timer to wake up. Show the CPU going to low power and resuming.
 5. **Documentation:** In `Bare_Metal_Drivers/PWR/Document`, explain power modes and regulator levels. For instance, note that LSI (32.768 kHz) is used for RTC in Standby. Describe how you programmed the registers to achieve a mode (e.g. setting `PWR_CR3_VOS` bits, etc.).
+
+
+## Stage 3: GPIO Driver Development
+
+
+## Stage 4 – TIM (Timer / PWM)
+Target: General‑purpose timers (TIM2–TIM5, TIM12–TIM17) and advanced timers (TIM1, TIM8) – but at least one representative timer.
+
+### Must support:
+- Time base configuration (prescaler, auto‑reload, counter mode up/down/center‑aligned).
+- Output compare/PWM generation (multiple channels).
+- Input capture (frequency/period measurement).
+- Encoder mode.
+- One‑pulse mode.
+- Interrupts (update, capture/compare, trigger, etc.).
+- DMA burst transfers.
+
+### Execution flow.
+1. **Identify Timers:** Read the documentation resides in path `Bare_Metal_Drivers/Timer/Document` and study all Timer registers. Note which timers are present and on which bus. (E.g. TIM1 and TIM8 on APB2; TIM2–7 on APB1).
+2. **Header File:** In `Bare_Metal_Drivers/Timer/h7timer.h`, define timer base addresses and bitfields for prescaler, counters, and control bits.
+3. **Source File:** In `h7timer.c`, implement functions like `Timer_Init(timer_base, prescaler, period)`, `Timer_Start()`, and interrupts (e.g. enable update interrupt). Configure CCMR registers for PWM modes (edge-aligned, center-aligned).
+Functions:
+c
+void H7_TIM_Init(TIM_TypeDef *tim, uint32_t prescaler, uint32_t period, uint32_t counterMode);
+void H7_TIM_DeInit(TIM_TypeDef *tim);
+void H7_TIM_PWM_ConfigChannel(TIM_TypeDef *tim, uint32_t channel, uint32_t compare, uint32_t polarity, uint32_t outputMode);
+void H7_TIM_Start(TIM_TypeDef *tim);
+void H7_TIM_Stop(TIM_TypeDef *tim);
+void H7_TIM_EnableInterrupt(TIM_TypeDef *tim, uint32_t src);
+void H7_TIM_DisableInterrupt(TIM_TypeDef *tim, uint32_t src);
+// ... and for input capture, encoder, etc.
+4. **Examples:** In `Timer/Example/`, write code to generate a 1 kHz square wave or a PWM with adjustable duty on a GPIO pin using timer output. For instance, blink an LED using an update interrupt or vary LED brightness via PWM.  
+5. **Documentation:** In `Timer/Document`, explain the timer clock (e.g. timer clock = APB1/2 freq * multiplier if APB prescaler >1), prescaler and auto-reload formula, and how you set CCRx for PWM duty. Reference that GPIO pins must be set to the timer’s alternate function.
+
+
+## Stage 5 – NVIC controller
+Target: NVIC based supporting functions development.
+
+### Must support:
+- Support all interrupts for peripherals including External interrupts.
+- Interrupt enable/disable api for all peripherals in STM32H743ZI controller.
+- Interrupt priority set/Get APIs.
+- Sleep mode support if needed.
+- User callback register for all Interrupt vectors. (User function can be set as the Interrupt handler).
+
+### Execution flow.
+1. **Identify Timers:** Read the below documents and study the NVIC memory addresses and also the important information about NVIC. Also study the bit fields of the NVIC related registers for programming.
+    - All documents in the `Bare_Metal_Drivers/NVIC/Document` folder.
+    - Programming menual for STM32H7 at the path        "Documents_H7\Reference_and_Programming_Manual_stm32h742-stm32h743-753-and-stm32h750\pm0253-stm32f7-series-and-stm32h7-series-cortexm7-processor-programming-manual-stmicroelectronics.pdf.
+
+2. **Header File:** In `Bare_Metal_Drivers/NVIC/h7nvic.h`, define NVIC base addresses and bitfields for different settings (like Enable/Disable the peripheral interrupts, Set priority of interrupts etc).
+
+3. **Source File:** In `h7nvic.c`, Inplement the functions for below requirements.
+    - Enable/Disable the individual interrupts (Ex:- Timers, SPI, UART,...etc). 
+    - Set priority of interrupts.
+    - User function set API for interrupt callback for each and every peripherals.
+    - Interrupt handlers for each and every peripherals with interrupt flags clear if needed and calls the user functions.
+4. **Examples:** Examples for all peripherals interrupt configurations and interrupt handler user function register. For example generate file GPIOExtiExample.c for GPIO external interrupts and TimerIntExampleCC1.c for Timer1 Capture Compare interrupt. Do it for all peripherals like I2C, SPI, UART, I2S, ADC, Comparator, DAC, USB, CAN, etc..
+5. **Documentation:** Generate the detailed documentation for interrupt configurations and interrupt handling functions. Also describe about each registers and its bitfields for each interrupts.

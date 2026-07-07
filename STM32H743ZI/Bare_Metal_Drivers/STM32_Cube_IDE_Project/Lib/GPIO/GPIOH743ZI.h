@@ -90,19 +90,19 @@ typedef struct {
 /* ---------------------------------------------------------------------
  *  NVIC (Cortex-M7) - interrupt set-enable / clear-pending.
  * ------------------------------------------------------------------- */
-#define NVIC_ISER_BASE          0xE000E100UL
-#define NVIC_ICER_BASE          0xE000E180UL
-#define NVIC_ISER(n)            (*(volatile uint32_t *)(NVIC_ISER_BASE + ((n) * 4)))
-#define NVIC_ICER(n)            (*(volatile uint32_t *)(NVIC_ICER_BASE + ((n) * 4)))
+//#define NVIC_ISER_BASE          0xE000E100UL
+//#define NVIC_ICER_BASE          0xE000E180UL
+//#define NVIC_ISER(n)            (*(volatile uint32_t *)(NVIC_ISER_BASE + ((n) * 4)))
+//#define NVIC_ICER(n)            (*(volatile uint32_t *)(NVIC_ICER_BASE + ((n) * 4)))
 
 /* EXTI line IRQ numbers (RM0433 vector table) */
-#define EXTI0_IRQn              6
-#define EXTI1_IRQn              7
-#define EXTI2_IRQn              8
-#define EXTI3_IRQn              9
-#define EXTI4_IRQn              10
-#define EXTI9_5_IRQn            23
-#define EXTI15_10_IRQn          40
+//#define EXTI0_IRQn              6
+//#define EXTI1_IRQn              7
+//#define EXTI2_IRQn              8
+//#define EXTI3_IRQn              9
+//#define EXTI4_IRQn              10
+//#define EXTI9_5_IRQn            23
+//#define EXTI15_10_IRQn          40
 
 /* ---------------------------------------------------------------------
  *  Driver enumerations

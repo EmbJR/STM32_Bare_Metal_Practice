@@ -169,14 +169,24 @@ static uint8_t GPIO_GetIRQn(uint8_t pin) {
 
 void GPIO_EnableInterrupt(uint8_t pin) {
     uint8_t irq = GPIO_GetIRQn(pin);
+    
+    /* Enable the EXTI line interrupt in EXTI controller */
     EXTI_CPUIMR1 |= (1U << pin);
-    NVIC_ISER(irq >> 5) = (1U << (irq & 0x1FU));
+    
+    /* Enable the IRQ in NVIC */
+    volatile uint32_t *iser = (volatile uint32_t *)(NVIC_BASE + NVIC_ISER_OFFSET + (irq / 32) * 4);
+    *iser = (1U << (irq % 32));
 }
 
 void GPIO_DisableInterrupt(uint8_t pin) {
     uint8_t irq = GPIO_GetIRQn(pin);
+    
+    /* Disable the EXTI line interrupt in EXTI controller */
     EXTI_CPUIMR1 &= ~(1U << pin);
-    NVIC_ICER(irq >> 5) = (1U << (irq & 0x1FU));
+    
+    /* Disable the IRQ in NVIC */
+    volatile uint32_t *icer = (volatile uint32_t *)(NVIC_BASE + NVIC_ICER_OFFSET + (irq / 32) * 4);
+    *icer = (1U << (irq % 32));
 }
 
 uint32_t GPIO_GetPendingInterrupt(uint8_t pin) {

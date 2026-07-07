@@ -16,19 +16,24 @@
  ******************************************************************************
  */
 
+#if 1
 #include <stdint.h>
 #include "RCCH743ZI.h"
 #include "GPIOH743ZI.h"
 #include "h7pwr.h"
+#include "stdbool.h"
+#include "h7timer.h"
+#include "h7nvic.h"
 
-//------------ Power control -------------//
+/* Define TIM3 base address */
+/* Define TIM2 base address */
+#define TIM2 ((TIM_TypeDef *)TIM2_BASE)
 
-//---------------------------------------//
+/* =====================================================================
+ *  Timer interrupt flags in SR and DIER
+ * ===================================================================== */
+#define TIM_SR_CC2IF            (1U << 2)
 
-#define HSE_FREQUENCY_8MHZ       8000000UL
-#define TARGET_SYSCLK_4MHZ        4000000UL
-#define TARGET_SYSCLK_16MHZ       16000000UL
-#define TARGET_SYSCLK_480MHZ      480000000UL
 /* Board mapping used by all examples:
  *   LED    -> PB14
  *   Switch -> PG0   (assumed active-low; pressed = pin reads LOW)
@@ -38,12 +43,17 @@
 #define LED2_PORT        GPIOE
 #define LED2_PIN         1
 
-#define SW_PORT         GPIOG
-#define SW_PIN          0
-
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
+
+void SystemClock_16MHz_HSI(void);
+void SystemClock_400MHz_HSI(void);
+void LED_Init(void);
+void rcc_Clk_Enable(void);
+bool power_config(void);
+void timer_init(void);
+void TIM2_handler(void);
 
 void SystemClock_16MHz_HSI(void)
 {
@@ -65,6 +75,48 @@ void SystemClock_16MHz_HSI(void)
     RCC_SetSysClockSrc(RCC_SYSCLK_HSI);
 }
 
+void SystemClock_400MHz_HSI(void)
+{
+    /* 1) Enable HSI and wait */
+    RCC_HSIEnable(1);
+    while (!RCC_HSIRdy()) { /* wait */ }
+
+    /* 2) HSIDIV = /8  =>  hsi_ck = 8 MHz (pll reference) */
+    RCC_HSIConfig(3);                 /* 3 = /8 */
+
+    /* 3) Flash latency: 4 wait states for 240 MHz AHB at VOS1 */
+    RCC_SetFlashLatency(4);
+
+    /* 4) Bus prescalers (do this BEFORE switching to PLL) */
+    RCC_SetD1CPRE   (AHB_PRESCALER_DIV1);
+    RCC_SetAHBPrescaler (AHB_PRESCALER_DIV2);
+    RCC_SetD1PPRE   (APB_PRESCALER_DIV2);
+    RCC_SetD2PPRE1  (APB_PRESCALER_DIV2);
+    RCC_SetD2PPRE2  (APB_PRESCALER_DIV2);
+    RCC_SetD3PPRE   (APB_PRESCALER_DIV2);
+
+    /* 5) Configure PLL1 */
+    RCC_PLL1_Init_t pll1 = {
+        .pll_src    = RCC_PLLSRC_HSI,
+        .divm       = 1,
+        .divn       = 100,
+        .divp       = 1,            /* encoding 1 -> output /2 -> 480 MHz */
+        .divq       = 0,
+        .divr       = 0,
+        .pll_rge    = 3,            /* 8-16 MHz reference   */
+        .pll_vcosel = 0,            /* wide VCO 192-836 MHz */
+        .enable_p   = 1,
+        .enable_q   = 0,
+        .enable_r   = 0
+    };
+    RCC_PLL1Config(&pll1);
+    RCC_PLL1Enable(1);
+    while (!RCC_PLL1Ready()) { /* wait */ }
+
+    /* 6) Switch SYSCLK to PLL1 */
+    RCC_SetSysClockSrc(RCC_SYSCLK_PLL1);
+}
+
 /* ---------------------------------------------------------------------
  *  Shared pin setup helpers, used by all examples to avoid duplicating
  *  the configuration descriptors (which could otherwise drift apart).
@@ -83,25 +135,91 @@ void LED_Init(void) {
     GPIO_Init(LED2_PORT, &led);
 }
 
-int main(void) {
-	RCC_PeriphEnable(RCC_APB4_SYSCFG);
-	PWR_Init();
+void HardDelay(uint32_t value)
+{
+	for(int i = 0; i < value; i++)
+		for(int j = 0; j < 500; j++);
+}
 
+void rcc_Clk_Enable(void)
+{
+	RCC_PeriphEnable(RCC_APB4_SYSCFG);
 	RCC_PeriphEnable(RCC_AHB4_GPIOB);
 	RCC_PeriphEnable(RCC_AHB4_GPIOE);
+	RCC_PeriphEnable(RCC_APB1L_TIM2);
+}
 
+bool power_config(void)
+{
+	volatile bool suppOk = false;
+	//PWR_Init();
+	PWR_SetVoltageScale(PWR_VOS_0);
+	PWR_OverDriveEnable(1);
+	PWR_BoostEnable(1);
+	PWR_EnableBackupAccess();
 
-	SystemClock_16MHz_HSI();
+	for(int i = 0; i< 100; i++)
+	{
+		if (PWR_RegulatorReady() != 0U) { suppOk = true; break;}
+		if (PWR_GetVoltageScale() == PWR_VOS_0) { suppOk = true; break;}
+		HardDelay(100);
+	}
+	return suppOk;
+}
+
+void timer_init(void)
+{
+	/* Initialize TIM2 for PWM output of 1 hz (16Mhz timer clock / (1000 prescalar * 16000 counter))*/
+	H7_TIM_Init(TIM2, 100, 160, TIM_COUNTERMODE_UP);  // 80 MHz timer clock, 1 kHz frequency
+
+	/* Configure channel 1 for PWM output, 50% duty cycle */
+	H7_TIM_PWM_ConfigChannel(TIM2, 1, 500, TIM_OCPOLARITY_HIGH, TIM_OCMODE_PWM1);
+
+	/* Enable CC1 interrupt */
+	H7_TIM_EnableInterrupt(TIM2, TIM_CC2_INTERRUPT);
+
+	/* Enable the timer */
+	H7_TIM_Start(TIM2);
+
+	NVIC_Init();
+	NVIC_RegisterCallback(NVIC_IRQ_TIM2, TIM2_handler);
+	NVIC_SetPriority(NVIC_IRQ_TIM2, 0x20U);
+	NVIC_EnableIRQ(NVIC_IRQ_TIM2);
+}
+
+/* Timer2 CC1 interrupt handler */
+void TIM2_handler(void)
+{
+    if (TIM2->SR & TIM_SR_CC2IF)
+    {
+        TIM2->SR = ~TIM_SR_CC2IF;
+        /* Toggle LED to indicate interrupt occurred */
+    	GPIO_TogglePin(LED2_PORT, LED2_PIN);
+    }
+}
+
+int main(void) {
+
+	//SystemClock_400MHz_HSI();
+    SystemClock_16MHz_HSI();
+
+	rcc_Clk_Enable();
+	bool init = power_config();
+	if(init == false)
+	{
+		// error handling
+		return 0;
+	}
 
     LED_Init();
-
+    timer_init();
 
     while (1) {
-    	GPIO_TogglePin(LED1_PORT, LED1_PIN);
-    	GPIO_TogglePin(LED2_PORT, LED2_PIN);
-    	for(int i = 0; i < 500; i++)
-    		for(int j = 0; j < 500; j++);
+    	//GPIO_TogglePin(LED1_PORT, LED1_PIN);
+    	//GPIO_TogglePin(LED2_PORT, LED2_PIN);
+    	HardDelay(500);
     }
 
     return 0;
 }
+#endif
