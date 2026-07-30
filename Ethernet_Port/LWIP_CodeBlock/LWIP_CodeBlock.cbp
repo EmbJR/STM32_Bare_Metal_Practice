@@ -30,7 +30,185 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add directory="lwip/src/include" />
+			<Add directory="lwip/include" />
+			<Add directory="lwip/include/arch" />
 		</Compiler>
+		<Unit filename="lwip/contrib/ports/win32/pcapif.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="lwip/contrib/ports/win32/pcapif.h" />
+		<Unit filename="lwip/contrib/ports/win32/pcapif_helper.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="lwip/contrib/ports/win32/pcapif_helper.h" />
+		<Unit filename="lwip/contrib/ports/win32/sio.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="lwip/contrib/ports/win32/sys_arch.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="lwip/include/arch/cc.h" />
+		<Unit filename="lwip/include/lwipopts.h" />
+		<Unit filename="lwip/src/core/altcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/altcp_alloc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/altcp_tcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/def.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/dns.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/inet_chksum.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/init.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ip.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/acd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/autoip.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/dhcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/etharp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/icmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/igmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/ip4.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/ip4_addr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv4/ip4_frag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/dhcp6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/ethip6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/icmp6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/inet6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/ip6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/ip6_addr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/ip6_frag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/mld6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/ipv6/nd6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/mem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/memp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/netif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/pbuf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/raw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/stats.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/sys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/tcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/tcp_in.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/tcp_out.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/timeouts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/core/udp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/include/netif/bridgeif.h" />
+		<Unit filename="lwip/src/include/netif/bridgeif_opts.h" />
+		<Unit filename="lwip/src/include/netif/etharp.h" />
+		<Unit filename="lwip/src/include/netif/ethernet.h" />
+		<Unit filename="lwip/src/include/netif/ieee802154.h" />
+		<Unit filename="lwip/src/include/netif/lowpan6.h" />
+		<Unit filename="lwip/src/include/netif/lowpan6_ble.h" />
+		<Unit filename="lwip/src/include/netif/lowpan6_common.h" />
+		<Unit filename="lwip/src/include/netif/lowpan6_opts.h" />
+		<Unit filename="lwip/src/include/netif/slipif.h" />
+		<Unit filename="lwip/src/include/netif/zepif.h" />
+		<Unit filename="lwip/src/netif/bridgeif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/bridgeif_fdb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/ethernet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/lowpan6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/lowpan6_ble.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/lowpan6_common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lwip/src/netif/slipif.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="lwip/src/netif/zepif.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>

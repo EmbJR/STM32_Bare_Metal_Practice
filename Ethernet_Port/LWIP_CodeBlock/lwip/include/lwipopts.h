@@ -361,4 +361,13 @@ void lwip_example_app_platform_assert(const char *msg, int line, const char *fil
 #define PPP_NUM_TIMEOUTS        0
 #endif
 
+/* lwipopts.h additions for Loopback testing */
+#define LWIP_HAVE_LOOPIF        1   // Enable loopback netif
+#define LWIP_NETIF_LOOPBACK     1   // Enable loopback processing
+#define LWIP_NETIF_LOOPBACK_MULTITHREADING 0
+#define LWIP_LOOPBACK_MAX_PBUFS             8  /* Allow up to 8 queued pbufs */
+
+
+
+
 #endif /* __LWIPOPTS_H__ */
