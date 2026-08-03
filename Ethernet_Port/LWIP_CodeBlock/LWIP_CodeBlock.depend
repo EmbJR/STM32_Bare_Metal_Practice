@@ -1,0 +1,1257 @@
+# depslib dependency file v1.0
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\altcp.c
+	"lwip/opt.h"
+	"lwip/altcp.h"
+	"lwip/priv/altcp_priv.h"
+	"lwip/altcp_tcp.h"
+	"lwip/tcp.h"
+	"lwip/mem.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\opt.h
+	"lwipopts.h"
+	"lwip/debug.h"
+
+1785520292 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\lwipopts.h
+	"lwipopts_test.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\debug.h
+	"lwip/arch.h"
+	"lwip/opt.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\arch.h
+	"arch/cc.h"
+	<stdio.h>
+	<stdlib.h>
+	<stdio.h>
+	<stdlib.h>
+	<stddef.h>
+	<stdint.h>
+	<inttypes.h>
+	<limits.h>
+	<unistd.h>
+	<ctype.h>
+
+1785402824 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\arch\cc.h
+	<errno.h>
+	<sys/time.h>
+	<stdio.h>
+	<stdlib.h>
+	<stdint.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\altcp.h
+	"lwip/opt.h"
+	"lwip/tcpbase.h"
+	"lwip/err.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/tcp.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\tcpbase.h
+	"lwip/opt.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\err.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\pbuf.h
+	"lwip/opt.h"
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip_addr.h
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/ip4_addr.h"
+	"lwip/ip6_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\def.h
+	"lwip/arch.h"
+	"lwip/opt.h"
+	"arch/perf.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\arch\perf.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip4_addr.h
+	"lwip/opt.h"
+	"lwip/def.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip6_addr.h
+	"lwip/opt.h"
+	"def.h"
+	"lwip/ip6_zone.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip6_zone.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\tcp.h
+	"lwip/opt.h"
+	"lwip/tcpbase.h"
+	"lwip/mem.h"
+	"lwip/pbuf.h"
+	"lwip/ip.h"
+	"lwip/icmp.h"
+	"lwip/err.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\mem.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip.h
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/err.h"
+	"lwip/netif.h"
+	"lwip/ip4.h"
+	"lwip/ip6.h"
+	"lwip/prot/ip.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\netif.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/ip_addr.h"
+	"lwip/def.h"
+	"lwip/pbuf.h"
+	"lwip/stats.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\stats.h
+	"lwip/opt.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\memp.h
+	"lwip/opt.h"
+	"lwip/priv/memp_std.h"
+	"lwip/priv/memp_std.h"
+	"lwip/priv/memp_priv.h"
+	"lwip/stats.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\memp_std.h
+	"lwippools.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\memp_priv.h
+	"lwip/opt.h"
+	"lwip/mem.h"
+	"lwip/priv/mem_priv.h"
+	"lwip/priv/memp_std.h"
+	"lwip/priv/memp_std.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\mem_priv.h
+	"lwip/opt.h"
+	"lwip/mem.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip4.h
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/pbuf.h"
+	"lwip/ip4_addr.h"
+	"lwip/err.h"
+	"lwip/netif.h"
+	"lwip/prot/ip4.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\ip4.h
+	"lwip/arch.h"
+	"lwip/ip4_addr.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\arch\bpstruct.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\arch\epstruct.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip6.h
+	"lwip/opt.h"
+	"lwip/ip6_addr.h"
+	"lwip/prot/ip6.h"
+	"lwip/def.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\ip6.h
+	"lwip/arch.h"
+	"lwip/ip6_addr.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\ip.h
+	"lwip/arch.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\icmp.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/prot/icmp.h"
+	"lwip/icmp6.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\icmp.h
+	"lwip/arch.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\icmp6.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+	"lwip/prot/icmp6.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\icmp6.h
+	"lwip/arch.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\altcp_priv.h
+	"lwip/opt.h"
+	"lwip/altcp.h"
+	"lwip/ip_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\altcp_tcp.h
+	"lwip/opt.h"
+	"lwip/altcp.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\altcp_alloc.c
+	"lwip/opt.h"
+	"lwip/altcp.h"
+	"lwip/altcp_tcp.h"
+	"lwip/altcp_tls.h"
+	"lwip/priv/altcp_priv.h"
+	"lwip/mem.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\altcp_tls.h
+	"lwip/opt.h"
+	"lwip/altcp.h"
+	"lwip/apps/altcp_tls_mbedtls_opts.h"
+	"mbedtls/ssl.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\apps\altcp_tls_mbedtls_opts.h
+	"lwip/opt.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\altcp_tcp.c
+	"lwip/opt.h"
+	"lwip/altcp.h"
+	"lwip/altcp_tcp.h"
+	"lwip/priv/altcp_priv.h"
+	"lwip/tcp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/mem.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\tcp_priv.h
+	"lwip/opt.h"
+	"lwip/tcp.h"
+	"lwip/mem.h"
+	"lwip/pbuf.h"
+	"lwip/ip.h"
+	"lwip/icmp.h"
+	"lwip/err.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/prot/tcp.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\tcp.h
+	"lwip/arch.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\def.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\dns.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/udp.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/dns.h"
+	"lwip/prot/dns.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\udp.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/ip_addr.h"
+	"lwip/ip.h"
+	"lwip/ip6_addr.h"
+	"lwip/prot/udp.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\udp.h
+	"lwip/arch.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\dns.h
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\dns.h
+	"lwip/arch.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1785424273 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\inet_chksum.c
+	"lwip/opt.h"
+	"lwip/inet_chksum.h"
+	"lwip/def.h"
+	"lwip/ip_addr.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\inet_chksum.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+
+1785423381 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\init.c
+	"lwip/opt.h"
+	"lwip/init.h"
+	"lwip/stats.h"
+	"lwip/sys.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/sockets.h"
+	"lwip/ip.h"
+	"lwip/raw.h"
+	"lwip/udp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/igmp.h"
+	"lwip/dns.h"
+	"lwip/timeouts.h"
+	"lwip/etharp.h"
+	"lwip/ip6.h"
+	"lwip/nd6.h"
+	"lwip/mld6.h"
+	"lwip/api.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\init.h
+	"lwip/opt.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\sys.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"arch/sys_arch.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\arch\sys_arch.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\sockets.h
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/err.h"
+	"lwip/inet.h"
+	"lwip/errno.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\inet.h
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/ip_addr.h"
+	"lwip/ip6_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\errno.h
+	"lwip/opt.h"
+	<errno.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\raw.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/def.h"
+	"lwip/ip.h"
+	"lwip/ip_addr.h"
+	"lwip/ip6_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\igmp.h
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/pbuf.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\timeouts.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/sys.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\etharp.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip4_addr.h"
+	"lwip/netif.h"
+	"lwip/ip4.h"
+	"lwip/prot/ethernet.h"
+	"lwip/prot/etharp.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\ethernet.h
+	"lwip/arch.h"
+	"lwip/prot/ieee.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\ieee.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\etharp.h
+	"lwip/arch.h"
+	"lwip/prot/ethernet.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\nd6.h
+	"lwip/opt.h"
+	"lwip/ip6_addr.h"
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\mld6.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\api.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+	"lwip/netbuf.h"
+	"lwip/sys.h"
+	"lwip/ip_addr.h"
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\netbuf.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/ip6_addr.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ip.c
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/ip.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\acd.c
+	"lwip/opt.h"
+	<string.h>
+	"lwip/acd.h"
+	"lwip/prot/acd.h"
+	"lwip/autoip.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\acd.h
+	"lwip/opt.h"
+	"lwip/netif.h"
+	"lwip/etharp.h"
+	"lwip/prot/acd.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\acd.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\autoip.h
+	"lwip/opt.h"
+	"lwip/netif.h"
+	"lwip/etharp.h"
+	"lwip/acd.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\autoip.c
+	"lwip/opt.h"
+	"lwip/mem.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/autoip.h"
+	"lwip/acd.h"
+	"lwip/etharp.h"
+	"lwip/prot/autoip.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\autoip.h
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\dhcp.c
+	"lwip/opt.h"
+	"lwip/stats.h"
+	"lwip/mem.h"
+	"lwip/udp.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/def.h"
+	"lwip/dhcp.h"
+	"lwip/autoip.h"
+	"lwip/acd.h"
+	"lwip/dns.h"
+	"lwip/etharp.h"
+	"lwip/prot/dhcp.h"
+	"lwip/prot/iana.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\dhcp.h
+	"lwip/opt.h"
+	"lwip/netif.h"
+	"lwip/udp.h"
+	"lwip/acd.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\dhcp.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+	"lwip/prot/ip4.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\iana.h
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\etharp.c
+	"lwip/opt.h"
+	"lwip/etharp.h"
+	"lwip/stats.h"
+	"lwip/snmp.h"
+	"lwip/dhcp.h"
+	"lwip/autoip.h"
+	"lwip/acd.h"
+	"lwip/prot/iana.h"
+	"netif/ethernet.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\snmp.h
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\ethernet.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/prot/ethernet.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\icmp.c
+	"lwip/opt.h"
+	"lwip/icmp.h"
+	"lwip/inet_chksum.h"
+	"lwip/ip.h"
+	"lwip/def.h"
+	"lwip/stats.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\igmp.c
+	"lwip/opt.h"
+	"lwip/igmp.h"
+	"lwip/debug.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/ip.h"
+	"lwip/inet_chksum.h"
+	"lwip/netif.h"
+	"lwip/stats.h"
+	"lwip/prot/igmp.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\igmp.h
+	"lwip/arch.h"
+	"lwip/prot/ip4.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\ip4.c
+	"lwip/opt.h"
+	"lwip/ip.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/ip4_frag.h"
+	"lwip/inet_chksum.h"
+	"lwip/netif.h"
+	"lwip/icmp.h"
+	"lwip/igmp.h"
+	"lwip/priv/raw_priv.h"
+	"lwip/udp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/autoip.h"
+	"lwip/stats.h"
+	"lwip/prot/iana.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip4_frag.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/ip_addr.h"
+	"lwip/ip.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\raw_priv.h
+	"lwip/opt.h"
+	"lwip/raw.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\ip4_addr.c
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv4\ip4_frag.c
+	"lwip/opt.h"
+	"lwip/ip4_frag.h"
+	"lwip/def.h"
+	"lwip/inet_chksum.h"
+	"lwip/netif.h"
+	"lwip/stats.h"
+	"lwip/icmp.h"
+	<string.h>
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\dhcp6.c
+	"lwip/opt.h"
+	"lwip/dhcp6.h"
+	"lwip/prot/dhcp6.h"
+	"lwip/def.h"
+	"lwip/udp.h"
+	"lwip/dns.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\dhcp6.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\dhcp6.h
+	"lwip/opt.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\ethip6.c
+	"lwip/opt.h"
+	"lwip/ethip6.h"
+	"lwip/nd6.h"
+	"lwip/pbuf.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/inet_chksum.h"
+	"lwip/netif.h"
+	"lwip/icmp6.h"
+	"lwip/prot/ethernet.h"
+	"netif/ethernet.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ethip6.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\icmp6.c
+	"lwip/opt.h"
+	"lwip/icmp6.h"
+	"lwip/prot/icmp6.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/inet_chksum.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/nd6.h"
+	"lwip/mld6.h"
+	"lwip/ip.h"
+	"lwip/stats.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\inet6.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/inet.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\ip6.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/netif.h"
+	"lwip/ip.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/ip6_frag.h"
+	"lwip/icmp6.h"
+	"lwip/priv/raw_priv.h"
+	"lwip/udp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/dhcp6.h"
+	"lwip/nd6.h"
+	"lwip/mld6.h"
+	"lwip/debug.h"
+	"lwip/stats.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\ip6_frag.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip6_addr.h"
+	"lwip/ip6.h"
+	"lwip/netif.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\ip6_addr.c
+	"lwip/opt.h"
+	"lwip/ip_addr.h"
+	"lwip/def.h"
+	"lwip/netif.h"
+	<string.h>
+	"lwip/ip4_addr.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\ip6_frag.c
+	"lwip/opt.h"
+	"lwip/ip6_frag.h"
+	"lwip/ip6.h"
+	"lwip/icmp6.h"
+	"lwip/nd6.h"
+	"lwip/ip.h"
+	"lwip/pbuf.h"
+	"lwip/memp.h"
+	"lwip/stats.h"
+	<string.h>
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\mld6.c
+	"lwip/opt.h"
+	"lwip/mld6.h"
+	"lwip/prot/mld6.h"
+	"lwip/icmp6.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/ip.h"
+	"lwip/inet_chksum.h"
+	"lwip/pbuf.h"
+	"lwip/netif.h"
+	"lwip/memp.h"
+	"lwip/stats.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\mld6.h
+	"lwip/arch.h"
+	"lwip/prot/ip6.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\ipv6\nd6.c
+	"lwip/opt.h"
+	"lwip/nd6.h"
+	"lwip/priv/nd6_priv.h"
+	"lwip/prot/nd6.h"
+	"lwip/prot/icmp6.h"
+	"lwip/pbuf.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/inet_chksum.h"
+	"lwip/netif.h"
+	"lwip/icmp6.h"
+	"lwip/mld6.h"
+	"lwip/dhcp6.h"
+	"lwip/ip.h"
+	"lwip/stats.h"
+	"lwip/dns.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\nd6_priv.h
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\prot\nd6.h
+	"lwip/arch.h"
+	"lwip/ip6_addr.h"
+	"lwip/prot/ip6.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\mem.c
+	"lwip/opt.h"
+	"lwip/mem.h"
+	"lwip/def.h"
+	"lwip/sys.h"
+	"lwip/stats.h"
+	"lwip/err.h"
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+
+1785401407 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\memp.c
+	"lwip/opt.h"
+	"lwip/memp.h"
+	"lwip/sys.h"
+	"lwip/stats.h"
+	<string.h>
+	"lwip/pbuf.h"
+	"lwip/raw.h"
+	"lwip/udp.h"
+	"lwip/tcp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/altcp.h"
+	"lwip/ip4_frag.h"
+	"lwip/netbuf.h"
+	"lwip/api.h"
+	"lwip/priv/tcpip_priv.h"
+	"lwip/priv/api_msg.h"
+	"lwip/priv/sockets_priv.h"
+	"lwip/etharp.h"
+	"lwip/igmp.h"
+	"lwip/timeouts.h"
+	"lwip/netdb.h"
+	"lwip/dns.h"
+	"lwip/priv/nd6_priv.h"
+	"lwip/ip6_frag.h"
+	"lwip/mld6.h"
+	"lwip/priv/memp_std.h"
+	"lwip/priv/memp_std.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\tcpip_priv.h
+	"lwip/opt.h"
+	"lwip/tcpip.h"
+	"lwip/sys.h"
+	"lwip/timeouts.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\tcpip.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/timeouts.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\api_msg.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+	"lwip/ip_addr.h"
+	"lwip/err.h"
+	"lwip/sys.h"
+	"lwip/igmp.h"
+	"lwip/api.h"
+	"lwip/priv/tcpip_priv.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\priv\sockets_priv.h
+	"lwip/opt.h"
+	"lwip/err.h"
+	"lwip/sockets.h"
+	"lwip/sys.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\lwip\netdb.h
+	"lwip/opt.h"
+	"lwip/arch.h"
+	"lwip/inet.h"
+	"lwip/sockets.h"
+
+1785426310 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\netif.c
+	"lwip/opt.h"
+	<string.h>
+	<stdlib.h>
+	"lwip/def.h"
+	"lwip/ip_addr.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/udp.h"
+	"lwip/priv/raw_priv.h"
+	"lwip/snmp.h"
+	"lwip/igmp.h"
+	"lwip/etharp.h"
+	"lwip/stats.h"
+	"lwip/sys.h"
+	"lwip/ip.h"
+	"lwip/tcpip.h"
+	"netif/ethernet.h"
+	"lwip/autoip.h"
+	"lwip/dhcp.h"
+	"lwip/acd.h"
+	"lwip/dhcp6.h"
+	"lwip/mld6.h"
+	"lwip/nd6.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\pbuf.c
+	"lwip/opt.h"
+	"lwip/pbuf.h"
+	"lwip/stats.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/sys.h"
+	"lwip/netif.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/inet_chksum.h"
+	<string.h>
+	"lwip/tcpip.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\raw.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/memp.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/raw.h"
+	"lwip/priv/raw_priv.h"
+	"lwip/stats.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/inet_chksum.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\stats.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/stats.h"
+	"lwip/mem.h"
+	"lwip/debug.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\sys.c
+	"lwip/opt.h"
+	"lwip/sys.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\tcp.c
+	"lwip/opt.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/tcp.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/debug.h"
+	"lwip/stats.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/nd6.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\tcp_in.c
+	"lwip/opt.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/def.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/inet_chksum.h"
+	"lwip/stats.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/nd6.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\tcp_out.c
+	"lwip/opt.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/memp.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/inet_chksum.h"
+	"lwip/stats.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/sys.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\timeouts.c
+	"lwip/opt.h"
+	"lwip/timeouts.h"
+	"lwip/priv/tcp_priv.h"
+	"lwip/def.h"
+	"lwip/memp.h"
+	"lwip/priv/tcpip_priv.h"
+	"lwip/ip4_frag.h"
+	"lwip/etharp.h"
+	"lwip/dhcp.h"
+	"lwip/acd.h"
+	"lwip/igmp.h"
+	"lwip/dns.h"
+	"lwip/nd6.h"
+	"lwip/ip6_frag.h"
+	"lwip/mld6.h"
+	"lwip/dhcp6.h"
+	"lwip/sys.h"
+	"lwip/pbuf.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\core\udp.c
+	"lwip/opt.h"
+	"lwip/udp.h"
+	"lwip/def.h"
+	"lwip/memp.h"
+	"lwip/inet_chksum.h"
+	"lwip/ip_addr.h"
+	"lwip/ip6.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+	"lwip/icmp.h"
+	"lwip/icmp6.h"
+	"lwip/stats.h"
+	"lwip/snmp.h"
+	"lwip/dhcp.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\bridgeif.c
+	"netif/bridgeif.h"
+	"lwip/netif.h"
+	"lwip/sys.h"
+	"lwip/etharp.h"
+	"lwip/ethip6.h"
+	"lwip/snmp.h"
+	"lwip/timeouts.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\bridgeif.h
+	"netif/bridgeif_opts.h"
+	"lwip/err.h"
+	"lwip/prot/ethernet.h"
+	"lwip/sys.h"
+	"lwip/tcpip.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\bridgeif_opts.h
+	"lwip/opt.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\bridgeif_fdb.c
+	"netif/bridgeif.h"
+	"lwip/sys.h"
+	"lwip/mem.h"
+	"lwip/timeouts.h"
+	<string.h>
+
+1785401425 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\ethernet.c
+	"lwip/opt.h"
+	"netif/ethernet.h"
+	"lwip/def.h"
+	"lwip/stats.h"
+	"lwip/etharp.h"
+	"lwip/ip.h"
+	"lwip/snmp.h"
+	<string.h>
+	"netif/ppp/pppoe.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\lowpan6.c
+	"netif/lowpan6.h"
+	"lwip/ip.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/nd6.h"
+	"lwip/mem.h"
+	"lwip/udp.h"
+	"lwip/tcpip.h"
+	"lwip/snmp.h"
+	"netif/ieee802154.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\lowpan6.h
+	"netif/lowpan6_opts.h"
+	"netif/lowpan6_common.h"
+	"lwip/pbuf.h"
+	"lwip/ip.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\lowpan6_opts.h
+	"lwip/opt.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\lowpan6_common.h
+	"netif/lowpan6_opts.h"
+	"lwip/pbuf.h"
+	"lwip/ip.h"
+	"lwip/ip6_addr.h"
+	"lwip/netif.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\ieee802154.h
+	"lwip/opt.h"
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\lowpan6_ble.c
+	"netif/lowpan6_ble.h"
+	"lwip/ip.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/nd6.h"
+	"lwip/mem.h"
+	"lwip/udp.h"
+	"lwip/tcpip.h"
+	"lwip/snmp.h"
+	<string.h>
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\lowpan6_ble.h
+	"netif/lowpan6_opts.h"
+	"netif/lowpan6_common.h"
+	"lwip/pbuf.h"
+	"lwip/ip.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\lowpan6_common.c
+	"netif/lowpan6_common.h"
+	"lwip/ip.h"
+	"lwip/pbuf.h"
+	"lwip/ip_addr.h"
+	"lwip/netif.h"
+	"lwip/udp.h"
+	<string.h>
+
+1738768096 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\netif\zepif.c
+	"netif/zepif.h"
+	"netif/lowpan6.h"
+	"lwip/udp.h"
+	"lwip/timeouts.h"
+	<string.h>
+	"arch/bpstruct.h"
+	"arch/epstruct.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\src\include\netif\zepif.h
+	"lwip/opt.h"
+	"netif/lowpan6.h"
+	"lwip/netif.h"
+
+1785501820 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\main.c
+	<stdio.h>
+	<string.h>
+	<windows.h>
+	"lwip/init.h"
+	"lwip/netif.h"
+	"lwip/ip_addr.h"
+	"lwip/udp.h"
+	"lwip/timeouts.h"
+
+1785516568 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\contrib\ports\win32\pcapif.c
+	"lwipcfg.h"
+	<stdlib.h>
+	<stdio.h>
+	"pcap.h"
+	"pcap.h"
+	"lwip/opt.h"
+	"pcapif.h"
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	"lwip/debug.h"
+	"lwip/def.h"
+	"lwip/mem.h"
+	"lwip/pbuf.h"
+	"lwip/stats.h"
+	"lwip/sys.h"
+	"lwip/ip.h"
+	"lwip/snmp.h"
+	"lwip/tcpip.h"
+	"lwip/timeouts.h"
+	"lwip/ethip6.h"
+	"lwip/etharp.h"
+	"pcapif_helper.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\include\lwipcfg.h
+
+1736267866 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap.h
+	<pcap/pcap.h>
+
+1767640564 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\pcap.h
+	<pcap/funcattrs.h>
+	<pcap/pcap-inttypes.h>
+	<winsock2.h>
+	<io.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<sys/types.h>
+	<sys/time.h>
+	<pcap/socket.h>
+	<pcap/bpf.h>
+	<stdio.h>
+
+1767640564 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\funcattrs.h
+	<pcap/compiler-tests.h>
+	<sal.h>
+
+1767640564 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\compiler-tests.h
+
+1767640564 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\pcap-inttypes.h
+	<inttypes.h>
+	<inttypes.h>
+
+1737132209 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\socket.h
+	<windef.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+	<sys/types.h>
+	<sys/socket.h>
+	<netdb.h>
+	<netinet/in.h>
+	<arpa/inet.h>
+
+1767640564 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\bpf.h
+	<pcap/funcattrs.h>
+	<pcap/dlt.h>
+
+1767641576 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\pcap\dlt.h
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\contrib\ports\win32\pcapif.h
+	"lwip/err.h"
+
+1738768096 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\contrib\ports\win32\pcapif_helper.h
+	<stddef.h>
+
+1785518885 source:e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\contrib\ports\win32\pcapif_helper.c
+	"pcapif_helper.h"
+	<stdlib.h>
+	<stdio.h>
+	"lwip/arch.h"
+	"arch/cc.h"
+	<stdio.h>
+	<pcap.h>
+	<packet32.h>
+	"lwip/opt.h"
+	<windows.h>
+	<packet32.h>
+	<ntddndis.h>
+
+1757359217 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\packet32.h
+	<sal.h>
+	<winsock2.h>
+	"npcap-bpf.h"
+	"npcap-defs.h"
+	<airpcap.h>
+
+1740584088 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\npcap-bpf.h
+	<winsock2.h>
+
+1758733123 e:\new\microcontrollers\stm32\stm32_bare_metal_practice\ethernet_port\lwip_codeblock\lwip\npcap-sdk-1.16\include\npcap-defs.h
+

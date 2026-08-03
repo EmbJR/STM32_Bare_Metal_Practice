@@ -362,11 +362,30 @@ void lwip_example_app_platform_assert(const char *msg, int line, const char *fil
 #endif
 
 /* lwipopts.h additions for Loopback testing */
+/*----- for loopback test -----//
+-------------------------------//
 #define LWIP_HAVE_LOOPIF        1   // Enable loopback netif
 #define LWIP_NETIF_LOOPBACK     1   // Enable loopback processing
 #define LWIP_NETIF_LOOPBACK_MULTITHREADING 0
-#define LWIP_LOOPBACK_MAX_PBUFS             8  /* Allow up to 8 queued pbufs */
+#define LWIP_LOOPBACK_MAX_PBUFS             8  // Allow up to 8 queued pbufs
+-----------------------------------*/
 
+/* Ensure ARP and Ethernet handling are active */
+#define LWIP_ARP                    1
+#define LWIP_ETHERNET               1
+#define LWIP_UDP                    1
+
+/* Disable internal loopback testing */
+#define LWIP_HAVE_LOOPIF            0
+#define LWIP_NETIF_LOOPBACK         0
+#define PACK_STRUCT_USE_INCLUDES
+
+/* Enable DHCP module */
+#define LWIP_DHCP                   1
+#define LWIP_UDP                    1
+
+/* Required for DHCP timer callbacks */
+#define LWIP_NETIF_STATUS_CALLBACK  1
 
 
 

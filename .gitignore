@@ -3,3 +3,6 @@ Test
 .settings
 /STM32H743ZI/Reference_Manual_stm32h742-stm32h743-753-and-stm32h750.pdf
 /Ethernet_Port/Docs/lwip-2.2.1
+/Ethernet_Port/Docs/npcap-sdk-1.16
+/Ethernet_Port/LWIP_CodeBlock/bin
+/Ethernet_Port/LWIP_CodeBlock/obj

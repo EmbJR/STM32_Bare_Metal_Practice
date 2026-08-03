@@ -30,20 +30,24 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DWIN32" />
+			<Add option="-D_WINSOCK_DEPRECATED_NO_WARNINGS" />
 			<Add directory="lwip/src/include" />
 			<Add directory="lwip/include" />
 			<Add directory="lwip/include/arch" />
+			<Add directory="lwip/npcap-sdk-1.16/Include" />
+			<Add directory="lwip/contrib/ports/win32" />
 		</Compiler>
+		<Linker>
+			<Add library="lwip/npcap-sdk-1.16/Lib/x64/Packet.lib" />
+			<Add library="lwip/npcap-sdk-1.16/Lib/x64/wpcap.lib" />
+		</Linker>
 		<Unit filename="lwip/contrib/ports/win32/pcapif.c">
 			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
 		</Unit>
 		<Unit filename="lwip/contrib/ports/win32/pcapif.h" />
 		<Unit filename="lwip/contrib/ports/win32/pcapif_helper.c">
 			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
 		</Unit>
 		<Unit filename="lwip/contrib/ports/win32/pcapif_helper.h" />
 		<Unit filename="lwip/contrib/ports/win32/sio.c">
@@ -53,11 +57,10 @@
 		</Unit>
 		<Unit filename="lwip/contrib/ports/win32/sys_arch.c">
 			<Option compilerVar="CC" />
-			<Option compile="0" />
-			<Option link="0" />
 		</Unit>
 		<Unit filename="lwip/include/arch/cc.h" />
 		<Unit filename="lwip/include/lwipopts.h" />
+		<Unit filename="lwip/npcap-sdk-1.16/Include/pcap.h" />
 		<Unit filename="lwip/src/core/altcp.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -7,101 +7,98 @@
 #include "lwip/ip_addr.h"
 #include "lwip/udp.h"
 #include "lwip/timeouts.h"
+#include "netif/ethernet.h"
 
+/* Include Windows Pcap network interface initializer */
+#include "pcapif.h"
+
+// System tick required for lwIP
 u32_t sys_now(void) {
     return GetTickCount();
 }
 
-struct netif loop_netif;
-static volatile u8_t packet_received = 0;
-
-// 1. Output wrapper for IPv4 loopback
-static err_t my_loop_output(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipaddr) {
-    LWIP_UNUSED_ARG(ipaddr);
-    return netif_loop_output(netif, p);
-}
-
-// 2. Loopback Netif Initialization
-static err_t my_loopif_init(struct netif *netif) {
-    netif->name[0] = 'l';
-    netif->name[1] = 'o';
-    netif->output = my_loop_output;
-    return ERR_OK;
-}
-
-// 3. UDP Receive Callback
-void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-                       const ip_addr_t *addr, u16_t port) {
-    LWIP_UNUSED_ARG(arg);
-    LWIP_UNUSED_ARG(pcb);
-    LWIP_UNUSED_ARG(addr);
-    LWIP_UNUSED_ARG(port);
-
-    if (p != NULL) {
-        printf("\n==========================================\n");
-        printf("[SUCCESS] UDP Packet Received via lwIP Loopback!\n");
-        printf("Payload Length: %d bytes\n", p->tot_len);
-        printf("Data Content: %s\n", (char *)p->payload);
-        printf("==========================================\n\n");
-
-        packet_received = 1;
-        pbuf_free(p);
-    }
-}
+struct netif g_pcap_netif;
 
 int main(void) {
-    printf("--- Starting lwIP Bare-Metal Loopback Test ---\n");
+    printf("===================================================\n");
+    printf(" lwIP Real-IP String Sender (Windows Code::Blocks) \n");
+    printf("===================================================\n\n");
 
-    // Initialize lwIP Stack
+    // 1. Initialize lwIP stack
     lwip_init();
 
-    // Set up Loopback Netif (127.0.0.1)
-    ip4_addr_t ipaddr, netmask, gw;
-    IP4_ADDR(&ipaddr, 127, 0, 0, 1);
-    IP4_ADDR(&netmask, 255, 0, 0, 0);
-    IP4_ADDR(&gw, 127, 0, 0, 1);
+    // 2. Define Network Configurations
+    // NOTE: Match these to your actual LAN network router setup!
+    ip4_addr_t local_ip, netmask, gateway, target_ip;
+    IP4_ADDR(&local_ip,  192, 168, 29, 83);  // IP for lwIP stack on Windows
+    IP4_ADDR(&netmask,   255, 255, 255, 0);  // Subnet mask
+    IP4_ADDR(&gateway,   192, 168, 29, 1);    // Gateway
 
-    netif_add(&loop_netif, &ipaddr, &netmask, &gw, NULL, my_loopif_init, netif_input);
-    netif_set_default(&loop_netif);
-    netif_set_link_up(&loop_netif);
-    netif_set_up(&loop_netif);
+    // Target IP address to receive the string (another PC, phone, or board)
+    //IP4_ADDR(&target_ip, 155, 155, 255, 255);   // Target IP
+    IP4_ADDR(&target_ip, 192,168,29,198);
+    u16_t target_port = 5000;                // Target UDP Port
 
-    // Create UDP Server listening on port 7000
-    struct udp_pcb *server_pcb = udp_new();
-    udp_bind(server_pcb, IP_ADDR_ANY, 7000);
-    udp_recv(server_pcb, udp_recv_callback, NULL);
+    // 3. Register PCAP Network Interface
+    // pcapif_init will display a menu in console to pick your real Network Adapter
+    printf("Initializing Network Adapter via Npcap...\n");
+    if (netif_add(&g_pcap_netif, &local_ip, &netmask, &gateway, NULL, pcapif_init, ethernet_input) == NULL) {
+        printf("[ERROR] Failed to initialize pcapif network interface.\n");
+        return -1;
+    }
 
-    printf("UDP Server listening on port 7000...\n");
+    netif_set_default(&g_pcap_netif);
+    netif_set_link_up(&g_pcap_netif);
+    netif_set_up(&g_pcap_netif);
 
-    // Create UDP Client and Send Data
-    struct udp_pcb *client_pcb = udp_new();
-    const char *message = "Hello from lwIP in Code::Blocks!";
+    printf("\nNetwork Interface is UP.\n");
 
-    struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(strlen(message) + 1), PBUF_RAM);
+    // 4. Create UDP Protocol Control Block (PCB)
+    struct udp_pcb *udp_client = udp_new();
+    if (udp_client == NULL) {
+        printf("[ERROR] Could not create UDP PCB.\n");
+        return -1;
+    }
+
+    // Bind to any local port
+    udp_bind(udp_client, IP_ADDR_ANY, 0);
+
+    // 5. Create payload buffer and copy the message string
+    const char *message = "Hello from lwIP running in Code::Blocks on Windows!";
+    u16_t msg_len = (u16_t)strlen(message);
+
+    struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, msg_len, PBUF_RAM);
     if (p != NULL) {
-        memcpy(p->payload, message, strlen(message) + 1);
+        memcpy(p->payload, message, msg_len);
 
-        printf("Sending packet: '%s'\n", message);
-        udp_sendto(client_pcb, p, &ipaddr, 7000);
+        printf("\nSending UDP string to %d.%d.%d.%d:%d ...\n",
+               ip4_addr1(&target_ip), ip4_addr2(&target_ip),
+               ip4_addr3(&target_ip), ip4_addr4(&target_ip), target_port);
+
+        // 6. Transmit packet over physical Ethernet/Wi-Fi card
+        err_t err = udp_sendto(udp_client, p, &target_ip, target_port);
+        if (err == ERR_OK) {
+            printf("[SUCCESS] Packet passed to Npcap physical driver!\n");
+        } else {
+            printf("[ERROR] Send failed with error code: %d\n", err);
+        }
+
         pbuf_free(p);
     }
 
-    // Bare-Metal Polling Super-Loop
+    // 7. Polling Super-Loop (processes ARP replies and hardware packets)
+    printf("Polling network interface (10 seconds)... Press Ctrl+C to stop.\n");
     DWORD start_time = GetTickCount();
-    while (!packet_received && (GetTickCount() - start_time < 3000)) {
-        // Poll enqueued loopback packets to deliver them to netif_input
-        netif_poll_all();
+    while (GetTickCount() - start_time < 10000) {
+        /* Poll Npcap for incoming physical packets & ARP responses */
+        pcapif_poll(&g_pcap_netif);
         sys_check_timeouts();
         Sleep(10);
     }
 
-    if (!packet_received) {
-        printf("[FAIL] Timeout: Packet was not received.\n");
-    }
-
-    // Clean up
-    udp_remove(server_pcb);
-    udp_remove(client_pcb);
+    // Cleanup
+    udp_remove(udp_client);
+    printf("Done.\n");
 
     return 0;
 }

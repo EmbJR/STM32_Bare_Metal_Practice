@@ -9,6 +9,43 @@
 #include <stdio.h>
 
 #include "lwip/arch.h"
+#include "arch/cc.h"
+
+//------------------ Fix --------------------//
+#include <stdio.h>
+
+/* Fix for MinGW / GCC SAL annotation error */
+#ifndef _Post_invalid_
+#define _Post_invalid_
+#endif
+
+#ifndef HAVE_REMOTE
+#define HAVE_REMOTE
+#endif
+
+/* Include Windows and Packet API headers in correct order */
+//#include <windows.h>
+#include <pcap.h>
+#include <packet32.h>
+
+#include "lwip/opt.h"
+
+/* This is an example implementation for LWIP_PLATFORM_DIAG:
+ * format a string and pass it to your output function.
+ */
+void
+lwip_win32_platform_diag(const char *format, ...)
+{
+  va_list ap;
+  /* get the varargs */
+  va_start(ap, format);
+  /* print via varargs; to use another output function, you could use
+     vsnprintf here */
+  vprintf(format, ap);
+  va_end(ap);
+}
+
+//---------------------------------------------//
 
 #ifdef WIN32
 
