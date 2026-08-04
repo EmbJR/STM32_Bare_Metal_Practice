@@ -9,3 +9,4 @@ Test
 /Ethernet_Port/*.tmp
 /Ethernet_Port/~$Plan.docx
 /Ethernet_Port/STM32F0_LWIP/Perf_Lib/enc28j60/*.bak
+/STM32F051R8T6/AI_Generated Code/SPI/Code/*.bak

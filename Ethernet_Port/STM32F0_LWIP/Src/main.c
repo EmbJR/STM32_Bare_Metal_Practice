@@ -88,7 +88,6 @@ int main(void)
 	/* Initialize UART for interrupt mode at 115200 baud */
 	uart1_initialize();
 	enc28j60_init();
-	enc28j60_test();
     /* Loop forever */
     /* Main loop - toggle LED */
     while (1) {

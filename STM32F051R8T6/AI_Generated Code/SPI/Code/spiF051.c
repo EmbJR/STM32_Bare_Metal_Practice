@@ -6,8 +6,9 @@
  */
 
 #include "spiF051.h"
-#include "../../GPIO_AI/gpio.h"
-#include "../../DeepSeek_Generated/RCC/rcc.h"
+#include "gpio.h"
+#include "rcc.h"
+#include "F051NVIC.h"
 
 /*============================================================================
  * Private Macros
@@ -17,7 +18,7 @@
 /*============================================================================
  * Private Function Prototypes
  *============================================================================*/
-static void SPI_ConfigGPIO(SPI_TypeDef *SPIx);
+
 static uint32_t SPI_GetClockFreq(SPI_TypeDef *SPIx);
 
 /*============================================================================
@@ -128,7 +129,7 @@ void SPI_Init(SPI_TypeDef *SPIx, SPI_InitTypeDef *SPI_Init) {
  * @brief  Configure GPIO for SPI
  * @param  SPIx: pointer to SPI peripheral
  */
-static void SPI_ConfigGPIO(SPI_TypeDef *SPIx) {
+void SPI_ConfigGPIO(SPI_TypeDef *SPIx) {
     GPIO_InitTypeDef GPIO_InitStruct;
     
     /* Configure based on SPI instance */
@@ -346,14 +347,23 @@ uint8_t SPI_ReceiveData(SPI_TypeDef *SPIx) {
  * @param  rxBuffer: pointer to receive buffer
  * @param  length: number of bytes to transfer
  */
-void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length) {
+bool SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length) {
     uint16_t i;
+    uint32_t timeout = SPI_TIMEOUT_MAX;
     
     for (i = 0; i < length; i++) {
-        /* Wait for TX buffer empty */
-        while (!(SPIx->SR & SPI_SR_TXE)) {
+
+        /* Wait for transmission to complete */
+        while (SPIx->SR & SPI_SR_BSY) {
             /* Wait */
         }
+
+	/* Wait for TX buffer empty */
+	   while (!(SPIx->SR & SPI_SR_TXE)) {
+		   if (timeout-- == 0) {
+			   return 0;
+		   }
+	   }
         
         /* Send data */
         if (txBuffer != 0) {
@@ -363,8 +373,11 @@ void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rx
         }
         
         /* Wait for RX buffer not empty */
+        timeout = SPI_TIMEOUT_MAX;
         while (!(SPIx->SR & SPI_SR_RXNE)) {
-            /* Wait */
+            if (timeout-- == 0) {
+                return 0;
+            }
         }
         
         /* Receive data */
