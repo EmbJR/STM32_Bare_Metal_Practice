@@ -57,6 +57,8 @@
 		</Unit>
 		<Unit filename="lwip/contrib/ports/win32/sys_arch.c">
 			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
 		</Unit>
 		<Unit filename="lwip/include/arch/cc.h" />
 		<Unit filename="lwip/include/lwipopts.h" />

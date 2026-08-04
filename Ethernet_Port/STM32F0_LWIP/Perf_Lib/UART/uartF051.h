@@ -356,4 +356,6 @@ bool UART_SendStringIT(USART_TypeDef *USARTx, const char *str);
 #define UART_DMA_REQ_TX   USART_CR3_DMAT  /*!< DMA Request for TX */
 #define UART_DMA_REQ_RX   USART_CR3_DMAR  /*!< DMA Request for RX */
 
+void uart1_initialize(void);
+
 #endif /* UARTF051_H */

@@ -46,6 +46,8 @@
 									<listOptionValue builtIn="false" value="../Perf_Lib/GPIO_AI"/>
 									<listOptionValue builtIn="false" value="../Perf_Lib/UART"/>
 									<listOptionValue builtIn="false" value="../Perf_Lib/NVIC"/>
+									<listOptionValue builtIn="false" value="../Perf_Lib/SPI"/>
+									<listOptionValue builtIn="false" value="../Perf_Lib/enc28j60"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1635391996" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -76,7 +78,9 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/GPIO_AI"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/NVIC"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/RCC"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/SPI"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/UART"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="Perf_Lib/enc28j60"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Startup"/>
 					</sourceEntries>
