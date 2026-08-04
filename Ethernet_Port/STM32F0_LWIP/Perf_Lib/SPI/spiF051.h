@@ -15,7 +15,7 @@
  * SPI Base Addresses
  *============================================================================*/
 #define SPI1_BASE    (0x40013000UL)  /*!< SPI1 base address (APB2) */
-#define SPI2_BASE    (0x40003400UL)  /*!< SPI2 base address (APB1) */
+#define SPI2_BASE    (0x40003800UL)  /*!< SPI2 base address (APB1) */
 
 /*============================================================================
  * SPI Register Structure
@@ -343,7 +343,7 @@ uint8_t SPI_ReceiveData(SPI_TypeDef *SPIx);
  * @param  rxBuffer: pointer to receive buffer
  * @param  length: number of bytes to transfer
  */
-void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length);
+bool SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length);
 
 /**
  * @brief  Transmit multiple data bytes (Polling)

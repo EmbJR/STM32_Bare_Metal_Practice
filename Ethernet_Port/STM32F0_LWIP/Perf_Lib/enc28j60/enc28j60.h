@@ -44,5 +44,6 @@ static void ESP28J60_CSelect(ESP28J60_HandleTypeDef *handle);
 static void ESP28J60_CDeselect(ESP28J60_HandleTypeDef *handle);
 
 void enc28j60_init(void);
+bool enc28j60_test(void);
 
 #endif

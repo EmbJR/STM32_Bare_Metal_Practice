@@ -21,7 +21,8 @@
 #include "gpio.h"
 #include "uartF051.h"
 #include "spiF051.h"
-//#include "enc28j60.h"
+#include "main.h"
+#include "enc28j60.h"
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -86,6 +87,8 @@ int main(void)
 
 	/* Initialize UART for interrupt mode at 115200 baud */
 	uart1_initialize();
+	enc28j60_init();
+	enc28j60_test();
     /* Loop forever */
     /* Main loop - toggle LED */
     while (1) {

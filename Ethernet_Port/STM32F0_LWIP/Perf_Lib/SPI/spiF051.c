@@ -347,14 +347,23 @@ uint8_t SPI_ReceiveData(SPI_TypeDef *SPIx) {
  * @param  rxBuffer: pointer to receive buffer
  * @param  length: number of bytes to transfer
  */
-void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length) {
+bool SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rxBuffer, uint16_t length) {
     uint16_t i;
+    uint32_t timeout = SPI_TIMEOUT_MAX;
     
     for (i = 0; i < length; i++) {
-        /* Wait for TX buffer empty */
-        while (!(SPIx->SR & SPI_SR_TXE)) {
+
+        /* Wait for transmission to complete */
+        while (SPIx->SR & SPI_SR_BSY) {
             /* Wait */
         }
+
+	/* Wait for TX buffer empty */
+	   while (!(SPIx->SR & SPI_SR_TXE)) {
+		   if (timeout-- == 0) {
+			   return 0;
+		   }
+	   }
         
         /* Send data */
         if (txBuffer != 0) {
@@ -364,8 +373,11 @@ void SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rx
         }
         
         /* Wait for RX buffer not empty */
+        timeout = SPI_TIMEOUT_MAX;
         while (!(SPIx->SR & SPI_SR_RXNE)) {
-            /* Wait */
+            if (timeout-- == 0) {
+                return 0;
+            }
         }
         
         /* Receive data */

@@ -19,6 +19,7 @@
 #include "spiF051.h"
 #include "rcc.h"
 #include "gpio.h"
+#include "main.h"
 
 /*============================================================================
  * Macros
@@ -53,7 +54,7 @@ static void enc28j60_gpio_config(ESP28J60_HandleTypeDef *enc_handle)
     /* Configure CS pin as output */
     GPIO_InitStruct.Pin = enc_handle->CS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     GPIO_InitStruct.Ot = GPIO_OTYPE_PP;
     GPIO_InitStruct.Pull = GPIO_PULL_NO;
     GPIO_Init(enc_handle->CS_Port, &GPIO_InitStruct);
@@ -65,7 +66,7 @@ static void enc28j60_gpio_config(ESP28J60_HandleTypeDef *enc_handle)
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     GPIO_InitStruct.Pull = GPIO_PULL_NO;
     GPIO_InitStruct.AF = GPIO_AF0;
-    GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_Init(ESP28J60_GPIO_PORT, &GPIO_InitStruct);
     
     /* PB14 - SPI2_MISO */
     GPIO_InitStruct.Pin = ESP28J60_MISO_PIN;
@@ -74,7 +75,7 @@ static void enc28j60_gpio_config(ESP28J60_HandleTypeDef *enc_handle)
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     GPIO_InitStruct.Pull = GPIO_PULL_NO;
     GPIO_InitStruct.AF = GPIO_AF0;
-    GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_Init(ESP28J60_GPIO_PORT, &GPIO_InitStruct);
     
     /* PB15 - SPI2_MOSI */
     GPIO_InitStruct.Pin = ESP28J60_MOSI_PIN;
@@ -83,7 +84,7 @@ static void enc28j60_gpio_config(ESP28J60_HandleTypeDef *enc_handle)
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     GPIO_InitStruct.Pull = GPIO_PULL_NO;
     GPIO_InitStruct.AF = GPIO_AF0;
-    GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_Init(ESP28J60_GPIO_PORT, &GPIO_InitStruct);
 }
 
 /**
@@ -136,6 +137,7 @@ void enc28j60_SPI_Initialize(ESP28J60_HandleTypeDef * handle) {
     SPI_InitTypeDef SPI_InitStruct;
     
     enc28j60_gpio_config(handle);
+#if 1
     /* Fill with default values */
     SPI_StructInit(&SPI_InitStruct);
     
@@ -163,18 +165,36 @@ void enc28j60_SPI_Initialize(ESP28J60_HandleTypeDef * handle) {
     /* Disable CRC */
     SPI_InitStruct.CRC_Enable = false;
     
+    SPI_InitStruct.FIFOThreshold = true;
+
     /* Initialize SPI1 */
     SPI_Init(handle->SPIx, &SPI_InitStruct);
     
+
     /* Enable TXE and RXNE interrupts */
-    SPI_EnableInterrupt(handle->SPIx, SPI_IT_TXE | SPI_IT_RXNE);
+    //SPI_EnableInterrupt(handle->SPIx, SPI_IT_TXE | SPI_IT_RXNE);
     
     /* Enable SPI1 interrupt in NVIC */
-    NVIC_EnableSPI(SPI2_IRQn);
-    NVIC_SetSPIPriority(SPI2_IRQn, 1);
+    //NVIC_EnableSPI(SPI2_IRQn);
+    //NVIC_SetSPIPriority(SPI2_IRQn, 1);
 
     /* Enable SPI1 */
     SPI_Enable(handle->SPIx);
+#endif
+//    SPI_InitStruct.Mode = SPI_MODE_MASTER;
+//   SPI_InitStruct.ClockPolarity = SPI_CPOL_LOW;   /* Clock idle low */
+//   SPI_InitStruct.ClockPhase = SPI_CPHA_1EDGE;    /* Data captured on first edge */
+//   SPI_InitStruct.BaudRate = SPI_BAUDRATEPRESCALER_16;  /* Adjust as needed */
+//   SPI_InitStruct.FrameFormat = SPI_FRAME_FORMAT_MSBFIRST;
+//   SPI_InitStruct.DataSize = SPI_DATASIZE_8BIT;
+//   SPI_InitStruct.NSS = SPI_NSS_SOFT;  /* Software NSS control */
+//   SPI_InitStruct.FIFOThreshold = true;
+
+//   /* Initialize SPI */
+//   SPI_Init(SPI2, &SPI_InitStruct);
+//
+//   /* Enable SPI */
+//   SPI_Enable(SPI2);
 }
 
 /**
@@ -202,8 +222,17 @@ void enc28j60_init(void)
     enc28j60_SPI_Initialize(&enc28j60_handle);
 }
 
+#if 1
 bool enc28j60_test(void)
 {
-    uint8_t data[2] = {0xA5, 0x5A};
-    SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, data, sizeof(data));
+    uint8_t datatx[2] = {0xA5, 0x5A};
+    uint8_t datarx[2] = {0};
+    while(1)
+    {
+    	ESP28J60_CSelect(&enc28j60_handle);
+        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, datatx,datarx, sizeof(datatx));
+        ESP28J60_CDeselect(&enc28j60_handle);
+        Delay_ms(100);
+    }
 }
+    #endif
