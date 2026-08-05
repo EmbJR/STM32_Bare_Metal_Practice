@@ -17,6 +17,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include "rcc.h"
 #include "gpio.h"
 #include "uartF051.h"
@@ -24,10 +25,13 @@
 #include "main.h"
 #include "enc28j60.h"
 
+
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+
+ENC28J60_ConfigTypeDef encdevice;
 /*============================================================================
  * Simple Delay Function (using active wait)
  *============================================================================*/
@@ -87,7 +91,18 @@ int main(void)
 
 	/* Initialize UART for interrupt mode at 115200 baud */
 	uart1_initialize();
-	enc28j60_init();
+	UART_SendStringIT(USART1, "System Starting...\n");
+	ENC28J60_Init(&encdevice);
+	encdevice.mac_addr[0] = 0x01;
+	encdevice.mac_addr[1] = 0x02;
+	encdevice.mac_addr[2] = 0x03;
+	encdevice.mac_addr[3] = 0x04;
+	encdevice.mac_addr[4] = 0x05;
+	encdevice.mac_addr[5] = 0x06;
+	ENC28J60_SetMACAddress(encdevice.mac_addr);
+    uint8_t value = ENC28J60_GetRevision();
+    memset(encdevice.mac_addr, 0x00, sizeof(encdevice.mac_addr));
+    ENC28J60_GetMACAddress(encdevice.mac_addr);
     /* Loop forever */
     /* Main loop - toggle LED */
     while (1) {
