@@ -23,15 +23,17 @@
 #include "uartF051.h"
 #include "spiF051.h"
 #include "main.h"
-#include "enc28j60.h"
+#include "ethernetif.h"
 
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+struct netif enc28j60_netif;
 
-ENC28J60_ConfigTypeDef encdevice;
+
+//ENC28J60_ConfigTypeDef encdevice;
 /*============================================================================
  * Simple Delay Function (using active wait)
  *============================================================================*/

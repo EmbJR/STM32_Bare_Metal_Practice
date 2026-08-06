@@ -1,0 +1,9 @@
+#ifndef MAIN_H
+#define MAIN_H
+
+#include <stdint.h>
+#include "enc28j60.h"
+
+void Delay_ms(uint32_t ms);
+
+#endif	//MAIN_H
