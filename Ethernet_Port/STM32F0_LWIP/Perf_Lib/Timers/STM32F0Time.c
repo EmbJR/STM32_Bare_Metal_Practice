@@ -1,5 +1,6 @@
 #include "STM32F0Time.h"
 #include <stddef.h>
+#include "F051NVIC.h"
 
 // Use RCC helper to get system clock
 extern uint32_t RCC_GetSystemClockFrequency(void);
@@ -49,7 +50,7 @@ static const int TimerIRQn[TIMER_COUNT] = {
     21, // TIM16_IRQn
     22  // TIM17_IRQn
 };
-
+/*
 void NVIC_SetPriority(int irq, uint8_t priority) {
     if (irq < 0) {
         return;
@@ -76,7 +77,7 @@ void NVIC_DisableIRQ(int irq) {
     }
     NVIC_ICPR0 = (1UL << irq);
 }
-
+*/
 TIM_TypeDef *GetTimer(uint32_t timerId) {
     if (timerId <= TIMER_INVALID || timerId >= TIMER_COUNT) {
         return NULL;

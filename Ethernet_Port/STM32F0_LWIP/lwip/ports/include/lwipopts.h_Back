@@ -1,0 +1,106 @@
+#ifndef __LWIPOPTS_H__
+#define __LWIPOPTS_H__
+
+/* =====================================================================
+   1. System & Architecture Options
+   ===================================================================== */
+#define NO_SYS                      1   /* Bare-metal mode (No RTOS) */
+#define SYS_LIGHTWEIGHT_PROT        0   /* Disable task protection macros */
+#define MEM_ALIGNMENT               4   /* 32-bit alignment for STM32 */
+
+/* =====================================================================
+   2. Memory Allocation & Heap Setup
+   ===================================================================== */
+#define MEM_LIBC_MALLOC             0   /* Do NOT use standard malloc */
+#define MEMP_MEM_MALLOC             0   /* Use dedicated memory pools */
+
+/* Main heap size for dynamic lwIP allocations (reduced to 2 KB) */
+#define MEM_SIZE                    (2 * 1024)
+
+/* Number of struct pbuf allocated from pool */
+#define MEMP_NUM_PBUF               2
+/* Number of raw connection PCBs */
+#define MEMP_NUM_RAW_PCB            0
+/* Number of UDP PCBs (Control Blocks) */
+#define MEMP_NUM_UDP_PCB            2
+/* Number of TCP PCBs */
+#define MEMP_NUM_TCP_PCB            2
+/* Number of listening TCP PCBs */
+#define MEMP_NUM_TCP_PCB_LISTEN     1
+/* Number of active TCP segments queued for transmission */
+#define MEMP_NUM_TCP_SEG            4
+/* Number of ARP queue entries */
+#define MEMP_NUM_ARP_QUEUE          2
+/* Number of active timers */
+#define MEMP_NUM_SYS_TIMEOUT        5
+
+/* =====================================================================
+   3. Packet Buffer (PBUF) Configuration
+   ===================================================================== */
+/* Number of RAM buffers in the pbuf pool */
+#define PBUF_POOL_SIZE              2
+
+/*
+ * Packet buffer size: Set to ENC28J60 maximum frame size (1536 bytes)
+ * so 1 packet fits in 1 buffer.
+ * Total RAM used for PBUF Pool: 4 * 1536 = 6 KB (shared in heap/pools)
+ */
+#define PBUF_POOL_BUFSIZE           1536
+
+/* =====================================================================
+   4. IPv4 & ARP Setup
+   ===================================================================== */
+#define LWIP_IPV4                   1
+#define LWIP_ARP                    1
+#define LWIP_ETHERNET               1
+#define LWIP_ICMP                   1   /* Enable Ping response */
+#define LWIP_RAW                    0
+
+/* =====================================================================
+   5. UDP Configuration
+   ===================================================================== */
+#define LWIP_UDP                    1
+#define UDP_TTL                     255
+
+/* =====================================================================
+   6. TCP Configuration (Strictly Scaled Down)
+   ===================================================================== */
+#define LWIP_TCP                    0
+#define TCP_TTL                     255
+
+/* Maximum Segment Size: Keep it to 536 for low RAM usage */
+#define TCP_MSS                     536
+
+/* TCP Receive Window: Must be at least 2 * MSS */
+#define TCP_WND                     (2 * TCP_MSS)
+
+/* Send buffer space in bytes */
+#define TCP_SND_BUF                 (2 * TCP_MSS)
+
+/* Send queue length (number of pbufs in send buffer) */
+#define TCP_SND_QUEUELEN            4
+
+/* =====================================================================
+   7. Feature Reduction (Disable Unused Modules to Save RAM/Flash)
+   ===================================================================== */
+#define LWIP_DHCP                   0   /* Disable DHCP (Use Static IP) */
+#define LWIP_AUTOIP                 0
+#define LWIP_DNS                    0
+#define LWIP_IGMP                   0
+#define LWIP_STATS                  0   /* Disable statistics gathering */
+#define LWIP_NETIF_STATUS_CALLBACK  0
+#define LWIP_NETIF_LINK_CALLBACK    0
+#define LWIP_HAVE_LOOPIF            0
+#define LWIP_NETIF_LOOPBACK         0
+
+/* Disable debug output overhead */
+#define LWIP_DEBUG                  0
+
+
+
+#define LWIP_TIMEVAL_PRIVATE		0
+#define LWIP_SOCKET					0
+#define LWIP_NETCONN					0
+
+
+#endif /* __LWIPOPTS_H__ */

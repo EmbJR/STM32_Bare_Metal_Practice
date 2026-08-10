@@ -44,6 +44,7 @@
  */
 
 #include "ethernetif.h"
+#include "main.h"
 
 #if 1
 
@@ -66,8 +67,6 @@ struct ethernetif {
   /* Add whatever per-interface state that is needed here. */
 };
 
-/* Forward declarations. */
-static void  ethernetif_input(struct netif *netif);
 
 /**
  * In this function, the hardware should be initialized.
@@ -114,6 +113,21 @@ low_level_init(struct netif *netif)
 
   /* Do whatever else is needed to initialize interface. */
 }
+
+/*
+* Reading the initialized data for debugging
+*/
+void read_reg_data(void)
+{
+	uint8_t buf[6] = {0};
+  uint16_t phy1=0, phy2=0;
+  phy1 = ENC28J60_ReadPHY(PHCON1);
+  phy2 = ENC28J60_ReadPHY(PHCON2);
+  phy1 = ENC28J60_ReadReg(ECON1);
+
+  ENC28J60_ReadBuffer(buf, 6);
+}
+
 
 /**
  * This function should do the actual transmission of the packet. The packet is
@@ -252,7 +266,7 @@ low_level_input(struct netif *netif)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
-static void
+void
 ethernetif_input(struct netif *netif)
 {
   struct ethernetif *ethernetif;

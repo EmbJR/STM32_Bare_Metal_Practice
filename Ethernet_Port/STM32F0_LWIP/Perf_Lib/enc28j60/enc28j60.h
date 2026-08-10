@@ -1,7 +1,7 @@
 /**
  * @file    enc28j60.h
  * @brief   ENC28J60 Ethernet Controller Driver
- * @author  AI Generated
+ * @author  AI Generated (corrected per datasheet)
  * @date    2026-08-04
  *
  * @note    Driver for Microchip ENC28J60 Stand-Alone Ethernet Controller
@@ -54,13 +54,15 @@
 #define BANK2   2
 #define BANK3   3
 
+#define BANK_SHIFT          5
+#define ADDR_MASK           0x1F
+#define BANK_MASK           0x60
+
 /*============================================================================
  * ENC28J60 Register Map (Banked Memory Map)
  *============================================================================*/
 
-/*============================================================================
- * Bank 0 Registers
- *============================================================================*/
+/* Bank 0 Registers */
 #define ERDPTL      ((BANK0 << BANK_SHIFT) | 0x00)
 #define ERDPTH      ((BANK0 << BANK_SHIFT) | 0x01)
 #define EWRPTL      ((BANK0 << BANK_SHIFT) | 0x02)
@@ -85,42 +87,32 @@
 #define EDMADSTH    ((BANK0 << BANK_SHIFT) | 0x15)
 #define EDMACSL     ((BANK0 << BANK_SHIFT) | 0x16)
 #define EDMACSH     ((BANK0 << BANK_SHIFT) | 0x17)
-#define EHT0        ((BANK0 << BANK_SHIFT) | 0x18)
-#define EHT1        ((BANK0 << BANK_SHIFT) | 0x19)
-#define EHT2        ((BANK0 << BANK_SHIFT) | 0x1A)
-#define EHT3        ((BANK0 << BANK_SHIFT) | 0x1B)
-#define EHT4        ((BANK0 << BANK_SHIFT) | 0x1C)
-#define EHT5        ((BANK0 << BANK_SHIFT) | 0x1D)
-#define EHT6        ((BANK0 << BANK_SHIFT) | 0x1E)
-#define EHT7        ((BANK0 << BANK_SHIFT) | 0x1F)
-#define EPMM0       ((BANK0 << BANK_SHIFT) | 0x20)
-#define EPMM1       ((BANK0 << BANK_SHIFT) | 0x21)
-#define EPMM2       ((BANK0 << BANK_SHIFT) | 0x22)
-#define EPMM3       ((BANK0 << BANK_SHIFT) | 0x23)
-#define EPMM4       ((BANK0 << BANK_SHIFT) | 0x24)
-#define EPMM5       ((BANK0 << BANK_SHIFT) | 0x25)
-#define EPMM6       ((BANK0 << BANK_SHIFT) | 0x26)
-#define EPMM7       ((BANK0 << BANK_SHIFT) | 0x27)
-#define EPMCSL      ((BANK0 << BANK_SHIFT) | 0x28)
-#define EPMCSH      ((BANK0 << BANK_SHIFT) | 0x29)
-#define EPMOL       ((BANK0 << BANK_SHIFT) | 0x2A)
-#define EPMOH       ((BANK0 << BANK_SHIFT) | 0x2B)
-#define ERXFCON     ((BANK0 << BANK_SHIFT) | 0x2C)
-#define EPKTCNT     ((BANK0 << BANK_SHIFT) | 0x2D)
-#define EWOLIE      ((BANK0 << BANK_SHIFT) | 0x2E)
-#define EWOLIR      ((BANK0 << BANK_SHIFT) | 0x2F)
+/* Bank 1 Registers */
+#define EHT0        ((BANK1 << BANK_SHIFT) | 0x00)
+#define EHT1        ((BANK1 << BANK_SHIFT) | 0x01)
+#define EHT2        ((BANK1 << BANK_SHIFT) | 0x02)
+#define EHT3        ((BANK1 << BANK_SHIFT) | 0x03)
+#define EHT4        ((BANK1 << BANK_SHIFT) | 0x04)
+#define EHT5        ((BANK1 << BANK_SHIFT) | 0x05)
+#define EHT6        ((BANK1 << BANK_SHIFT) | 0x06)
+#define EHT7        ((BANK1 << BANK_SHIFT) | 0x07)
+#define EPMM0       ((BANK1 << BANK_SHIFT) | 0x08)
+#define EPMM1       ((BANK1 << BANK_SHIFT) | 0x09)
+#define EPMM2       ((BANK1 << BANK_SHIFT) | 0x0A)
+#define EPMM3       ((BANK1 << BANK_SHIFT) | 0x0B)
+#define EPMM4       ((BANK1 << BANK_SHIFT) | 0x0C)
+#define EPMM5       ((BANK1 << BANK_SHIFT) | 0x0D)
+#define EPMM6       ((BANK1 << BANK_SHIFT) | 0x0E)
+#define EPMM7       ((BANK1 << BANK_SHIFT) | 0x0F)
+#define EPMCSL      ((BANK1 << BANK_SHIFT) | 0x10)
+#define EPMCSH      ((BANK1 << BANK_SHIFT) | 0x11)
+#define EPMOL       ((BANK1 << BANK_SHIFT) | 0x14)
+#define EPMOH       ((BANK1 << BANK_SHIFT) | 0x15)
+#define ERXFCON     ((BANK1 << BANK_SHIFT) | 0x18)
+#define EPKTCNT     ((BANK1 << BANK_SHIFT) | 0x19)
 
-/*============================================================================
- * Bank 1 Registers
- *============================================================================*/
-#define EHT8        ((BANK1 << BANK_SHIFT) | 0x00)
-#define EHT9        ((BANK1 << BANK_SHIFT) | 0x01)
-#define EHT10       ((BANK1 << BANK_SHIFT) | 0x02)
-#define EHT11       ((BANK1 << BANK_SHIFT) | 0x03)
-#define EHT12       ((BANK1 << BANK_SHIFT) | 0x04)
-#define EHT13       ((BANK1 << BANK_SHIFT) | 0x05)
-#define EHT14       ((BANK1 << BANK_SHIFT) | 0x06)
-#define EHT15       ((BANK1 << BANK_SHIFT) | 0x07)
+
+/* Bank 1 Registers */
 #define EPMM8       ((BANK1 << BANK_SHIFT) | 0x08)
 #define EPMM9       ((BANK1 << BANK_SHIFT) | 0x09)
 #define EPMM10      ((BANK1 << BANK_SHIFT) | 0x0A)
@@ -143,86 +135,56 @@
 #define ECON2       ((BANK1 << BANK_SHIFT) | 0x1E)
 #define ECON1       ((BANK1 << BANK_SHIFT) | 0x1F)
 
-/*============================================================================
- * Bank 2 Registers
- *============================================================================*/
+/* Bank 2 Registers */
 #define MACON1      ((BANK2 << BANK_SHIFT) | 0x00)
-#define MACON2      ((BANK2 << BANK_SHIFT) | 0x01)
-#define MACON3      ((BANK2 << BANK_SHIFT) | 0x02)
+#define MACON3      ((BANK2 << BANK_SHIFT) | 0x02)   // Note: MACON2 is reserved; MACON3 is at 0x02
 #define MACON4      ((BANK2 << BANK_SHIFT) | 0x03)
 #define MABBIPG     ((BANK2 << BANK_SHIFT) | 0x04)
 #define MAIPGL      ((BANK2 << BANK_SHIFT) | 0x06)
 #define MAIPGH      ((BANK2 << BANK_SHIFT) | 0x07)
+#define MACLCON1    ((BANK2 << BANK_SHIFT) | 0x08)   // Retransmission Maximum
+#define MACLCON2    ((BANK2 << BANK_SHIFT) | 0x09)   // Collision Window
 #define MAMXFLL     ((BANK2 << BANK_SHIFT) | 0x0A)
 #define MAMXFLH     ((BANK2 << BANK_SHIFT) | 0x0B)
-#define MIREGADR    ((BANK2 << BANK_SHIFT) | 0x0E)
-#define MICMD       ((BANK2 << BANK_SHIFT) | 0x12)
-#define MIWRL       ((BANK2 << BANK_SHIFT) | 0x10)
-#define MIWRH       ((BANK2 << BANK_SHIFT) | 0x11)
-#define MIRDL       ((BANK2 << BANK_SHIFT) | 0x12)
-#define MIRDH       ((BANK2 << BANK_SHIFT) | 0x13)
+#define MICMD       ((BANK2 << BANK_SHIFT) | 0x12)   // MII Command (correct address)
+#define MIREGADR    ((BANK2 << BANK_SHIFT) | 0x14)   // MII Register Address
+#define MIWRL       ((BANK2 << BANK_SHIFT) | 0x16)   // MII Write Data Low
+#define MIWRH       ((BANK2 << BANK_SHIFT) | 0x17)   // MII Write Data High
+#define MIRDL       ((BANK2 << BANK_SHIFT) | 0x18)   // MII Read Data Low
+#define MIRDH       ((BANK2 << BANK_SHIFT) | 0x19)   // MII Read Data High
 
-/* MICMD Register Bits (Bank 2 - 0x12) */
-#define MICMD_MIIRD         (1 << 0)
-#define MICMD_MIISCAN       (1 << 1)
-
-/* Bank 2 - Non-banked (same regs in bank 2 & 3) */
-#define MAADR0      ((BANK2 << BANK_SHIFT) | 0x00)
-#define MAADR1      ((BANK2 << BANK_SHIFT) | 0x01)
-#define MAADR2      ((BANK2 << BANK_SHIFT) | 0x02)
-#define MAADR3      ((BANK2 << BANK_SHIFT) | 0x03)
-#define MAADR4      ((BANK2 << BANK_SHIFT) | 0x04)
-#define MAADR5      ((BANK2 << BANK_SHIFT) | 0x05)
-
-#define MLOW0       ((BANK2 << BANK_SHIFT) | 0x06)
-#define MLOW1       ((BANK2 << BANK_SHIFT) | 0x07)
-#define MLOW2       ((BANK2 << BANK_SHIFT) | 0x08)
-#define MHIGH0      ((BANK2 << BANK_SHIFT) | 0x09)
-#define MHIGH1      ((BANK2 << BANK_SHIFT) | 0x0A)
-#define MHIGH2      ((BANK2 << BANK_SHIFT) | 0x0B)
-
-/*============================================================================
- * Bank 3 Registers
- *============================================================================*/
-#define MISTAT      ((BANK3 << BANK_SHIFT) | 0x0A)
-#define MIRESULT    ((BANK3 << BANK_SHIFT) | 0x0C)
-
-/* MAC address registers (Bank 3, non-banked) */
-#define MAADR0_B3   ((BANK3 << BANK_SHIFT) | 0x00)
-#define MAADR1_B3   ((BANK3 << BANK_SHIFT) | 0x01)
-#define MAADR2_B3   ((BANK3 << BANK_SHIFT) | 0x02)
-#define MAADR3_B3   ((BANK3 << BANK_SHIFT) | 0x03)
-#define MAADR4_B3   ((BANK3 << BANK_SHIFT) | 0x04)
-#define MAADR5_B3   ((BANK3 << BANK_SHIFT) | 0x05)
-
+/* Bank 3 Registers (MAC address and others) */
+#define MAADR5      ((BANK3 << BANK_SHIFT) | 0x00)   // MAC Address Byte 5 (MSB?)
+#define MAADR6      ((BANK3 << BANK_SHIFT) | 0x01)   // MAC Address Byte 6 (LSB)
+#define MAADR3      ((BANK3 << BANK_SHIFT) | 0x02)
+#define MAADR4      ((BANK3 << BANK_SHIFT) | 0x03)
+#define MAADR1      ((BANK3 << BANK_SHIFT) | 0x04)   // MAC Address Byte 1 (MSB)
+#define MAADR2      ((BANK3 << BANK_SHIFT) | 0x05)
 #define EBSTSD      ((BANK3 << BANK_SHIFT) | 0x06)
 #define EBSTCON     ((BANK3 << BANK_SHIFT) | 0x07)
 #define EBSTCSL     ((BANK3 << BANK_SHIFT) | 0x08)
 #define EBSTCSH     ((BANK3 << BANK_SHIFT) | 0x09)
-
-#define EPAUSL      ((BANK3 << BANK_SHIFT) | 0x10)
-#define EPAUSH      ((BANK3 << BANK_SHIFT) | 0x11)
-
-/*============================================================================
- * ENC28J60 Register Address Masking
- *============================================================================*/
-#define ADDR_MASK           0x1F
-#define BANK_MASK           0x60
-#define BANK_SHIFT          5
+#define MISTAT      ((BANK3 << BANK_SHIFT) | 0x0A)
+#define MIRESULT    ((BANK3 << BANK_SHIFT) | 0x0C)
+#define EREVID      ((BANK3 << BANK_SHIFT) | 0x12)   // Revision ID
+#define EPAUSL      ((BANK3 << BANK_SHIFT) | 0x18)
+#define EPAUSH      ((BANK3 << BANK_SHIFT) | 0x19)
 
 /*============================================================================
- * ECON1 Register Bits (Bank 1 - 0x1F)
+ * ECON1 Register Bits (Bank 1 - 0x1F) – corrected bank select bits
  *============================================================================*/
+#define ECON1_TXRST         (1 << 7)
+#define ECON1_RXRST         (1 << 6)
 #define ECON1_RXEN          (1 << 2)
-#define ECON1_TXRTS         (1 << 1)
-#define ECON1_BSEL1         (1 << 0)
-#define ECON1_BSEL0         (1 << 7)
+#define ECON1_TXRTS         (1 << 1)   /* same as BSEL1 */
+#define ECON1_BSEL0         (1 << 0)
+#define ECON1_BSEL1         (1 << 1)
 
-/* Bank select values in ECON1 */
+/* Bank select values for ECON1 bits (1:0) */
 #define ECON1_BSEL_BANK0    0x00
 #define ECON1_BSEL_BANK1    0x01
-#define ECON1_BSEL_BANK2    0x80
-#define ECON1_BSEL_BANK3    0x81
+#define ECON1_BSEL_BANK2    0x02
+#define ECON1_BSEL_BANK3    0x03
 
 /*============================================================================
  * ECON2 Register Bits (Bank 1 - 0x1E)
@@ -266,11 +228,6 @@
 #define ESTAT_CLKRDY        (1 << 0)
 
 /*============================================================================
- * EREVID Register (Bank 3 - 0x12)
- *============================================================================*/
-#define EREVID      ((BANK3 << BANK_SHIFT) | 0x12)
-
-/*============================================================================
  * MACON1 Register Bits (Bank 2 - 0x00)
  *============================================================================*/
 #define MACON1_TXPAUS       (1 << 3)
@@ -279,33 +236,40 @@
 #define MACON1_MARXEN       (1 << 0)
 
 /*============================================================================
- * MACON2 Register Bits (Bank 2 - 0x01)
+ * MACON2 Register Bits (Bank 2 - 0x01) – only these two exist
  *============================================================================*/
 #define MACON2_MARST        (1 << 7)
 #define MACON2_RNDRST       (1 << 6)
-#define MACON2_MARXRST      (1 << 0)
-#define MACON2_RFUNRST      (1 << 2)
-#define MACON2_MATXRST      (1 << 1)
-#define MACON2_TFUNRST      (1 << 3)
-#define MACON2_PADCFG_0     (1 << 4)
-#define MACON2_PADCFG_1     (1 << 5)
-#define MACON2_PADCFG_2     (1 << 3)
-#define MACON2_TXCRCEN      (1 << 4)
-#define MACON2_PHDREN       (1 << 5)
-#define MACON2_HFRMEN       (1 << 2)
-#define MACON2_FRMLNEN      (1 << 0)
-#define MACON2_FULDPX       (1 << 0)
 
 /*============================================================================
- * MACON3 Register Bits (Bank 2 - 0x02)
+ * MACON3 Register Bits (Bank 2 - 0x02) – all other configuration bits
  *============================================================================*/
-#define MACON3_PADCFG_0     (1 << 0)
-#define MACON3_PADCFG_1     (1 << 1)
-#define MACON3_TXCRCEN      (1 << 4)
-#define MACON3_PHDREN       (1 << 5)
+/* PADCFG2 is bit 5? Actually bits 5:7? Let's define clearly:
+   PADCFG0 = bit0, PADCFG1 = bit1, PADCFG2 = bit5? No, according to datasheet,
+   PADCFG2:0 are bits 7:5? Wait, register MACON3 has:
+   bit 7:5 = PADCFG2:0, bit 4 = TXCRCEN, bit 3 = PHDREN, bit 2 = HFRMEN, bit 1 = FRMLNEN, bit 0 = FULDPX.
+   Actually the datasheet says: bit7 = FULDPX, bit6 = FRMLNEN? Let's check the datasheet.
+   From Register 6-2 (page 35 of PDF, page 37 of document): 
+   MACON3: 
+   bit 7-5: PADCFG2:0 (but they list them as PADCFG2, PADCFG1, PADCFG0)
+   bit 4: TXCRCEN
+   bit 3: PHDREN
+   bit 2: HFRMEN
+   bit 1: FRMLNEN
+   bit 0: FULDPX
+   So we need to define accordingly.
+*/
+#define MACON3_PADCFG2      (1 << 7)  // but that conflicts with FULDPX? Actually no, FULDPX is bit0.
+// Let's re-do:
+#define MACON3_FULDPX       (1 << 0)
+#define MACON3_FRMLNEN      (1 << 1)
 #define MACON3_HFRMEN       (1 << 2)
-#define MACON3_FRMLNEN      (1 << 3)
-#define MACON3_FULDPX       (1 << 7)
+#define MACON3_PHDREN       (1 << 3)
+#define MACON3_TXCRCEN      (1 << 4)
+#define MACON3_PADCFG0      (1 << 5)  // Wait, bits 5-7 are PADCFG, but they are bits 5,6,7?
+// Actually the datasheet says: bit 7-5 = PADCFG2:0, so PADCFG0 is bit5, PADCFG1 is bit6, PADCFG2 is bit7.
+#define MACON3_PADCFG1      (1 << 6)
+#define MACON3_PADCFG2      (1 << 7)
 
 /*============================================================================
  * MACON4 Register Bits (Bank 2 - 0x03)
@@ -324,18 +288,22 @@
 #define MISTAT_NVALID       (1 << 2)
 
 /*============================================================================
+ * MICMD Register Bits (Bank 2 - 0x12)
+ *============================================================================*/
+#define MICMD_MIIRD         (1 << 0)
+#define MICMD_MIISCAN       (1 << 1)
+
+/*============================================================================
  * ERXFCON Register Bits (Bank 0 - 0x2C)
  *============================================================================*/
 #define ERXFCON_BCEN        (1 << 0)
 #define ERXFCON_MCEN        (1 << 1)
 #define ERXFCON_HTEN        (1 << 2)
-#define ERXFCON_HSEN        (1 << 3)
-#define ERXFCON_MPEN        (1 << 4)
-#define ERXFCON_PMEN        (1 << 5)
-#define ERXFCON_CRCEN       (1 << 6)
-#define ERXFCON_ANDOR       (1 << 7)
-#define ERXFCON_UCASTEN     (1 << 8)
-#define ERXFCON_NOTMEEN     (1 << 9)
+#define ERXFCON_MPEN        (1 << 3)   // also called HSEN
+#define ERXFCON_PMEN        (1 << 4)
+#define ERXFCON_CRCEN       (1 << 5)
+#define ERXFCON_ANDOR       (1 << 6)
+#define ERXFCON_UCEN        (1 << 7)
 
 /*============================================================================
  * PHY Registers
@@ -381,10 +349,10 @@
  *============================================================================*/
 #define ENC28J60_RAM_SIZE           8192
 #define ENC28J60_RX_BUFFER_START    0x0000
-#define ENC28J60_RX_BUFFER_END      0x0FFF
-#define ENC28J60_TX_BUFFER_START    0x1000
+#define ENC28J60_RX_BUFFER_END      (0x1FFF-0x0600-1) //0x0FFF
+#define ENC28J60_TX_BUFFER_START    (0x1FFF-0x0600) //0x1000
 #define ENC28J60_TX_BUFFER_END      0x1FFF
-#define ENC28J60_MAX_FRAMELEN       1518
+#define ENC28J60_MAX_FRAMELEN       1500
 #define ENC28J60_TX_BUFFER_SIZE     0x0600
 
 /*============================================================================

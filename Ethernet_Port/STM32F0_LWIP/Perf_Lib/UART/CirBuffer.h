@@ -13,7 +13,7 @@
 //#include <stddef.h>
 #include <stdint.h>
 
-#define UART_BUFF_SIZE  25
+#define UART_BUFF_SIZE  500
 
 typedef enum
 {
