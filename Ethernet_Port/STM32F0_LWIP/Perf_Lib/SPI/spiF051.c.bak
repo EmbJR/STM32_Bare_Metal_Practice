@@ -280,6 +280,11 @@ void SPI_Disable(SPI_TypeDef *SPIx) {
 uint8_t SPI_TransmitReceive(SPI_TypeDef *SPIx, uint8_t txData) {
     uint32_t timeout = SPI_TIMEOUT_MAX;
     
+    /* Wait for transmission to complete */
+	   while (SPIx->SR & SPI_SR_BSY) {
+		   /* Wait */
+	   }
+
     /* Wait for TX buffer empty */
     while (!(SPIx->SR & SPI_SR_TXE)) {
         if (timeout-- == 0) {
@@ -388,7 +393,6 @@ bool SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rx
             (void)temp;
         }
     }
-    return 1;
 }
 
 /**
@@ -399,12 +403,21 @@ bool SPI_TransmitReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint8_t *rx
  */
 void SPI_SendBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint16_t length) {
     uint16_t i;
+    uint32_t timeout = SPI_TIMEOUT_MAX;
     
     for (i = 0; i < length; i++) {
-        /* Wait for TX buffer empty */
-        while (!(SPIx->SR & SPI_SR_TXE)) {
-            /* Wait */
+        /* Wait for transmission to complete */
+        while (SPIx->SR & SPI_SR_BSY) {
+            if (timeout-- == 0) {
+			   return 0;
+            }
         }
+        /* Wait for TX buffer empty */
+	   while (!(SPIx->SR & SPI_SR_TXE)) {
+		   if (timeout-- == 0) {
+			   return 0;
+		   }
+	   }
         
         /* Send data */
         *(volatile uint8_t*)&SPIx->DR = txBuffer[i];
@@ -424,8 +437,15 @@ void SPI_SendBuffer(SPI_TypeDef *SPIx, uint8_t *txBuffer, uint16_t length) {
  */
 void SPI_ReceiveBuffer(SPI_TypeDef *SPIx, uint8_t *rxBuffer, uint16_t length) {
     uint16_t i;
+    uint32_t timeout = SPI_TIMEOUT_MAX;
     
     for (i = 0; i < length; i++) {
+        /* Wait for transmission to complete */
+        while (SPIx->SR & SPI_SR_BSY) {
+            if (timeout-- == 0) {
+			   return 0;
+            }
+        }
         /* Send dummy byte to generate clock */
         while (!(SPIx->SR & SPI_SR_TXE)) {
             /* Wait */

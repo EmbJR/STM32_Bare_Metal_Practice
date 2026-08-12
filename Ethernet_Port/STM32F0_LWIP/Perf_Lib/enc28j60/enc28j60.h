@@ -113,24 +113,25 @@
 
 
 /* Bank 1 Registers */
-#define EPMM8       ((BANK1 << BANK_SHIFT) | 0x08)
-#define EPMM9       ((BANK1 << BANK_SHIFT) | 0x09)
-#define EPMM10      ((BANK1 << BANK_SHIFT) | 0x0A)
-#define EPMM11      ((BANK1 << BANK_SHIFT) | 0x0B)
-#define EPMM12      ((BANK1 << BANK_SHIFT) | 0x0C)
-#define EPMM13      ((BANK1 << BANK_SHIFT) | 0x0D)
-#define EPMM14      ((BANK1 << BANK_SHIFT) | 0x0E)
-#define EPMM15      ((BANK1 << BANK_SHIFT) | 0x0F)
-#define EPMCS2L     ((BANK1 << BANK_SHIFT) | 0x10)
-#define EPMCS2H     ((BANK1 << BANK_SHIFT) | 0x11)
-#define EPMO2L      ((BANK1 << BANK_SHIFT) | 0x12)
-#define EPMO2H      ((BANK1 << BANK_SHIFT) | 0x13)
-#define ERXFCON2    ((BANK1 << BANK_SHIFT) | 0x14)
-#define ERXFCON3    ((BANK1 << BANK_SHIFT) | 0x15)
-#define ERXFCON4    ((BANK1 << BANK_SHIFT) | 0x16)
-#define EIE         ((BANK1 << BANK_SHIFT) | 0x17)
-#define ESTATCLR    ((BANK1 << BANK_SHIFT) | 0x1A)
-#define EIR         ((BANK1 << BANK_SHIFT) | 0x1B)
+//#define EPMM8       ((BANK1 << BANK_SHIFT) | 0x08)
+//#define EPMM9       ((BANK1 << BANK_SHIFT) | 0x09)
+//#define EPMM10      ((BANK1 << BANK_SHIFT) | 0x0A)
+//#define EPMM11      ((BANK1 << BANK_SHIFT) | 0x0B)
+//#define EPMM12      ((BANK1 << BANK_SHIFT) | 0x0C)
+//#define EPMM13      ((BANK1 << BANK_SHIFT) | 0x0D)
+//#define EPMM14      ((BANK1 << BANK_SHIFT) | 0x0E)
+//#define EPMM15      ((BANK1 << BANK_SHIFT) | 0x0F)
+//#define EPMCS2L     ((BANK1 << BANK_SHIFT) | 0x10)
+//#define EPMCS2H     ((BANK1 << BANK_SHIFT) | 0x11)
+//#define EPMO2L      ((BANK1 << BANK_SHIFT) | 0x12)
+//#define EPMO2H      ((BANK1 << BANK_SHIFT) | 0x13)
+//#define ERXFCON2    ((BANK1 << BANK_SHIFT) | 0x14)
+//#define ERXFCON3    ((BANK1 << BANK_SHIFT) | 0x15)
+//#define ERXFCON4    ((BANK1 << BANK_SHIFT) | 0x16)
+
+#define EIE         ((BANK1 << BANK_SHIFT) | 0x1B)
+#define EIR         ((BANK1 << BANK_SHIFT) | 0x1C)
+//#define ESTATCLR    ((BANK1 << BANK_SHIFT) | 0x1A)
 #define ESTAT       ((BANK1 << BANK_SHIFT) | 0x1D)
 #define ECON2       ((BANK1 << BANK_SHIFT) | 0x1E)
 #define ECON1       ((BANK1 << BANK_SHIFT) | 0x1F)
@@ -175,6 +176,7 @@
  *============================================================================*/
 #define ECON1_TXRST         (1 << 7)
 #define ECON1_RXRST         (1 << 6)
+#define ECON1_CSUMEN         (1 << 4)
 #define ECON1_RXEN          (1 << 2)
 #define ECON1_TXRTS         (1 << 1)   /* same as BSEL1 */
 #define ECON1_BSEL0         (1 << 0)
@@ -316,6 +318,7 @@
 #define PHCON2              0x10
 #define PHSTAT2             0x11
 #define PHSTAT3             0x1B
+#define PHLCON           0x14
 
 /* PHCON1 Bits */
 #define PHCON1_PRST         (1 << 15)
@@ -418,12 +421,12 @@ typedef struct {
     uint16_t          CS_Pin;
     uint8_t           current_bank;
     uint8_t           mac_addr[6];
-    uint16_t          rx_buffer_start;
-    uint16_t          rx_buffer_end;
-    uint16_t          tx_buffer_start;
-    uint16_t          tx_buffer_end;
-    uint16_t          next_packet_ptr;
-    uint8_t           remaining_packets;
+    // uint16_t          rx_buffer_start;
+    // uint16_t          rx_buffer_end;
+    // uint16_t          tx_buffer_start;
+    // uint16_t          tx_buffer_end;
+    // uint16_t          next_packet_ptr;
+    // uint8_t           remaining_packets;
     bool              initialized;
 } ENC28J60_HandleTypeDef;
 
@@ -436,7 +439,9 @@ extern ENC28J60_HandleTypeDef enc28j60_handle;
  * API - Initialization
  *============================================================================*/
 void ENC28J60_Init(ENC28J60_ConfigTypeDef *config);
+uint8_t ENC28J60_verify(void);
 void ENC28J60_DeInit(void);
+bool ENC28J60_verifyRead(uint8_t reg, uint8_t verifybyte);
 
 /*============================================================================
  * API - Register Access (Internal use)

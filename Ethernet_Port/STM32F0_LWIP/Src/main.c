@@ -18,73 +18,27 @@
 #include "rcc.h"
 #include "gpio.h"
 #include "uartF051.h"
-#include "spiF051.h"
 #include "main.h"
-#include "ethernetif.h"
 #include "STM32F0Time.h"
+#include "network.h"
 
-#define UDP_TX_TEST	1
-#define UDP_RX_TEST	0
+uint8_t printdata[50];
+ENC28J60_ConfigTypeDef encdevice = {
+		.mac_addr = {0x62,0x5F,0x70,0x72,0x61,0x79},
+};
 
-uint8_t printdata[50] = {0xFF};
-
-#if !defined(__SOFT_FP__) && defined(__ARM_FP)
-  #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
-#endif
-
-struct netif enc28j60_netif;
 volatile uint32_t timerTickCount = 0;
 
-#if UDP_TX_TEST==1
-ip_addr_t server_ip;
-#endif
-// Your network interface structure
-#if UDP_RX_TEST == 1
+/* Private variables ---------------------------------------------------------*/
+#define PSTRV(s) ((char *)(s))
+static uint8_t myip[4] = {192,168,29,51};
+static uint16_t mywwwport = 5000;
 
-static struct udp_pcb *g_listener_pcb = NULL;
-#endif
-///-----------------------------------//
-
-static void Timer2_Callback(void) {
-    timerTickCount++;
-    //GPIO_TogglePin(GPIOC, GPIO_PIN_8);
-}
-
-/* Microcontroller System Tick Handler (Must return system time in milliseconds) */
-/* Replace with your MCU hardware tick getter (e.g., HAL_GetTick() for STM32)   */
-u32_t sys_now(void) {
-    return timerTickCount;
-}
-
-void initializaTimer(void)
-{
-	uint32_t t2clk = STM32F0Timer_GetTimerClockHz(TIMER2);
-	// TIMER2: 1 second = 1,000,000 us (1 Hz)
-	if (!STM32F0Timer_ConfigurePeriodUs(TIMER2, t2clk, 1000)) {
-		while (1);
-	}
-
-	STM32F0Timer_SetUpdateCallback(TIMER2, Timer2_Callback);
-
-    // Enable update interrupts (NVIC priority in helper)
-    STM32F0Timer_EnableUpdateInterrupt(TIMER2, true);
-
-    // Start timers
-    STM32F0Timer_Start(TIMER2);
-}
-
-//ENC28J60_ConfigTypeDef encdevice;
-/*============================================================================
- * Simple Delay Function (using active wait)
- *============================================================================*/
-void Delay_ms(uint32_t ms) {
-    uint32_t i, j;
-    for (i = 0; i < ms; i++) {
-        for (j = 0; j < 8000; j++) {
-            //__NOP();
-        }
-    }
-}
+#define BUFFER_SIZE 1500
+uint8_t buf[BUFFER_SIZE+1],browser;
+uint16_t plen; 
+char * ptr,*chr,chr2[20];
+int b1,b2,iii,ij;
 
 // Example configuration for 48MHz system clock using PLL from HSE
 void SystemClock_Config_48MHz(void) {
@@ -104,6 +58,15 @@ void SystemClock_Config_48MHz(void) {
 
     /* Initialize RCC */
     RCC_Init(&rcc_config);
+}
+
+void Delay_ms(uint32_t ms) {
+    uint32_t i, j;
+    for (i = 0; i < ms; i++) {
+        for (j = 0; j < 8000; j++) {
+            //__NOP();
+        }
+    }
 }
 
 /*============================================================================
@@ -127,211 +90,42 @@ void Example_LED_Blink(void) {
 
 }
 
+static void Timer2_Callback(void) {
+    timerTickCount++;
+    //GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+}
 
-#if UDP_RX_TEST == 1
-/**
- * @brief  lwIP Callback function triggered whenever a UDP packet is received.
- * @note   This runs inside the lwIP stack context (during ethernetif_input / sys_check_timeouts).
- */
-static void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-                              const ip_addr_t *addr, u16_t port)
+/* Microcontroller System Tick Handler (Must return system time in milliseconds) */
+/* Replace with your MCU hardware tick getter (e.g., HAL_GetTick() for STM32)   */
+uint32_t sys_now(void) {
+    return timerTickCount;
+}
+
+void initializaTimer(void)
 {
-    // Prevent compiler warning for unused arg
-    LWIP_UNUSED_ARG(arg);
+	uint32_t t2clk = STM32F0Timer_GetTimerClockHz(TIMER2);
+	// TIMER2: 1 second = 1,000,000 us (1 Hz)
+	if (!STM32F0Timer_ConfigurePeriodUs(TIMER2, t2clk, 1000)) {
+		while (1);
+	}
 
-    if (p != NULL) {
-        /* Convert sender IP address to string for printing */
-        char sender_ip_str[16];
-        ipaddr_ntoa_r(addr, sender_ip_str, sizeof(sender_ip_str));
+	STM32F0Timer_SetUpdateCallback(TIMER2, Timer2_Callback);
 
-        /* Print sender details */
-        printf("\n[UDP Received] From %s:%d | Len: %d bytes\n", sender_ip_str, port, p->tot_len);
+    // Enable update interrupts (NVIC priority in helper)
+    STM32F0Timer_EnableUpdateInterrupt(TIMER2, true);
 
-        /* Print string payload */
-        printf("Payload: ");
-
-        /*
-         * Handle pbuf payload safely:
-         * Chained pbufs (if packet > PBUF_POOL_BUFSIZE) are iterated through.
-         */
-        struct pbuf *q;
-        for (q = p; q != NULL; q = q->next) {
-            // Print payload characters directly to stdout
-            fwrite(q->payload, 1, q->len, stdout);
-        }
-        printf("\n\n");
-
-        /*
-         * CRITICAL FOR BARE-METAL (STM32F0):
-         * You MUST free the pbuf after processing, otherwise your PBUF_POOL
-         * will run out of memory after a few received packets!
-         */
-        pbuf_free(p);
-    }
+    // Start timers
+    STM32F0Timer_Start(TIMER2);
 }
 
-
-err_t udp_listener_init(uint16_t port) {
-    // 1. If listener already running, clean up first
-    if (g_listener_pcb != NULL) {
-        udp_listener_deinit();
-    }
-
-    // 2. Allocate a new UDP Protocol Control Block (PCB)
-    g_listener_pcb = udp_new();
-    if (g_listener_pcb == NULL) {
-        printf("[UDP Error] Failed to allocate UDP PCB.\n");
-        return ERR_MEM;
-    }
-
-    // 3. Bind the PCB to listen on any local IP address at the specified port
-    err_t err = udp_bind(g_listener_pcb, IP_ADDR_ANY, port);
-    if (err != ERR_OK) {
-        printf("[UDP Error] Failed to bind to port %d (Error: %d)\n", port, err);
-        udp_remove(g_listener_pcb);
-        g_listener_pcb = NULL;
-        return err;
-    }
-
-    // 4. Register the asynchronous receive callback
-    udp_recv(g_listener_pcb, udp_recv_callback, NULL);
-
-    printf("[UDP Listener] Successfully listening on port %d...\n", port);
-    return ERR_OK;
-}
-
-void udp_listener_deinit(void) {
-    if (g_listener_pcb != NULL) {
-        udp_remove(g_listener_pcb);
-        g_listener_pcb = NULL;
-        printf("[UDP Listener] Stopped.\n");
-    }
-}
-#endif
-
-#if UDP_TX_TEST == 1
-/**
- * @brief Sends a UDP message.
- *
- * This function creates a temporary UDP connection, sends the message,
- * and then cleans up. It's designed for simple, one-off message sending.
- */
-err_t udp_send_message(ip_addr_t *dest_ip, uint16_t dest_port, const char *message) {
-    err_t err;
-    struct udp_pcb *pcb;
-    struct pbuf *p;
-    size_t msg_len = strlen(message);
-
-    // 1. Create a new UDP Protocol Control Block (PCB)[reference:1][reference:2]
-    pcb = udp_new();
-    if (pcb == NULL) {
-        return ERR_MEM;
-    }
-
-    // 2. Connect the PCB to the destination. This sets the destination
-    //    address and port for the PCB[reference:3][reference:4].
-    err = udp_connect(pcb, dest_ip, dest_port);
-    if (err != ERR_OK) {
-        udp_remove(pcb);
-        return err;
-    }
-
-    // 3. Allocate a pbuf (packet buffer) to hold the message[reference:5][reference:6].
-    //    PBUF_TRANSPORT reserves space for transport layer headers (UDP/IP).
-    p = pbuf_alloc(PBUF_TRANSPORT, msg_len, PBUF_RAM);
-    if (p == NULL) {
-        udp_remove(pcb);
-        return ERR_MEM;
-    }
-
-    // 4. Copy the message into the pbuf's payload[reference:7].
-    memcpy(p->payload, message, msg_len);
-
-    // 5. Send the pbuf[reference:8][reference:9].
-    //    Note: udp_send() does NOT free the pbuf[reference:10][reference:11].
-    err = udp_send(pcb, p);
-
-    // 6. Free the pbuf and the UDP PCB[reference:12][reference:13].
-    pbuf_free(p);
-    udp_remove(pcb);
-
-    return err;
-}
-#endif
-
-void network_initialize(void)
+void readVerifyReg(void)
 {
-	lwip_init();
-	// 3. Configure Static IP & Netif (Match your LAN network)
-	ip4_addr_t ipaddr, netmask, gw;
-	IP4_ADDR(&ipaddr,  192, 168, 137,51);
-	IP4_ADDR(&netmask, 255, 255, 255, 0);
-	IP4_ADDR(&gw,      192, 168, 137, 20);
 
-	// Register ENC28J60 netif driver
-	netif_add(&enc28j60_netif, &ipaddr, &netmask, &gw, NULL, ethernetif_init, ethernet_input);
-	netif_set_default(&enc28j60_netif);
-	netif_set_link_up(&enc28j60_netif);
-	netif_set_up(&enc28j60_netif);
-#if UDP_TX_TEST==1
-	 // 2. Set the destination IP address (e.g., 192.168.1.100)[reference:15]
-	 IP4_ADDR(&server_ip, 192, 168, 137, 10);
-#endif
-#if UDP_RX_TEST==1
-	// 4. Start the UDP Listener API on Port 5000
-	udp_listener_init(5000);
-#endif
 }
-
-void ethernet_Task(void)
-{
-	bool linkstat = false;
-	bool linkduplex = false;
-	uint16_t cnt = 0;
-
-
-	read_reg_data();
-
-	// 5. Bare-Metal Polling Super-Loop
-	while (1) {
-#if UDP_TX_TEST == 1
-			ethernetif_input(&enc28j60_netif);
-		 	 // 4. Send a message to the server on port 8080
-			err_t result = udp_send_message(&server_ip, 5000, "Hello from lwIP!");
-
-			if (result == ERR_OK) {
-				// Message sent successfully
-			} else {
-				// Handle the error (e.g., log it)
-			}
-
-			// 5. Crucial: Let lwIP process its internal timers and handle
-			//    incoming packets (even if you're only sending)[reference:16].
-			sys_check_timeouts();
-#endif
-#if UDP_RX_TEST == 1
-			ethernetif_input(&enc28j60_netif);
-			sys_check_timeouts();
-#endif
-
-			Delay_ms(5);
-			cnt++;
-			if(cnt > 100)
-			{
-				cnt = 0;
-				ENC28J60_GetPHYStatus(&linkstat, &linkduplex);
-				GPIO_TogglePin(GPIOC, GPIO_PIN_9);
-				memset((char *)printdata, 0x00, sizeof(printdata));
-				sprintf((char *)printdata, "Link status:- %d, duplex:- %d\r\n", linkstat, linkduplex);
-				UART_SendStringIT(USART1, (const char *)printdata);
-			}
-
-		}
-}
-
 
 int main(void)
 {
+    uint16_t dat_p;
 	SystemClock_Config_48MHz();
 	Delay_ms(30);
 	Example_LED_Blink();
@@ -339,14 +133,56 @@ int main(void)
 	uart1_initialize();
 	initializaTimer();
 	UART_SendStringIT(USART1, "System Starting...\n");
-	network_initialize();
-	ethernet_Task();
+    ENC28J60_Init(&encdevice);
+	init_network(encdevice.mac_addr,myip,mywwwport);
+
+	ENC28J60_verify();
+	//ethernet_Task();
     /* Loop forever */
     /* Main loop - toggle LED */
-    while (1) {
+	//ENC28J60_SendPacket((uint8_t *)"Hellow....", sizeof("Hellow..."));
+while (1)
+  {
+    /* USER CODE END WHILE */
 
-    	//GPIO_TogglePin(GPIOC, GPIO_PIN_9);
-        Delay_ms(5);
-        //UART_SendStringIT(USART1, "Hello STM32\n");
-    }
+    /* USER CODE BEGIN 3 */
+	Delay_ms(200);
+	//ENC28J60_SendPacket((uint8_t *)"Hellow....", 90);
+	plen = ENC28J60_ReceivePacket(buf, BUFFER_SIZE);
+        if(plen==0) continue;
+        if(eth_is_arp(buf,plen)) {
+            arp_reply(buf);
+            continue;
+        }
+        if(eth_is_ip(buf,plen)==0) continue;
+        if(buf[IP_PROTO]==IP_ICMP && buf[ICMP_TYPE]==ICMP_REQUEST) {
+            icmp_reply(buf,plen);
+            continue;
+        }
+        if(buf[IP_PROTO]==IP_TCP && buf[TCP_DST_PORT]==0 && buf[TCP_DST_PORT+1]==mywwwport) {
+            if(buf[TCP_FLAGS] & TCP_SYN) {
+                tcp_synack(buf);
+                continue;
+            }
+            if(buf[TCP_FLAGS] & TCP_ACK) {
+                init_len_info(buf);
+                dat_p = get_tcp_data_ptr();
+                if(dat_p==0) {
+                    if(buf[TCP_FLAGS] & TCP_FIN) tcp_ack(buf);
+                    continue;
+                }
+                
+                if(strstr((char*)&(buf[dat_p]),"User Agent")) browser=0;
+                else if(strstr((char*)&(buf[dat_p]),"MSIE")) browser=1;
+                else browser=2;
+                
+                if(strncmp("/page",(char*)&(buf[dat_p+4]),5)==0){
+                    ptr = (char*)&(buf[dat_p+4]);
+                    //testpage();
+                    //sendpage();
+                    continue;
+                }
+            }
+        }    
+  }
 }

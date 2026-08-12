@@ -33,7 +33,7 @@ static void ENC28J60_InitBuffers(void);
  * Global Handle Instance
  *============================================================================*/
 ENC28J60_HandleTypeDef enc28j60_handle;
-static unsigned int NextPacketPtr;
+static uint16_t NextPacketPtr;
 /*============================================================================
  * ENC28J60 SPI Initialization
  *============================================================================*/
@@ -49,7 +49,7 @@ static void ENC28J60_SPI_Init(void)
 
     SPI_StructInit(&SPI_InitStruct);
     SPI_InitStruct.Mode          = SPI_MODE_MASTER;
-    SPI_InitStruct.BaudRate      = SPI_BAUDRATEPRESCALER_64;
+    SPI_InitStruct.BaudRate      = SPI_BAUDRATEPRESCALER_256;
     SPI_InitStruct.ClockPolarity = SPI_CPOL_LOW;
     SPI_InitStruct.ClockPhase    = SPI_CPHA_1EDGE;
     SPI_InitStruct.DataSize      = SPI_DATASIZE_8BIT;
@@ -112,13 +112,13 @@ static void ENC28J60_GPIO_Init(void)
 static void ENC28J60_CS_Low(void)
 {
     GPIO_ResetPin(enc28j60_handle.CS_Port, enc28j60_handle.CS_Pin);
-    //Delay_ms(1);
+    for(int i = 0; i < 100; i++);
 }
 
 static void ENC28J60_CS_High(void)
 {
+	for(int i = 0; i < 100; i++);
     GPIO_SetPin(enc28j60_handle.CS_Port, enc28j60_handle.CS_Pin);
-    //Delay_ms(1);
 }
 
 /*============================================================================
@@ -159,7 +159,7 @@ static void ENC28J60_WriteRegRaw(uint8_t reg_addr, uint8_t value)
     {
         uint8_t tx[3] = { opcode, value, 0x00 };
         uint8_t rx[3];
-        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 3);
+        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
     }
     ENC28J60_CS_High();
 }
@@ -178,7 +178,7 @@ static void ENC28J60_SPI_SoftResetCmd(void)
     tx[0] = ENC28J60_SYSTEM_RESET_CMD;
     tx[1] = 0x00;
     tx[2] = 0x00;
-    SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 3);
+    SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 1);
     ENC28J60_CS_High();
 }
 
@@ -216,7 +216,7 @@ void ENC28J60_SetBitField(uint8_t reg_addr, uint8_t mask)
         {
             uint8_t tx[3] = { opcode, mask, 0x00 };
             uint8_t rx[3];
-            SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 3);
+            SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
         }
         ENC28J60_CS_High();
     }
@@ -236,7 +236,7 @@ void ENC28J60_ClearBitField(uint8_t reg_addr, uint8_t mask)
         {
             uint8_t tx[3] = { opcode, mask, 0x00 };
             uint8_t rx[3];
-            SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 3);
+            SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
         }
         ENC28J60_CS_High();
     }
@@ -329,8 +329,8 @@ void ENC28J60_WriteBuffer(uint8_t *buffer, uint16_t length)
 	    // Now read 'length' bytes. Each SPI transaction clocks exactly 1 byte.
 	    for (uint16_t i = 0; i < length; i++)
 	    {
-	        uint8_t tx_dummy = 0x00;
-	        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, &buffer[i], 0, 1);
+	        uint8_t tx_dummy[2] = {0x00, 0x00};
+	        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, &buffer[i], tx_dummy, 1);
 	    }
 
 	    ENC28J60_CS_High();
@@ -375,12 +375,23 @@ static void ENC28J60_SelectBank(uint8_t bank)
     if (bank == enc28j60_handle.current_bank) return;
     //ENC28J60_SetBitField(ECON1, bank);
     {
+		uint8_t opcode = (ECON1 & ADDR_MASK) | ENC28J60_BIT_FIELD_CLR;
+		ENC28J60_CS_Low();
+		{
+			uint8_t tx[3] = { opcode, (0x03), 0x00 };
+			uint8_t rx[3];
+			SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
+		}
+		ENC28J60_CS_High();
+	}
+    //ENC28J60_SetBitField(ECON1, bank);
+    {
 		uint8_t opcode = (ECON1 & ADDR_MASK) | ENC28J60_BIT_FIELD_SET;
 		ENC28J60_CS_Low();
 		{
 			uint8_t tx[3] = { opcode, bank, 0x00 };
 			uint8_t rx[3];
-			SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 3);
+			SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
 		}
 		ENC28J60_CS_High();
 	}
@@ -494,7 +505,7 @@ static void ENC28J60_InitMAC(ENC28J60_ConfigTypeDef *config)
     }
     else
     {
-        ENC28J60_WriteReg(MACON1, MACON1_MARXEN);
+        ENC28J60_WriteReg(MACON1, MACON1_MARXEN | MACON1_RXPAUS | MACON1_TXPAUS);
         ENC28J60_WriteReg(MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN);
         ENC28J60_WriteReg(MACON4, MACON4_DEFER);
         ENC28J60_WriteReg(MABBIPG, 0x12);
@@ -517,6 +528,10 @@ static void ENC28J60_InitMAC(ENC28J60_ConfigTypeDef *config)
 
     /* Back-to-back inter-packet gap */
     ENC28J60_WriteReg(MABBIPG, config->full_duplex ? 0x15 : 0x12);
+
+    uint8_t mactest = ENC28J60_ReadReg(MACON1);
+
+    mactest = ENC28J60_ReadReg(MACON3);
 }
 
 /*============================================================================
@@ -560,6 +575,7 @@ static void ENC28J60_InitPHY(ENC28J60_ConfigTypeDef *config)
     {
         //ENC28J60_WritePHY(PHCON2, ENC28J60_ReadPHY(PHCON2) | PHCON2_FRCLNK);
     }
+    ENC28J60_WritePHY(PHLCON, (uint16_t)((1<<1)|(1<<5)|(1<<8))); // led status
 
     //------------- Enable Loopback ------------------
     //ENC28J60_SetBitField(PHCON1, PHCON1_PLOOPBK);
@@ -573,26 +589,28 @@ static void ENC28J60_InitPHY(ENC28J60_ConfigTypeDef *config)
  *============================================================================*/
 static void ENC28J60_InitBuffers(void)
 {
+	ENC28J60_verifyRead(ECON1, 0x12);
+
     ENC28J60_SelectBank(BANK0);
 
-    ENC28J60_WriteReg(ERXSTL,  (uint8_t)(enc28j60_handle.rx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ERXSTH,  (uint8_t)((enc28j60_handle.rx_buffer_start >> 8) & 0xFF));
-    ENC28J60_WriteReg(ERXNDL,  (uint8_t)(enc28j60_handle.rx_buffer_end & 0xFF));
-    ENC28J60_WriteReg(ERXNDH,  (uint8_t)((enc28j60_handle.rx_buffer_end >> 8) & 0xFF));
-    ENC28J60_WriteReg(ERXRDPTL,(uint8_t)(enc28j60_handle.rx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ERXRDPTH,(uint8_t)((enc28j60_handle.rx_buffer_start >> 8) & 0xFF));
+    ENC28J60_WriteReg(ERXSTL,  (uint8_t)(encdevice.rx_buffer_start & 0xFF));
+    ENC28J60_WriteReg(ERXSTH,  (uint8_t)((encdevice.rx_buffer_start >> 8) & 0xFF));
 
-    ENC28J60_WriteReg(ETXSTL,  (uint8_t)(enc28j60_handle.tx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ETXSTH,  (uint8_t)((enc28j60_handle.tx_buffer_start >> 8) & 0xFF));
-    ENC28J60_WriteReg(ETXNDL,  (uint8_t)(enc28j60_handle.tx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ETXNDH,  (uint8_t)((enc28j60_handle.tx_buffer_start >> 8) & 0xFF));
+    ENC28J60_WriteReg(ERXNDL,  (uint8_t)(encdevice.rx_buffer_end & 0xFF));
+    ENC28J60_WriteReg(ERXNDH,  (uint8_t)((encdevice.rx_buffer_end >> 8) & 0xFF));
+
+    // ENC28J60_WriteReg(ERXRDPTL,(uint8_t)(encdevice.rx_buffer_start & 0xFF));
+    // ENC28J60_WriteReg(ERXRDPTH,(uint8_t)((encdevice.rx_buffer_start >> 8) & 0xFF));
+
+    ENC28J60_WriteReg(ETXSTL,  (uint8_t)(encdevice.tx_buffer_start & 0xFF));
+    ENC28J60_WriteReg(ETXSTH,  (uint8_t)((encdevice.tx_buffer_start >> 8) & 0xFF));
+
+    ENC28J60_WriteReg(ETXNDL,  (uint8_t)(encdevice.tx_buffer_end & 0xFF));
+    ENC28J60_WriteReg(ETXNDH,  (uint8_t)((encdevice.tx_buffer_end >> 8) & 0xFF));
 
     /* Set read pointer */
-    ENC28J60_WriteReg(ERXRDPTL, (uint8_t)(enc28j60_handle.rx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ERXRDPTH, (uint8_t)((enc28j60_handle.rx_buffer_start >> 8) & 0xFF));
-
-    /* Enable RX */
-    ENC28J60_SetBitField(ECON1, ECON1_RXEN);
+    ENC28J60_WriteReg(ERXRDPTL, (uint8_t)(encdevice.rx_buffer_start & 0xFF));
+    ENC28J60_WriteReg(ERXRDPTH, (uint8_t)((encdevice.rx_buffer_start >> 8) & 0xFF));
 }
 
 /*============================================================================
@@ -608,10 +626,10 @@ void ENC28J60_SetMACAddress(uint8_t *mac_addr)
 
     for (i = 0; i < 6; i++)
     {
-        enc28j60_handle.mac_addr[i] = mac_addr[i];
+        encdevice.mac_addr[i] = mac_addr[i];
     }
 
-    ENC28J60_SelectBank(BANK2);
+    ENC28J60_SelectBank(BANK3);
     for (i = 0; i < 6; i++)
     {
         ENC28J60_WriteReg(ma_addr_regs[i], mac_addr[i]);
@@ -704,23 +722,23 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
     if (length > ENC28J60_MAX_FRAMELEN) return;
 
 
-    tx_end = enc28j60_handle.tx_buffer_start + length;
+    tx_end = encdevice.tx_buffer_start + length;
 
     //-------------- for debugging -------------
         	memset((char *)printdata, 0x00, sizeof(printdata));
-        	sprintf((char *)printdata, "Tx_tx_end: %d\r\n", tx_end);
+        	sprintf((char *)printdata, "tx_end: %d\r\n", tx_end);
         	UART_SendStringIT(USART1, (const char *)printdata);
     //------------------------------------------
 
     /* Set write pointer to TX start */
-    ENC28J60_WriteReg(EWRPTL, (uint8_t)(enc28j60_handle.tx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(EWRPTH, (uint8_t)((enc28j60_handle.tx_buffer_start >> 8) & 0xFF));
+    ENC28J60_WriteReg(EWRPTL, (uint8_t)(encdevice.tx_buffer_start & 0xFF));
+    ENC28J60_WriteReg(EWRPTH, (uint8_t)((encdevice.tx_buffer_start >> 8) & 0xFF));
 
     /* Set TX start and end boundaries */
     ENC28J60_WriteReg(ETXNDL, (uint8_t)(tx_end & 0xFF));
     ENC28J60_WriteReg(ETXNDH, (uint8_t)((tx_end >> 8) & 0xFF));
 
-    ENC28J60_WriteReg(ENC28J60_WRITE_BUF_MEM, 0x0E);
+    //ENC28J60_WriteReg(ENC28J60_WRITE_BUF_MEM, 0x0E);
     ENC28J60_WriteBuffer(data, length);
 
     /* Start transmission */
@@ -728,118 +746,6 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
 }
 #endif
 
-#if 0
- void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
-{
-    uint16_t tx_end;
-    uint16_t i;
-
-    if (length > ENC28J60_MAX_FRAMELEN) return;
-
-    ENC28J60_SelectBank(BANK0);
-
-    tx_end = enc28j60_handle.tx_buffer_start + length;
-
-    /* Set write pointer to TX start */
-    ENC28J60_WriteReg(EWRPTL, (uint8_t)(enc28j60_handle.tx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(EWRPTH, (uint8_t)((enc28j60_handle.tx_buffer_start >> 8) & 0xFF));
-
-    /* Set TX start and end boundaries */
-    ENC28J60_WriteReg(ETXSTL, (uint8_t)(enc28j60_handle.tx_buffer_start & 0xFF));
-    ENC28J60_WriteReg(ETXSTH, (uint8_t)((enc28j60_handle.tx_buffer_start >> 8) & 0xFF));
-    ENC28J60_WriteReg(ETXNDL, (uint8_t)(tx_end & 0xFF));
-    ENC28J60_WriteReg(ETXNDH, (uint8_t)((tx_end >> 8) & 0xFF));
-
-    /* Single CS assertion: WBM opcode, per-packet control byte, then data */
-    ENC28J60_CS_Low();
-
-    /* WBM opcode */
-    {
-        uint8_t tx[2] = { ENC28J60_WRITE_BUF_MEM, 0x00 };
-        uint8_t rx[2];
-        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
-    }
-
-    /* Per-packet control byte: 0x00 = use MACON3 settings */
-    {
-        uint8_t tx[2] = { 0x00, 0x00 };
-        uint8_t rx[2];
-        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
-    }
-
-    /* Frame data */
-    for (i = 0; i < length; i++)
-    {
-        uint8_t tx[2] = { data[i], 0x00 };
-        uint8_t rx[2];
-        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
-    }
-
-    /* Dummy byte to ensure last data byte is committed */
-    {
-        uint8_t tx[2] = { 0x00, 0x00 };
-        uint8_t rx[2];
-        SPI_TransmitReceiveBuffer(enc28j60_handle.SPIx, tx, rx, 2);
-    }
-
-    ENC28J60_CS_High();
-
-    /* Trigger transmission with errata #12 and #13 workarounds */
-    ENC28J60_SelectBank(BANK1);
-
-    {
-        uint8_t retries = 16;
-        uint8_t eir_val;
-
-        do {
-            /* Errata #12: Reset internal transmit logic before each attempt */
-            ENC28J60_SetBitField(ECON1, ECON1_TXRST);
-            ENC28J60_ClearBitField(ECON1, ECON1_TXRST);
-
-            /* Clear TX interrupt flags before starting */
-            ENC28J60_ClearBitField(EIR, EIR_TXIF | EIR_TXERIF);
-
-            /* Start transmission */
-            ENC28J60_SetBitField(ECON1, ECON1_TXRTS);
-
-            /* Errata #13: Wait for transmission to complete */
-            {
-                volatile uint32_t timeout = 2000000UL;
-                do {
-                    eir_val = ENC28J60_ReadReg(EIR);
-                    if (eir_val & (EIR_TXIF | EIR_TXERIF)) break;
-                    timeout--;
-                } while (timeout > 0);
-            }
-
-            /* Stop transmission (force clear TXRTS in case of abort stall) */
-            ENC28J60_ClearBitField(ECON1, ECON1_TXRTS);
-
-           /* Read TSV to check late collision status (errata #13) */
-           {
-               uint8_t tsv_val;
-               uint16_t tsv_addr;
-               ENC28J60_SelectBank(BANK0);
-               tsv_addr = enc28j60_handle.tx_buffer_start + length + 4;
-               ENC28J60_WriteReg(ERDPTL, (uint8_t)(tsv_addr & 0xFF));
-               ENC28J60_WriteReg(ERDPTH, (uint8_t)((tsv_addr >> 8) & 0xFF));
-               ENC28J60_ReadBuffer(&tsv_val, 1);
-               ENC28J60_SelectBank(BANK1);
-
-               if (!(ENC28J60_ReadReg(EIR) & EIR_TXERIF) || !(tsv_val & 0x10))
-               {
-                   break;
-               }
-           }
-
-            retries--;
-        } while (retries > 0);
-    }
-
-    /* Clear TX interrupt flags */
-    ENC28J60_ClearBitField(EIR, EIR_TXIF | EIR_TXERIF);
-}
-#endif
 
 uint8_t  rx_header[ENC28J60_RX_HEADER_SIZE];
 /*============================================================================
@@ -862,12 +768,14 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
     unsigned int rxstat;
     uint8_t econ1;
     //ENC28J60_SelectBank(BANK1);
-    do{
-    	econ1 = ENC28J60_ReadReg(ESTAT);
-    }while(econ1 & ESTAT_RXBUSY);
+//    do{
+//    	econ1 = ENC28J60_ReadReg(ESTAT);
+//    }while(econ1 & ESTAT_RXBUSY);
     pkt_count = ENC28J60_ReadReg(EPKTCNT);
 
     if (pkt_count == 0) return 0;
+
+    //ENC28J60_verify();
 
 	// Set the read pointer to the start of the received packet
     ENC28J60_WriteReg(ERDPTL,(unsigned char)(NextPacketPtr));
@@ -907,26 +815,38 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
 			UART_SendStringIT(USART1, "------------------- Rx Data ---------------");
 			memset((char *)printdata, 0x00, sizeof(printdata));
 			sprintf((char *)printdata, "Rx_next_packet: %d\r\n", next_packet);
+            UART_SendStringIT(USART1, (const char *)printdata);
 			sprintf((char *)printdata, "Rx_packet_length: %d\r\n", packet_length);
+            UART_SendStringIT(USART1, (const char *)printdata);            
+            sprintf((char *)printdata, "Rx_pkt_count: %d\r\n", pkt_count);
 			UART_SendStringIT(USART1, (const char *)printdata);
 
-			for(uint16_t cnt = 0; cnt < 100; cnt++)
-			{
-				UART_SendDataIT(USART1, buffer[cnt]);
-				for(int i=0; i< 5000; i++);
-			}
-			UART_SendDataIT(USART1, '\n');
-			UART_SendDataIT(USART1, '\r');
+			 for(uint16_t cnt = 0; cnt < 100; cnt++)
+			 {
+			 	UART_SendDataIT(USART1, buffer[cnt]);
+			 	for(int i=0; i< 5000; i++);
+			 }
+			 UART_SendDataIT(USART1, '\n');
+			 UART_SendDataIT(USART1, '\r');
 			//------------------------------------------
 		}
 
 	}
 
-    ENC28J60_WriteReg(ERXRDPTL, (uint8_t)(rx_header[RX_STATUS_NEXT_PACKET_LOW]));
-    ENC28J60_WriteReg(ERXRDPTH, (uint8_t)(rx_header[RX_STATUS_NEXT_PACKET_HIGH]));
+    if ((next_packet - 1 < ENC28J60_RX_BUFFER_START)
+                || (next_packet -1 > ENC28J60_RX_BUFFER_START)) {
+                ENC28J60_WriteReg(ERXRDPTL,  (uint8_t)(ENC28J60_RX_BUFFER_START & 0xFF));
+                ENC28J60_WriteReg(ERXRDPTH,  (uint8_t)((ENC28J60_RX_BUFFER_START >> 8) & 0xFF));
+                NextPacketPtr = ENC28J60_RX_BUFFER_START;
+        } else {
+                ENC28J60_WriteReg(ERXRDPTL,  (uint8_t)((next_packet - 1) & 0xFF));
+                ENC28J60_WriteReg(ERXRDPTH,  (uint8_t)(((next_packet - 1) >> 8) & 0xFF));
+                NextPacketPtr = next_packet;
+        }
+
     ENC28J60_SetBitField(ECON2, ECON2_PKTDEC);
 
-    NextPacketPtr = next_packet;
+
 
     return packet_length;
 
@@ -1030,7 +950,7 @@ void ENC28J60_DiscardRxPacket(void)
 
     if (next_packet == 0)
     {
-        next_packet = enc28j60_handle.rx_buffer_end;
+        next_packet = encdevice.rx_buffer_end;
     }
 
     ENC28J60_WriteReg(ERXRDPTL, (uint8_t)(next_packet & 0xFF));
@@ -1131,17 +1051,26 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
     ENC28J60_SPI_Init();
 
     ENC28J60_SoftReset();
-    Delay_ms(10);
+    Delay_ms(100);
 
     enc28j60_handle.current_bank = 0;
 
-    ENC28J60_SelectBank(BANK0);
-
 #if 1
-    NextPacketPtr = 0x00;
-    /* RX filter: accept broadcast and CRC-valid frames */
+    NextPacketPtr = ENC28J60_RX_BUFFER_START;
+    uint8_t econ1 = ENC28J60_ReadReg(ECON1);
+
+        /* Store config values */
+    encdevice.rx_buffer_start = ENC28J60_RX_BUFFER_START;
+    encdevice.rx_buffer_end   = ENC28J60_RX_BUFFER_END;
+    encdevice.tx_buffer_start = ENC28J60_TX_BUFFER_START;
+    encdevice.tx_buffer_end   = ENC28J60_TX_BUFFER_END;
+
+    ENC28J60_InitBuffers();
+            /* RX filter: accept broadcast and CRC-valid frames */
     /* Unicast frames matching local MAC are automatically accepted */
-    ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_PMEN | ERXFCON_MCEN);
+    //ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_PMEN);// | ERXFCON_MCEN);
+    ENC28J60_WriteReg(ERXFCON, 0x00);// | ERXFCON_MCEN);
+
 
     ENC28J60_WriteReg(EPMM0,  0x3F);
     ENC28J60_WriteReg(EPMM1,  0x30);
@@ -1152,29 +1081,14 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
     ENC28J60_WriteReg(EPMOL,  0x00);
     ENC28J60_WriteReg(EPMOH,  0x40);
 
-    /* Store config values */
-    enc28j60_handle.rx_buffer_start = ENC28J60_RX_BUFFER_START;
-    enc28j60_handle.rx_buffer_end   = ENC28J60_RX_BUFFER_END;
-    enc28j60_handle.tx_buffer_start = ENC28J60_TX_BUFFER_START;
-    enc28j60_handle.tx_buffer_end   = ENC28J60_TX_BUFFER_END;
-
-    if (config->rx_buffer_start != 0)
-        enc28j60_handle.rx_buffer_start = config->rx_buffer_start;
-    if (config->rx_buffer_end != 0)
-        enc28j60_handle.rx_buffer_end   = config->rx_buffer_end;
-    if (config->tx_buffer_start != 0)
-        enc28j60_handle.tx_buffer_start = config->tx_buffer_start;
-    if (config->tx_buffer_end != 0)
-        enc28j60_handle.tx_buffer_end   = config->tx_buffer_end;
+    ENC28J60_InitMAC(config);
 
     ENC28J60_SetMACAddress(config->mac_addr);
 
     ENC28J60_InitPHY(config);
-    ENC28J60_InitMAC(config);
-    ENC28J60_InitBuffers();
 
     // Automatically increment ERDPT and EWRPT when the SPI RBM/WBM command is used
-	ENC28J60_SetBitField(ECON2, ECON2_AUTOINC);
+	//ENC28J60_SetBitField(ECON2, ECON2_AUTOINC);
 
     ENC28J60_SelectBank(BANK1);
     ENC28J60_EnableInterrupts(EIE_PKTIE);
@@ -1184,7 +1098,125 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
 
 	/* pull transmitter and receiver out of reset */
 	//ENC28J60_SetBitField(ECON1, ECON1_TXRST | ECON1_RXRST);
+
+    ENC28J60_ClearBitField(ECON1, ECON1_CSUMEN);
     	/* enable reception */
 	ENC28J60_SetBitField(ECON1, ECON1_RXEN);
+	econ1 = ENC28J60_ReadReg(ECON1);
     enc28j60_handle.initialized = true;
+}
+
+bool ENC28J60_verifyRead(uint8_t reg, uint8_t verifybyte)
+{
+	uint8_t read_byte = 0;
+	read_byte = ENC28J60_ReadReg(reg);
+	if(verifybyte != read_byte)
+	{
+		return false;
+	}
+	return true;
+}
+
+uint8_t ENC28J60_verify(void)
+{
+	uint8_t err = 0;
+	uint8_t mac_addr[6] = {0};
+	const uint8_t ma_addr_regs[6] = { MAADR1, MAADR2, MAADR3, MAADR4, MAADR5, MAADR6 };
+	uint16_t          rx_buffer_start = 0;
+	uint16_t          rx_buffer_end = 0;
+	uint16_t          tx_buffer_start = 0;
+	uint16_t          tx_buffer_end = 0;
+	uint16_t          next_packet_ptr = 0;
+
+	for(uint8_t i=0; i<5; i++)
+	{
+		if(!ENC28J60_verifyRead(ma_addr_regs[i], encdevice.mac_addr[i]))
+		{
+			//return 1;
+		}
+	}
+	rx_buffer_start = ENC28J60_ReadReg(ERXSTL);
+	rx_buffer_start |= (ENC28J60_ReadReg(ERXSTH) << 8);
+
+	rx_buffer_end = ENC28J60_ReadReg(ERXNDL);
+	rx_buffer_end |= (ENC28J60_ReadReg(ERXNDH) << 8);
+
+	tx_buffer_start = ENC28J60_ReadReg(ETXSTL);
+	tx_buffer_start |= (ENC28J60_ReadReg(ETXSTH) << 8);
+
+	tx_buffer_end = ENC28J60_ReadReg(ETXNDL);
+	tx_buffer_end |= (ENC28J60_ReadReg(ETXNDH) << 8);
+
+	next_packet_ptr = ENC28J60_ReadReg(ERXRDPTL);
+	next_packet_ptr |= (ENC28J60_ReadReg(ERXRDPTH) << 8);
+
+	memset((char *)printdata, 0x00, sizeof(printdata));
+	sprintf((char *)printdata, "rx_buffer_start: %d\r\n", rx_buffer_start);
+	UART_SendStringIT(USART1, (const char *)printdata);
+
+	memset((char *)printdata, 0x00, sizeof(printdata));
+	sprintf((char *)printdata, "rx_buffer_end: %d\r\n", rx_buffer_end);
+	UART_SendStringIT(USART1, (const char *)printdata);
+
+	memset((char *)printdata, 0x00, sizeof(printdata));
+	sprintf((char *)printdata, "tx_buffer_start: %d\r\n", tx_buffer_start);
+	UART_SendStringIT(USART1, (const char *)printdata);
+
+	memset((char *)printdata, 0x00, sizeof(printdata));
+	sprintf((char *)printdata, "tx_buffer_end: %d\r\n", tx_buffer_end);
+	UART_SendStringIT(USART1, (const char *)printdata);
+
+	memset((char *)printdata, 0x00, sizeof(printdata));
+	sprintf((char *)printdata, "next_packet_ptr: %d\r\n", next_packet_ptr);
+	UART_SendStringIT(USART1, (const char *)printdata);
+
+	UART_SendStringIT(USART1, (const char *)("\r\n"));
+
+
+    //----------------------- mac initialization ------------------------
+    if(!ENC28J60_verifyRead(MACON1, (uint8_t)(MACON1_MARXEN | MACON1_RXPAUS | MACON1_TXPAUS)))
+	{
+    	err = 1;
+	}
+	if(!ENC28J60_verifyRead(MACON3, (uint8_t)(MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN)))
+	{
+		err = 2;
+	}
+    if(!ENC28J60_verifyRead(MACON4, (uint8_t)MACON4_DEFER))
+	{
+    	err = 3;
+	}
+	if(!ENC28J60_verifyRead(MABBIPG, (uint8_t)(0x12)))
+	{
+		err = 4;
+	}
+
+        if(!ENC28J60_verifyRead(MAMXFLL, (uint8_t)(ENC28J60_MAX_FRAMELEN & 0xFF)))
+	{
+        	err = 5;
+	}
+	if(!ENC28J60_verifyRead(MAMXFLH, (uint8_t)((ENC28J60_MAX_FRAMELEN >> 8) & 0xFF)))
+	{
+		err = 6;
+	}
+    if(!ENC28J60_verifyRead(MAIPGL, (uint8_t)0x12))
+	{
+    	err = 7;
+	}
+	if(!ENC28J60_verifyRead(MAIPGH, (uint8_t)(0x0C)))
+	{
+		err = 8;
+	}
+
+
+    uint16_t phycon1 = ENC28J60_ReadPHY(PHCON1);
+    uint16_t phycon2 = ENC28J60_ReadPHY(PHCON2);
+    uint16_t phylcon = ENC28J60_ReadPHY(PHLCON);
+    uint16_t phystat1 = ENC28J60_ReadPHY(PHSTAT1);
+    uint16_t phystat2 = ENC28J60_ReadPHY(PHSTAT2);
+    uint8_t econ1 = ENC28J60_ReadReg(ECON1);
+    uint8_t econ2 = ENC28J60_ReadReg(ECON2);
+
+    return 0;
+
 }

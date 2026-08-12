@@ -51,7 +51,7 @@
 
 //#include "netif/ppp/pppoe.h"
 
-ENC28J60_ConfigTypeDef encdevice;
+extern ENC28J60_ConfigTypeDef encdevice;
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
 #define IFNAME1 'n'
@@ -84,7 +84,7 @@ low_level_init(struct netif *netif)
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = 0x00; netif->hwaddr[1] = 0x08;
+  netif->hwaddr[0] = 0x02; netif->hwaddr[1] = 0x08;
   netif->hwaddr[2] = 0xDC; netif->hwaddr[3] = 0x00;
   netif->hwaddr[4] = 0x00; netif->hwaddr[5] = 0x01;
 
@@ -119,6 +119,7 @@ low_level_init(struct netif *netif)
 */
 void read_reg_data(void)
 {
+  uint8_t mac[6] = {0};
 	uint8_t buf[6] = {0};
   uint16_t phy1=0, phy2=0;
   phy1 = ENC28J60_ReadPHY(PHCON1);
@@ -126,6 +127,14 @@ void read_reg_data(void)
   phy1 = ENC28J60_ReadReg(ECON1);
 
   ENC28J60_ReadBuffer(buf, 6);
+
+  //----------- read mac address ------------------//
+  mac[0] = ENC28J60_ReadReg(MAADR1);
+  mac[1] = ENC28J60_ReadReg(MAADR2);
+  mac[2] = ENC28J60_ReadReg(MAADR3);
+  mac[3] = ENC28J60_ReadReg(MAADR4);
+  mac[4] = ENC28J60_ReadReg(MAADR5);
+  mac[5] = ENC28J60_ReadReg(MAADR6);
 }
 
 
