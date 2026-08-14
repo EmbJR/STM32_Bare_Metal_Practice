@@ -24,19 +24,28 @@
 
 uint8_t printdata[50];
 ENC28J60_ConfigTypeDef encdevice = {
-		.mac_addr = {0x62,0x5F,0x70,0x72,0x61,0x79},
+        .full_duplex = true,
+        .auto_negotiation = true,
+		//.mac_addr = {0x62,0x5F,0x70,0x72,0x61,0x79},
+		.mac_addr = {0x00,0x04,0xA3,0x11,0x22,0x33},
 };
+
+uint8_t testbuff[] = {0xff,0xff,0xff,0xff,0xff,0xff,0x2c,0x60
+					,0x0c,0xc8,0xbb,0xb6,0x08,0x06,0x00,0x01,0x08,0x00,0x06,0x04,0x00,0x01,0x2c,0x60
+					,0x0c,0xc8,0xbb,0xb6,0xc0,0xa8,0x1d,0x11,0x00,0x00,0x00,0x00,0x00,0x00,0xc0,0xa8
+					,0x1d,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+					,0x00,0x00,0x00,0x00};
 
 volatile uint32_t timerTickCount = 0;
 
 /* Private variables ---------------------------------------------------------*/
 #define PSTRV(s) ((char *)(s))
 static uint8_t myip[4] = {192,168,29,51};
-static uint16_t mywwwport = 5000;
+static uint16_t mywwwport = 80;
 
 #define BUFFER_SIZE 1500
 uint8_t buf[BUFFER_SIZE+1],browser;
-uint16_t plen; 
+uint16_t plen;
 char * ptr,*chr,chr2[20];
 int b1,b2,iii,ij;
 
@@ -123,8 +132,10 @@ void readVerifyReg(void)
 
 }
 
+uint8_t sampleStr[] = {0xff,0xff,0xff,0xff,0xff, 0xff, 0x62,0x5F,0x70,0x72,0x61,0x79, 0x08, 0x00, 0x00, 0x08, 'H','e','l','l','o','.','.','.','.'};
 int main(void)
 {
+	uint8_t vnt = 0;
     uint16_t dat_p;
 	SystemClock_Config_48MHz();
 	Delay_ms(30);
@@ -141,13 +152,21 @@ int main(void)
     /* Loop forever */
     /* Main loop - toggle LED */
 	//ENC28J60_SendPacket((uint8_t *)"Hellow....", sizeof("Hellow..."));
+	//plen = sizeof(testbuff);	// test code
 while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	Delay_ms(200);
-	//ENC28J60_SendPacket((uint8_t *)"Hellow....", 90);
+	//ENC28J60_SendPacket((uint8_t *)sampleStr, sizeof(sampleStr));
+	Delay_ms(100);
+
+	if(vnt++ > 50)
+	{
+		vnt = 0;
+		ENC28J60_verify();
+	}
+
 	plen = ENC28J60_ReceivePacket(buf, BUFFER_SIZE);
         if(plen==0) continue;
         if(eth_is_arp(buf,plen)) {
