@@ -23,8 +23,8 @@
 #include "network.h"
 
 uint8_t printdata[50];
-ENC28J60_ConfigTypeDef encdevice = {
-        .full_duplex = true,
+ENC28J60_ConfigTypeDef encdevice2 = {
+        .full_duplex = false,
         .auto_negotiation = true,
 		//.mac_addr = {0x62,0x5F,0x70,0x72,0x61,0x79},
 		.mac_addr = {0x00,0x04,0xA3,0x11,0x22,0x33},
@@ -135,7 +135,7 @@ void readVerifyReg(void)
 uint8_t sampleStr[] = {0xff,0xff,0xff,0xff,0xff, 0xff, 0x62,0x5F,0x70,0x72,0x61,0x79, 0x08, 0x00, 0x00, 0x08, 'H','e','l','l','o','.','.','.','.'};
 int main(void)
 {
-	uint8_t vnt = 0;
+	uint16_t vnt = 0;
     uint16_t dat_p;
 	SystemClock_Config_48MHz();
 	Delay_ms(30);
@@ -144,8 +144,8 @@ int main(void)
 	uart1_initialize();
 	initializaTimer();
 	UART_SendStringIT(USART1, "System Starting...\n");
-    ENC28J60_Init(&encdevice);
-	init_network(encdevice.mac_addr,myip,mywwwport);
+    ENC28J60_Init(&encdevice2);
+	init_network(encdevice2.mac_addr,myip,mywwwport);
 
 	ENC28J60_verify();
 	//ethernet_Task();
@@ -166,7 +166,7 @@ while (1)
 		vnt = 0;
 		ENC28J60_verify();
 	}
-
+#if 0
 	plen = ENC28J60_ReceivePacket(buf, BUFFER_SIZE);
         if(plen==0) continue;
         if(eth_is_arp(buf,plen)) {
@@ -202,6 +202,8 @@ while (1)
                     continue;
                 }
             }
-        }    
+        }
+#endif
   }
+
 }

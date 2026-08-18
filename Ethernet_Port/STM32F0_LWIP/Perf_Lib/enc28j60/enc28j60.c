@@ -666,20 +666,20 @@ void ENC28J60_GetMACAddress(uint8_t *mac_addr)
  static inline void ENC28J60_TxErrata_Fix(void) {
     // 1. Read ECON1 to check if TXRTS is stuck high
 #if 1
-	//  if (ENC28J60_ReadReg(EIR) & EIR_TXERIF) {
-    //     // 2. Errata fix: Force reset the transmit logic state machine
-    //     ENC28J60_SetBitField(ECON1, ECON1_TXRST);
-    //     ENC28J60_ClearBitField(ECON1, ECON1_TXRST);
-    // }
-    // 1. Read ESTAT to check if an abort happened
+//	  if (ENC28J60_ReadReg(EIR) & EIR_TXERIF) {
+//         // 2. Errata fix: Force reset the transmit logic state machine
+//         ENC28J60_SetBitField(ECON1, ECON1_TXRST);
+//         ENC28J60_ClearBitField(ECON1, ECON1_TXRST);
+//     }
+// 1. Read ESTAT to check if an abort happened
     {
         // 2. Clear TXRTS bit just in case it's still latched
     	ENC28J60_ClearBitField(ECON1, ECON1_TXRTS);
-        
+
         // 3. Reset the internal TX logic state machine
         ENC28J60_SetBitField(ECON1, ECON1_TXRST);
         ENC28J60_ClearBitField(ECON1, ECON1_TXRST);
-        
+
         // 4. Clear the Transmit Abort and Error Flags
         ENC28J60_ClearBitField(ESTAT, ESTAT_TXABRT);
         ENC28J60_ClearBitField(EIR, EIR_TXERIF | EIR_TXIF);
@@ -722,7 +722,7 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
 //    ENC28J60_ClearBitField(ESTAT, ESTAT_TXABRT);
 
      // Check if the previous transmission is stuck before processing the new one
-    //while ((current_econ1 & ECON1_TXRTS) || (estat & ESTAT_TXABRT)) {
+   // while ((ENC28J60_ReadRegRaw(ECON1) & ECON1_TXRTS)) {
     while (((ENC28J60_ReadReg(ESTAT) & ESTAT_TXABRT)) ) {
         // Call the errata fix to unlock the hardware
         ENC28J60_TxErrata_Fix();
@@ -735,14 +735,14 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
     if(length > 0)
     {
     	UART_SendStringIT(USART1, "\r\n---- Tx Data st----\r\n");
-//    	for(uint16_t cnt = 0; cnt < length; cnt++)
-//    	{
-//    		UART_SendDataIT(USART1, data[cnt]);
-//    		for(int i=0; i< 5000; i++);
-//    	}
-//    	UART_SendStringIT(USART1, "\r\n------------------- Tx Data end---------------\r\n");
-//		UART_SendDataIT(USART1, '\n');
-//		UART_SendDataIT(USART1, '\r');
+    	for(uint16_t cnt = 0; cnt < length; cnt++)
+    	{
+    		UART_SendDataIT(USART1, data[cnt]);
+    		for(int i=0; i< 5000; i++);
+    	}
+    	UART_SendStringIT(USART1, "\r\n--- Tx Data end---\r\n");
+		UART_SendDataIT(USART1, '\n');
+		UART_SendDataIT(USART1, '\r');
 
     }
 

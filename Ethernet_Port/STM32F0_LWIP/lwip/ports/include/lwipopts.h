@@ -12,7 +12,7 @@
 /*============================================================================
  * Protocol Support - UDP Only (Disable TCP)
  *============================================================================*/
-#define LWIP_UDP                        0   /* Enable UDP [reference:4][reference:5] */
+#define LWIP_UDP                        1   /* Enable UDP [reference:4][reference:5] */
 #define LWIP_TCP                        0   /* Disable TCP (saves ~40KB of code) [reference:6] */
 #define LWIP_RAW                        0   /* Disable RAW API (not needed) */
 
