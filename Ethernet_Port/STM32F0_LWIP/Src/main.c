@@ -275,7 +275,7 @@ void network_initialize(void)
 #else
 	// 3. Configure Static IP & Netif (Match your LAN network)
 	ip4_addr_t ipaddr, netmask, gw;
-	IP4_ADDR(&ipaddr,  192, 168, 29,51);
+	IP4_ADDR(&ipaddr,  192, 168, 29,52);
 	IP4_ADDR(&netmask, 255, 255, 255, 0);
 	IP4_ADDR(&gw,      192, 168, 29, 1);
 #endif
