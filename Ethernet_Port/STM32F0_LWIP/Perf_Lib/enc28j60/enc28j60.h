@@ -178,7 +178,7 @@
 #define ECON1_RXRST         (1 << 6)
 #define ECON1_CSUMEN         (1 << 4)
 #define ECON1_RXEN          (1 << 2)
-#define ECON1_TXRTS         (1 << 1)   /* same as BSEL1 */
+#define ECON1_TXRTS         (1 << 3)   /* same as BSEL1 */
 #define ECON1_BSEL0         (1 << 0)
 #define ECON1_BSEL1         (1 << 1)
 
@@ -355,7 +355,7 @@
 #define ENC28J60_RX_BUFFER_END      0x0BFF  // end of RX buffer, room for 2 packets
 #define ENC28J60_TX_BUFFER_START    0x0C00  // start of TX buffer, room for 1 packet
 #define ENC28J60_TX_BUFFER_END      0x1FB0  // end of TX buffer
-#define ENC28J60_MAX_FRAMELEN       1500
+#define ENC28J60_MAX_FRAMELEN       1518
 #define ENC28J60_TX_BUFFER_SIZE     0x0600
 
 /*============================================================================
@@ -430,6 +430,24 @@ typedef struct {
     bool              initialized;
 } ENC28J60_HandleTypeDef;
 
+typedef struct {
+    uint16_t byte_count;         // Total bytes transmitted on wire
+    uint8_t  collision_count:4;
+    uint8_t  crc_error:1;
+    uint8_t  length_check_error:1;
+    uint8_t  length_out_of_range:1;
+    uint8_t  done:1;
+    uint8_t  multicast:1;
+    uint8_t  broadcast:1;
+    uint8_t  packet_defer:1;
+    uint8_t  excessive_defer:1;
+    uint8_t  excessive_collision:1;
+    uint8_t  late_collision:1;
+    uint8_t  giant:1;
+    uint8_t  underrun:1;
+    uint16_t bytes_on_wire;
+} enc28j60_tsv_t;
+
 /*============================================================================
  * Global Handle Declaration
  *============================================================================*/
@@ -490,7 +508,7 @@ void     ENC28J60_GetPHYStatus(bool *link_up, bool *full_duplex);
 /*============================================================================
  * API - Power / Reset
  *============================================================================*/
-void     ENC28J60_SoftReset(void);
+void     ENC28J60_WaitClk(void);
 uint8_t  ENC28J60_GetRevision(void);
 
 #endif /* ENC28J60_H */

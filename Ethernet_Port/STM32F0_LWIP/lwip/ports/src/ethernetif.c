@@ -52,7 +52,7 @@
 //#include "netif/ppp/pppoe.h"
 
 ENC28J60_ConfigTypeDef encdevice = {
-		.full_duplex = false,
+		.full_duplex = true,
 		.auto_negotiation = false,
 };
 
@@ -88,9 +88,9 @@ low_level_init(struct netif *netif)
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = 0x00; netif->hwaddr[1] = 0x04;
-  netif->hwaddr[2] = 0xA3; netif->hwaddr[3] = 0x11;
-  netif->hwaddr[4] = 0x22; netif->hwaddr[5] = 0x33;
+  netif->hwaddr[0] = 0x02; netif->hwaddr[1] = 0x00;
+  netif->hwaddr[2] = 0x00; netif->hwaddr[3] = 0x00;
+  netif->hwaddr[4] = 0x00; netif->hwaddr[5] = 0x01;
 
   /* maximum transfer unit */
   netif->mtu = 1500;
