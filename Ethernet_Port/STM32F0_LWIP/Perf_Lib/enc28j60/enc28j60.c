@@ -1009,8 +1009,25 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
             /* RX filter: accept broadcast and CRC-valid frames */
     /* Unicast frames matching local MAC are automatically accepted */
 
-    //ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_MPEN);
-    ENC28J60_WriteReg(ERXFCON, ERXFCON_PMEN | ERXFCON_ANDOR | ERXFCON_CRCEN); // | ERXFCON_BCEN);
+    /*-------- Receive Filters disabled ------*/
+    ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_MPEN);
+    /*-------- Receive Filters (Bound to the specific MAC address) ------*/
+    //ENC28J60_WriteReg(ERXFCON, ERXFCON_PMEN | ERXFCON_ANDOR | ERXFCON_CRCEN); // | ERXFCON_BCEN);
+    // ENC28J60_WriteReg(EPMOL,  0x00);
+    // ENC28J60_WriteReg(EPMOH,  0x00);
+
+    // ENC28J60_WriteReg(EPMM0,  0xC0);
+    // ENC28J60_WriteReg(EPMM1,  0x0F);
+    // ENC28J60_WriteReg(EPMM2,  0x00);
+    // ENC28J60_WriteReg(EPMM3,  0x00);
+    // ENC28J60_WriteReg(EPMM4,  0x00);
+    // ENC28J60_WriteReg(EPMM5,  0x00);
+    // ENC28J60_WriteReg(EPMM6,  0x00);
+    // ENC28J60_WriteReg(EPMM7,  0x00);    
+
+    // ENC28J60_WriteReg(EPMCSL, 0x9C);
+    // ENC28J60_WriteReg(EPMCSH, 0x7b);
+    /*-------------------------------------------------------------------*/
     
     //ENC28J60_WriteReg(ERXFCON, 0x00);// | ERXFCON_MCEN);
     #ifdef DEBUG_LOOPBACK
@@ -1025,21 +1042,6 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
     ENC28J60_WriteReg(EPMCSL, 0xF9);
     ENC28J60_WriteReg(EPMCSH, 0xf7);
     */
-
-    ENC28J60_WriteReg(EPMOL,  0x00);
-    ENC28J60_WriteReg(EPMOH,  0x00);
-
-    ENC28J60_WriteReg(EPMM0,  0xC0);
-    ENC28J60_WriteReg(EPMM1,  0x0F);
-    ENC28J60_WriteReg(EPMM2,  0x00);
-    ENC28J60_WriteReg(EPMM3,  0x00);
-    ENC28J60_WriteReg(EPMM4,  0x00);
-    ENC28J60_WriteReg(EPMM5,  0x00);
-    ENC28J60_WriteReg(EPMM6,  0x00);
-    ENC28J60_WriteReg(EPMM7,  0x00);    
-
-    ENC28J60_WriteReg(EPMCSL, 0x9C);
-    ENC28J60_WriteReg(EPMCSH, 0x7b);
 
     ENC28J60_InitMAC(config);
 
