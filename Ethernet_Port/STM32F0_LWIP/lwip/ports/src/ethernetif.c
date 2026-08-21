@@ -216,14 +216,18 @@ low_level_input(struct netif *netif)
 
   /* Obtain the size of the packet and put it into the "len"
      variable. */
-  len = netif->mtu;
+  //len = netif->mtu;
+    len = getPackatLen();
 
 #if ETH_PAD_SIZE
   len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
 #endif
 
-  /* We allocate a pbuf chain of pbufs from the pool. */
-  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+  if(len > 0)
+	  /* We allocate a pbuf chain of pbufs from the pool. */
+	  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+  else
+	  p = NULL;
 
   if (p != NULL) {
 
@@ -279,6 +283,7 @@ low_level_input(struct netif *netif)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
+#if 1
 void
 ethernetif_input(struct netif *netif)
 {
@@ -300,6 +305,21 @@ ethernetif_input(struct netif *netif)
     }
   }
 }
+#endif
+#if 0
+void ethernetif_input(struct netif *netif) {
+    struct pbuf *p;
+
+    // Process all pending packets in the ENC28J60 SRAM buffer
+    while ((p = ENC28J60_packet_receive()) != NULL) {
+        // Pass the packet to lwIP stack (ethernet_input or ip_input)
+        if (netif->input(p, netif) != ERR_OK) {
+            // If stack rejects the packet, free pbuf immediately to avoid memory leak
+            pbuf_free(p);
+        }
+    }
+}
+#endif
 
 /**
  * Should be called at the beginning of the program to set up the

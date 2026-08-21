@@ -16,6 +16,8 @@
 #include "rcc.h"
 #include "gpio.h"
 #include "main.h"
+#include "lwip/pbuf.h"
+#include "lwip/netif.h"
 
 //#define DEBUG_LOOPBACK
 
@@ -51,7 +53,7 @@ static void ENC28J60_SPI_Init(void)
 
     SPI_StructInit(&SPI_InitStruct);
     SPI_InitStruct.Mode          = SPI_MODE_MASTER;
-    SPI_InitStruct.BaudRate      = SPI_BAUDRATEPRESCALER_256;
+    SPI_InitStruct.BaudRate      = SPI_BAUDRATEPRESCALER_4;
     SPI_InitStruct.ClockPolarity = SPI_CPOL_LOW;
     SPI_InitStruct.ClockPhase    = SPI_CPHA_1EDGE;
     SPI_InitStruct.DataSize      = SPI_DATASIZE_8BIT;
@@ -113,14 +115,14 @@ static void ENC28J60_GPIO_Init(void)
  *============================================================================*/
 static void ENC28J60_CS_Low(void)
 {
-    for(int i = 0; i < 100; i++);
+    for(int i = 0; i < 10; i++);
     GPIO_ResetPin(enc28j60_handle.CS_Port, enc28j60_handle.CS_Pin);
-    for(int i = 0; i < 100; i++);
+    for(int i = 0; i < 2; i++);
 }
 
 static void ENC28J60_CS_High(void)
 {
-	for(int i = 0; i < 100; i++);
+	for(int i = 0; i < 2; i++);
     GPIO_SetPin(enc28j60_handle.CS_Port, enc28j60_handle.CS_Pin);
 }
 
@@ -629,16 +631,16 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
 
 	if(length > 0)
     {
-        UART_SendStringIT(USART1, "\r\n---- Tx Data st----\r\n");
+        //UART_SendStringIT(USART1, "\r\n---- Tx Data st----\r\n");
 
-        for(uint16_t cnt = 0; cnt < length; cnt++)
-        {
-            UART_SendDataIT(USART1, data[cnt]);
-            for(int i=0; i< 5000; i++);
-        }
-        //UART_SendStringIT(USART1, "\r\n--- Tx Data end---\r\n");
-        UART_SendDataIT(USART1, '\r');
-        UART_SendDataIT(USART1, '\n');
+//        for(uint16_t cnt = 0; cnt < length; cnt++)
+//        {
+//            UART_SendDataIT(USART1, data[cnt]);
+//            for(int i=0; i< 5000; i++);
+//        }
+//        //UART_SendStringIT(USART1, "\r\n--- Tx Data end---\r\n");
+//        UART_SendDataIT(USART1, '\r');
+//        UART_SendDataIT(USART1, '\n');
 
     }
     // 6. Write packet payload over SPI
@@ -652,7 +654,7 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
     // 8. Start Transmission
     ENC28J60_SetBitField(ECON1, ECON1_TXRTS);
 
-    Delay_ms(10);
+    Delay_ms(1);
 
     /* checking the transmit status */
     	// Set the read pointer to the start of the received packet
@@ -664,12 +666,59 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
 
     if(tsvdata.bytes_on_wire < 1500)
     {
-    	UART_SendStringIT(USART1, "\r\n--- |) Tx success---\r\n");
+    	UART_SendStringIT(USART1, "\r\n- |) Tx success-\r\n");
     }
 }
 #endif
 
+static uint16_t next_packet;
+static uint8_t  pkt_count;
+uint16_t getPackatLen(void)
+{
+    unsigned int rxstat;
+    uint16_t packet_length;
 
+
+    uint8_t  rx_header[ENC28J60_RX_HEADER_SIZE];
+	pkt_count = ENC28J60_ReadReg(EPKTCNT);
+
+	if (pkt_count == 0) return 0;
+
+    ENC28J60_ClearBitField(ECON1, ECON1_RXEN);
+
+	// Set the read pointer to the start of the received packet
+	ENC28J60_WriteReg(ERDPTL,(unsigned char)(NextPacketPtr));
+	ENC28J60_WriteReg(ERDPTH,(unsigned char)(NextPacketPtr>>8));
+
+	/* Read the 6-byte RX status vector */
+	ENC28J60_ReadBuffer((uint8_t *)rx_header, ENC28J60_RX_HEADER_SIZE);
+
+	next_packet   = (uint16_t)rx_header[RX_STATUS_NEXT_PACKET_LOW];
+	next_packet  |= (uint16_t)rx_header[RX_STATUS_NEXT_PACKET_HIGH] << 8;
+
+	packet_length = (uint16_t)rx_header[RX_STATUS_LENGTH_LOW];
+	packet_length |= (uint16_t)(rx_header[RX_STATUS_LENGTH_HIGH] & RX_STATUS_LENGTH_MASK) << 8;
+
+	rxstat  = (unsigned int)rx_header[RX_STATUS_STATUS_LOW];
+	rxstat |= (unsigned int)rx_header[RX_STATUS_STATUS_HIGH] << 8;
+
+
+	if(((rxstat & 0x80) == 0) || (packet_length > ENC28J60_MAX_FRAMELEN) || (packet_length == 0))
+	{
+		// invalid
+		packet_length=0;
+        ENC28J60_DiscardRxPacket();
+        ENC28J60_SetBitField(ECON1, ECON1_RXEN);
+	}
+	else
+	{
+		packet_length-=4;
+	}
+
+	return packet_length;
+}
+
+#if 1
 /*============================================================================
  * Receive Packet
  *
@@ -682,7 +731,53 @@ void ENC28J60_SendPacket(uint8_t *data, uint16_t length)
 uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
 {
 
-    uint16_t next_packet;
+		// copy the packet from the receive buffer
+		if(max_length > 0)
+		{
+			ENC28J60_ReadBuffer(buffer, max_length);
+			//-------------- for debugging -------------
+			///UART_SendStringIT(USART1, "\r\n--- Rx Data --\r\n");
+//			 for(uint16_t cnt = 0; cnt < packet_length; cnt++)
+//			 {
+//			 	UART_SendDataIT(USART1, buffer[cnt]);
+//			 	for(int i=0; i< 5000; i++);
+//			 }
+//			 UART_SendDataIT(USART1, '\n');
+//			 UART_SendDataIT(USART1, '\r');
+			 //UART_SendStringIT(USART1, "\r\n--- Rx Data ends --\r\n");
+			//------------------------------------------
+		}
+
+    if ((next_packet - 1 < ENC28J60_RX_BUFFER_START)
+                || (next_packet -1 > ENC28J60_RX_BUFFER_END)) {
+                ENC28J60_WriteReg(ERXRDPTL,  (uint8_t)(ENC28J60_RX_BUFFER_START & 0xFF));
+                ENC28J60_WriteReg(ERXRDPTH,  (uint8_t)((ENC28J60_RX_BUFFER_START >> 8) & 0xFF));
+                NextPacketPtr = ENC28J60_RX_BUFFER_START;
+        } else {
+                ENC28J60_WriteReg(ERXRDPTL,  (uint8_t)((next_packet - 1) & 0xFF));
+                ENC28J60_WriteReg(ERXRDPTH,  (uint8_t)(((next_packet - 1) >> 8) & 0xFF));
+                NextPacketPtr = next_packet;
+        }
+
+    ENC28J60_SetBitField(ECON1, ECON1_RXEN);        
+    ENC28J60_SetBitField(ECON2, ECON2_PKTDEC);
+
+    return max_length;
+}
+#endif
+
+#if 0
+/*============================================================================
+ * Receive Packet
+ *
+ * Reads the next pending packet from the RX buffer.
+ * Returns the number of bytes read (data payload only).
+ * The caller must provide a buffer large enough for max_length bytes.
+ *
+ * Returns 0 if no valid packet was found.
+ *============================================================================*/
+uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
+{
     uint16_t packet_length;
     uint8_t  rx_status_high;
     uint16_t read_ptr;
@@ -690,7 +785,7 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
     unsigned int rxstat;
     uint8_t econ1;
     uint8_t  rx_header[ENC28J60_RX_HEADER_SIZE];
-    
+
     pkt_count = ENC28J60_ReadReg(EPKTCNT);
 
     if (pkt_count == 0) return 0;
@@ -727,14 +822,6 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
 			ENC28J60_ReadBuffer(buffer, packet_length);
 			//-------------- for debugging -------------
 			UART_SendStringIT(USART1, "\r\n--- Rx Data --\r\n");
-//			memset((char *)printdata, 0x00, sizeof(printdata));
-//			sprintf((char *)printdata, "Rx_next_packet: %d\r\n", next_packet);
-//            UART_SendStringIT(USART1, (const char *)printdata);
-//			sprintf((char *)printdata, "Rx_packet_length: %d\r\n", packet_length);
-//            UART_SendStringIT(USART1, (const char *)printdata);
-//            sprintf((char *)printdata, "Rx_pkt_count: %d\r\n", pkt_count);
-//			UART_SendStringIT(USART1, (const char *)printdata);
-//
 //			 for(uint16_t cnt = 0; cnt < packet_length; cnt++)
 //			 {
 //			 	UART_SendDataIT(USART1, buffer[cnt]);
@@ -742,6 +829,7 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
 //			 }
 //			 UART_SendDataIT(USART1, '\n');
 //			 UART_SendDataIT(USART1, '\r');
+			 UART_SendStringIT(USART1, "\r\n--- Rx Data ends --\r\n");
 			//------------------------------------------
 		}
 
@@ -760,8 +848,10 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length)
 
     ENC28J60_SetBitField(ECON2, ECON2_PKTDEC);
 
+
     return packet_length;
 }
+#endif
 
 /*============================================================================
  * Discard Current RX Packet
@@ -918,8 +1008,9 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
     ENC28J60_InitBuffers();
             /* RX filter: accept broadcast and CRC-valid frames */
     /* Unicast frames matching local MAC are automatically accepted */
-    //ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_PMEN);// | ERXFCON_MCEN);
-    ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_MPEN);
+
+    //ENC28J60_WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_BCEN | ERXFCON_CRCEN | ERXFCON_MPEN);
+    ENC28J60_WriteReg(ERXFCON, ERXFCON_PMEN | ERXFCON_ANDOR | ERXFCON_CRCEN); // | ERXFCON_BCEN);
     
     //ENC28J60_WriteReg(ERXFCON, 0x00);// | ERXFCON_MCEN);
     #ifdef DEBUG_LOOPBACK
@@ -935,8 +1026,20 @@ void ENC28J60_Init(ENC28J60_ConfigTypeDef *config)
     ENC28J60_WriteReg(EPMCSH, 0xf7);
     */
 
-    // ENC28J60_WriteReg(EPMOL,  0x00);
-    // ENC28J60_WriteReg(EPMOH,  0x40);
+    ENC28J60_WriteReg(EPMOL,  0x00);
+    ENC28J60_WriteReg(EPMOH,  0x00);
+
+    ENC28J60_WriteReg(EPMM0,  0xC0);
+    ENC28J60_WriteReg(EPMM1,  0x0F);
+    ENC28J60_WriteReg(EPMM2,  0x00);
+    ENC28J60_WriteReg(EPMM3,  0x00);
+    ENC28J60_WriteReg(EPMM4,  0x00);
+    ENC28J60_WriteReg(EPMM5,  0x00);
+    ENC28J60_WriteReg(EPMM6,  0x00);
+    ENC28J60_WriteReg(EPMM7,  0x00);    
+
+    ENC28J60_WriteReg(EPMCSL, 0x9C);
+    ENC28J60_WriteReg(EPMCSH, 0x7b);
 
     ENC28J60_InitMAC(config);
 

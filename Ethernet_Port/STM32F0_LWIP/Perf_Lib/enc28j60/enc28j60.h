@@ -491,6 +491,8 @@ uint16_t ENC28J60_ReceivePacket(uint8_t *buffer, uint16_t max_length);
 void     ENC28J60_DiscardRxPacket(void);
 uint8_t  ENC28J60_GetPendingPacketCount(void);
 
+struct pbuf* ENC28J60_packet_receive(void);
+
 /*============================================================================
  * API - Interrupt Handling
  *============================================================================*/
@@ -510,5 +512,6 @@ void     ENC28J60_GetPHYStatus(bool *link_up, bool *full_duplex);
  *============================================================================*/
 void     ENC28J60_WaitClk(void);
 uint8_t  ENC28J60_GetRevision(void);
+
 
 #endif /* ENC28J60_H */

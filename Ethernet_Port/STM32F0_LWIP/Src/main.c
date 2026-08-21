@@ -23,7 +23,7 @@
 #include "ethernetif.h"
 #include "STM32F0Time.h"
 
-#define UDP_TX_TEST	1
+#define UDP_TX_TEST	0
 #define UDP_RX_TEST	0
 
 uint8_t printdata[50] = {0xFF};
@@ -308,10 +308,8 @@ void ethernet_Task(void)
 
 	// 5. Bare-Metal Polling Super-Loop
 	while (1) {
-#if UDP_TX_TEST == 1
 			ethernetif_input(&enc28j60_netif);
-
-
+#if UDP_TX_TEST == 1
 			// 5. Crucial: Let lwIP process its internal timers and handle
 			//    incoming packets (even if you're only sending)[reference:16].
 			sys_check_timeouts();
@@ -321,9 +319,9 @@ void ethernet_Task(void)
 			sys_check_timeouts();
 #endif
 
-			Delay_ms(50);
+			Delay_ms(5);
 			cnt++;
-			if((cnt % 20) == 0)
+			if((cnt % 400) == 0)
 			{
 				linkstate = ENC28J60_IsLinkUp();
 				if(linkstate)
@@ -331,8 +329,9 @@ void ethernet_Task(void)
 				else
 					UART_SendStringIT(USART1, (const char *)">>> Linke is down\r\n");
 			}
-			else if((cnt % 50) == 0)
+			else if((cnt % 500) == 0)
 			{
+#if UDP_TX_TEST==1
 				 // 4. Send a message to the server on port 8080
 				err_t result = udp_send_message(&server_ip, 5000, "Hello from lwIP!");
 
@@ -341,8 +340,9 @@ void ethernet_Task(void)
 				} else {
 					// Handle the error (e.g., log it)
 				}
+#endif
 			}
-			else if(cnt > 1000)
+			else if(cnt > 5000)
 			{
 				cnt = 0;
 //				ENC28J60_GetPHYStatus(&linkstat, &linkduplex);
