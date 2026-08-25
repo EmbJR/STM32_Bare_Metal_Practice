@@ -10,3 +10,9 @@ Test
 /Ethernet_Port/~$Plan.docx
 /Ethernet_Port/STM32F0_LWIP/Perf_Lib/enc28j60/*.bak
 /STM32F051R8T6/AI_Generated Code/SPI/Code/*.bak
+/Ethernet_Port/Test_code_From_Github
+npcap-sdk-1.16
+EtherCard-main
+lwip-2.2.1
+/Ethernet_Port/STM32F0_LWIP/Src/*.bak
+/Ethernet_Port/Docs and Reference Codes/uIP/uip-master
