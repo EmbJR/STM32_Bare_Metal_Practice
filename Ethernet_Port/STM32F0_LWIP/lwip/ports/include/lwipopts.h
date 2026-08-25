@@ -12,16 +12,21 @@
 /*============================================================================
  * Protocol Support - UDP Only (Disable TCP)
  *============================================================================*/
-#define LWIP_UDP                        1   /* Enable UDP [reference:4][reference:5] */
-#define LWIP_TCP                        0   /* Disable TCP (saves ~40KB of code) [reference:6] */
+#define LWIP_UDP                        0   /* Enable UDP [reference:4][reference:5] */
+#define LWIP_TCP                        1   /* Disable TCP (saves ~40KB of code) [reference:6] */
 #define LWIP_RAW                        0   /* Disable RAW API (not needed) */
+
+//#define TCP_MSS             			256
+//#define TCP_SND_BUF         			(2 * TCP_MSS)   // 512 bytes send window
+//#define TCP_WND             			(2 * TCP_MSS)   // 512 bytes receive window
+//#define MEMP_NUM_TCP_PCB    			2               // Limit max concurrent connections
 
 /*============================================================================
  * Network Discovery (ARP) - Required for your device to be "seen"
  *============================================================================*/
 #define LWIP_ARP                        1   /* Enable ARP - makes device discoverable [reference:7] */
-#define LWIP_ETHERNET           1
-#define LWIP_ICMP               1           /* Ping response */
+#define LWIP_ETHERNET           		1
+#define LWIP_ICMP               		0           /* Ping response */
 #define ARP_TABLE_SIZE                  10  /* Max entries in ARP cache [reference:8] */
 #define ETHARP_TRUST_IP_MAC             1   /* Learn MAC from incoming IP packets */
 
@@ -44,17 +49,17 @@
 /*============================================================================
  * Memory Settings - Keep small for microcontrollers
  *============================================================================*/
-#define MEM_SIZE                        (1 * 1024)  /* Heap size (8KB) [reference:11] */
+#define MEM_SIZE                        (1 * 512)  /* Heap size (8KB) [reference:11] */
 #define MEMP_NUM_UDP_PCB                2           /* Max UDP connections [reference:12][reference:13] */
 #define MEMP_NUM_PBUF                   2           /* Max packet buffers */
-#define PBUF_POOL_SIZE                  2           /* Number of packet buffers [reference:14] */
+#define PBUF_POOL_SIZE                  1           /* Number of packet buffers [reference:14] */
 #define PBUF_POOL_BUFSIZE               1536         /* Size of each buffer */
 
 /*============================================================================
  * Checksum Settings - Let hardware or skip for speed
  *============================================================================*/
-#define CHECKSUM_GEN_UDP                1           /* Generate UDP checksums */
-#define CHECKSUM_CHECK_UDP              1           /* Verify incoming UDP checksums */
+#define CHECKSUM_GEN_UDP                0           /* Generate UDP checksums */
+#define CHECKSUM_CHECK_UDP              0           /* Verify incoming UDP checksums */
 
 /*============================================================================
  * Debugging - Disable for release (saves code)
@@ -71,6 +76,8 @@
 /* --- PPP Support --- */
 #define PPP_SUPPORT             0   /* Disable PPP (you already have this) */
 #define PPP_NUM_TIMEOUTS        0   /* Explicitly define to 0 when disabled */
+
+#define LWIP_DISABLE_TCP_SANITY_CHECKS	1
 
 #endif /* __LWIPOPTS_H__ */
 #endif

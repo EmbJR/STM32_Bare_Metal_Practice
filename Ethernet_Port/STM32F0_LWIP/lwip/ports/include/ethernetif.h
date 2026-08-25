@@ -18,6 +18,7 @@
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 #include "lwip/udp.h"
+#include "lwip/tcp.h"
 #include "lwip/timeouts.h"
 #include "netif/ethernet.h"
 

@@ -18,40 +18,88 @@
 #include "rcc.h"
 #include "gpio.h"
 #include "uartF051.h"
+#include "spiF051.h"
 #include "main.h"
+#include "ethernetif.h"
 #include "STM32F0Time.h"
-#include "network.h"
 
-uint8_t printdata[50];
-ENC28J60_ConfigTypeDef encdevice2 = {
-        .full_duplex = true,
-        .auto_negotiation = false,
-		//.mac_addr = {0x62,0x5F,0x70,0x72,0x61,0x79},
-		.mac_addr = {0x00,0x04,0xA3,0x11,0x22,0x33},
-};
+#define UDP_TX_TEST	0
+#define UDP_RX_TEST	0
+#define HTTP_SERVER	1
 
-uint8_t testbuff[] = {0xff,0xff,0xff,0xff,0xff,0xff,0x2c,0x60
-					,0x0c,0xc8,0xbb,0xb6,0x08,0x06,0x00,0x01,0x08,0x00,0x06,0x04,0x00,0x01,0x2c,0x60
-					,0x0c,0xc8,0xbb,0xb6,0xc0,0xa8,0x1d,0x11,0x00,0x00,0x00,0x00,0x00,0x00,0xc0,0xa8
-					,0x1d,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-					,0x00,0x00,0x00,0x00};
+uint8_t printdata[50] = {0xFF};
 
+#if !defined(__SOFT_FP__) && defined(__ARM_FP)
+  #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
+#endif
+
+struct netif enc28j60_netif;
 volatile uint32_t timerTickCount = 0;
-
-/* Private variables ---------------------------------------------------------*/
-#define PSTRV(s) ((char *)(s))
-static uint8_t myip[4] = {192,168,29,52};
-static uint16_t mywwwport = 80;
-
-#define BUFFER_SIZE 1500
-uint8_t buf[BUFFER_SIZE+1],browser;
-uint16_t plen;
-char * ptr,*chr,chr2[20];
-int b1,b2,iii,ij;
 bool linkstate;
 
-void sendpage(void);
-void testpage(void);
+
+#if UDP_TX_TEST==1
+ip_addr_t server_ip;
+#endif
+// Your network interface structure
+#if UDP_RX_TEST == 1
+
+static struct udp_pcb *g_listener_pcb = NULL;
+#endif
+
+#if HTTP_SERVER==1
+
+#define HTTP_SERVER_PORT 8080
+static uint8_t device_states[3] = {0, 0, 0};
+
+// Forward declaration
+static bool send_chunk(struct tcp_pcb *tpcb, uintptr_t step);
+
+#define SERVER_PORT 8080
+#endif
+
+///-----------------------------------//
+
+static void Timer2_Callback(void) {
+    timerTickCount++;
+    //GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+}
+
+/* Microcontroller System Tick Handler (Must return system time in milliseconds) */
+/* Replace with your MCU hardware tick getter (e.g., HAL_GetTick() for STM32)   */
+u32_t sys_now(void) {
+    return timerTickCount;
+}
+
+void initializaTimer(void)
+{
+	uint32_t t2clk = STM32F0Timer_GetTimerClockHz(TIMER2);
+	// TIMER2: 1 second = 1,000,000 us (1 Hz)
+	if (!STM32F0Timer_ConfigurePeriodUs(TIMER2, t2clk, 1000)) {
+		while (1);
+	}
+
+	STM32F0Timer_SetUpdateCallback(TIMER2, Timer2_Callback);
+
+    // Enable update interrupts (NVIC priority in helper)
+    STM32F0Timer_EnableUpdateInterrupt(TIMER2, true);
+
+    // Start timers
+    STM32F0Timer_Start(TIMER2);
+}
+
+//ENC28J60_ConfigTypeDef encdevice;
+/*============================================================================
+ * Simple Delay Function (using active wait)
+ *============================================================================*/
+void Delay_ms(uint32_t ms) {
+    uint32_t i, j;
+    for (i = 0; i < ms; i++) {
+        for (j = 0; j < 8000; j++) {
+            //__NOP();
+        }
+    }
+}
 
 // Example configuration for 48MHz system clock using PLL from HSE
 void SystemClock_Config_48MHz(void) {
@@ -71,15 +119,6 @@ void SystemClock_Config_48MHz(void) {
 
     /* Initialize RCC */
     RCC_Init(&rcc_config);
-}
-
-void Delay_ms(uint32_t ms) {
-    uint32_t i, j;
-    for (i = 0; i < ms; i++) {
-        for (j = 0; j < 8000; j++) {
-            //__NOP();
-        }
-    }
 }
 
 /*============================================================================
@@ -103,86 +142,511 @@ void Example_LED_Blink(void) {
 
 }
 
-static void Timer2_Callback(void) {
-    timerTickCount++;
-    //GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+#if HTTP_SERVER==1
+// -----------------------------------------------------------------------------
+// TCP Sent Callback: Fired whenever client ACK arrives for previous chunk
+// -----------------------------------------------------------------------------
+static err_t http_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
+    // Retrieve current step count directly from the callback argument
+    uintptr_t step = (uintptr_t)arg;
+
+    // Trigger transmission of the next chunk
+    send_chunk(tpcb, step);
+
+    return ERR_OK;
 }
 
-/* Microcontroller System Tick Handler (Must return system time in milliseconds) */
-/* Replace with your MCU hardware tick getter (e.g., HAL_GetTick() for STM32)   */
-uint32_t sys_now(void) {
-    return timerTickCount;
-}
+// -----------------------------------------------------------------------------
+// Chunk Streaming Engine (Keeps every write under ~120 bytes)
+// -----------------------------------------------------------------------------
+#if 0
+static void send_chunk(struct tcp_pcb *tpcb, uintptr_t step) {
+    char buf[120];
+    int len = 0;
+    err_t err = ERR_OK;
 
-void initializaTimer(void)
-{
-	uint32_t t2clk = STM32F0Timer_GetTimerClockHz(TIMER2);
-	// TIMER2: 1 second = 1,000,000 us (1 Hz)
-	if (!STM32F0Timer_ConfigurePeriodUs(TIMER2, t2clk, 1000)) {
-		while (1);
-	}
+    switch (step) {
+        case 0:
+            // Chunk 0: HTTP Header line
+            len = snprintf(buf, sizeof(buf), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n");
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-	STM32F0Timer_SetUpdateCallback(TIMER2, Timer2_Callback);
+        case 1:
+            // Chunk 1: HTML Start & Basic CSS
+            len = snprintf(buf, sizeof(buf),
+                "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+                "<style>body{font-family:sans-serif;text-align:center;margin-top:20px;}"
+                ".b{padding:12px;margin:6px;width:180px;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;}"
+                );
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-    // Enable update interrupts (NVIC priority in helper)
-    STM32F0Timer_EnableUpdateInterrupt(TIMER2, true);
+        case 2:
+            // Chunk 2: Device 1 Button
+            len = snprintf(buf, sizeof(buf),
+				".on{background:#2ecc71;}.off{background:#e74c3c;}</style></head><body>"
+				"<h3>Control Panel</h3>"
+                "<div><a href=\"/toggle/1\"><button class=\"b %s\">Dev 1: %s</button></a></div>",
+                device_states[0] ? "on" : "off",
+                device_states[0] ? "ON" : "OFF");
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-    // Start timers
-    STM32F0Timer_Start(TIMER2);
-}
+        case 3:
+            // Chunk 3: Device 2 Button
+            len = snprintf(buf, sizeof(buf),
+                "<div><a href=\"/toggle/2\"><button class=\"b %s\">Dev 2: %s</button></a></div>",
+                device_states[1] ? "on" : "off",
+                device_states[1] ? "ON" : "OFF");
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-void readVerifyReg(void)
-{
+        case 4:
+            // Chunk 4: Device 3 Button
+            len = snprintf(buf, sizeof(buf),
+                "<div><a href=\"/toggle/3\"><button class=\"b %s\">Dev 3: %s</button></a></div>",
+                device_states[2] ? "on" : "off",
+                device_states[2] ? "ON" : "OFF");
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-}
+        case 5:
+            // Chunk 5: HTML End Tags
+            len = snprintf(buf, sizeof(buf), "</body></html>");
+            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+            break;
 
-
-/* USER CODE BEGIN 4 */
-uint16_t make_tcp_data_pos_var(uint8_t *buf,uint16_t pos, char *progmem_s) {
-    char c;
-    while((c = *(progmem_s++))) {
-        buf[TCP_CHECKSUM+4+pos] = c;
-        pos++;
+        default:
+            // All chunks transmitted -> teardown callbacks and close connection
+            tcp_arg(tpcb, NULL);
+            tcp_sent(tpcb, NULL);
+            tcp_recv(tpcb, NULL);
+            tcp_close(tpcb);
+            return;
     }
-    return(pos);
+
+    if (err == ERR_OK) {
+        // Advance step state pointer for next tcp_sent event
+        step++;
+        tcp_arg(tpcb, (void *)step);
+
+        // Force output immediately over network
+        tcp_output(tpcb);
+    } else {
+        // Buffer full / Write error -> close connection to avoid hang
+        tcp_close(tpcb);
+    }
 }
-void testpage(void) {
-  static  int rn = 0, ix;
-	char str[10];
-	for(ix=4;(*(ptr+ix))!=0;ix++)
-	{
-		if(((*(ptr+ix-4))=='o') && ((*(ptr+ix-3))=='n') && ((*(ptr+ix-2))=='=') && ((*(ptr+ix-1))=='0') && ((*(ptr+ix-0))=='1')){GPIOC->ODR &= ~GPIO_PIN_8;plen=make_tcp_data_pos_var(buf,0,PSTRV("<script>document.location.href=\"/page\"</script>"));return;}
+#endif
 
-		if(((*(ptr+ix-4))=='o') && ((*(ptr+ix-3))=='f') && ((*(ptr+ix-2))=='=') && ((*(ptr+ix-1))=='0') && ((*(ptr+ix-0))=='1')){GPIOC->ODR |= GPIO_PIN_8;plen=make_tcp_data_pos_var(buf,0,PSTRV("<script>document.location.href=\"/page\"</script>"));return;}
-	}
-	rn++;
-	sprintf(str,"  %d",rn);
-	plen=make_tcp_data_pos_var(buf,0,PSTRV("<!doctype html><html>"
-	"<head><script>function f(i,th){if(i!=\'\'){if(th.checked)str=\"n=0\"+i;else str=\"f=0\"+i;}else str=\"\";document.location.href=\"/pageo\"+str;}</script><style>#myc{background:blue;padding:30px;}body{font-size:50px;background:blue;color:white;}input{width:150px;-ms-transform:scale(5,5);-webkit-transform:scale(5,5);transform:scale(5,5);margin:30px 5px 0px 10px;}input #but{margin-top:20px;}#butt{margin:20px 0px 150px 150px;}</style></head>"
-	"<body>"
-	"<div id=\"myc\"><input type=\"checkbox\" onclick=\"f(\'1\',this);\""
-	));if(!(GPIOC->ODR & GPIO_PIN_8)) plen=make_tcp_data_pos_var(buf,plen,PSTRV(" checked "));
-	plen=make_tcp_data_pos_var(buf,plen,PSTRV(">LED<br></div><div id=\"butt\"><input type=\"button\" value=\"Refresh\" onclick=\"f(\'\');\">"
-	"</div>"
-	"<div style=\"background: black; color: white;\">"
-	"<h1>"));
-	plen=make_tcp_data_pos_var(buf,plen,PSTRV(str));
-	plen=make_tcp_data_pos_var(buf,plen,PSTRV("</h1></div>"
-	"</body>"
-	"</html>"));
+static bool send_chunk(struct tcp_pcb *tpcb, uintptr_t step) {
+    char buf[120];
+    int len = 0;
+    err_t err = ERR_OK;
 
+    switch (step) {
+        case 0:
+            // HTTP Header
+            len = snprintf(buf, sizeof(buf),
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n");
+            break;
 
+        case 1:
+            // HTML & Head opening
+            len = snprintf(buf, sizeof(buf),
+                "<!DOCTYPE html><html><head><style>");
+            break;
+
+        case 2:
+            // CSS Part 1: Body & Base Button
+            len = snprintf(buf, sizeof(buf),
+                "body{font-family:sans-serif;text-align:center;}");
+            break;
+
+        case 3:
+            // CSS Part 1: Body & Base Button
+            len = snprintf(buf, sizeof(buf),
+                ".b{padding:12px;margin:6px;width:180px;color:#fff;border:none;border-radius:4px;}");
+            break;
+
+        case 4:
+            // CSS Part 2: Green & Red Colors
+            len = snprintf(buf, sizeof(buf),
+                ".on{background-color:#e74c3c;}"
+                ".off{background-color:#2ecc71;}");
+            break;
+
+        case 5:
+            // Close Style & Open Body
+            len = snprintf(buf, sizeof(buf),
+                "</style></head><body><h3>Control Panel</h3>");
+            break;
+
+        case 6:
+            // Device 1 Button
+            len = snprintf(buf, sizeof(buf),
+                "<div><a href=\"/toggle/1\"><button class=\"b %s\">Dev 1: %s</button></a></div>",
+                device_states[0] ? "on" : "off",
+                device_states[0] ? "ON" : "OFF");
+            break;
+
+        case 7:
+            // Device 2 Button
+            len = snprintf(buf, sizeof(buf),
+                "<div><a href=\"/toggle/2\"><button class=\"b %s\">Dev 2: %s</button></a></div>",
+                device_states[1] ? "on" : "off",
+                device_states[1] ? "ON" : "OFF");
+            break;
+
+        case 8:
+            // Device 3 Button
+            len = snprintf(buf, sizeof(buf),
+                "<div><a href=\"/toggle/3\"><button class=\"b %s\">Dev 3: %s</button></a></div>",
+                device_states[2] ? "on" : "off",
+                device_states[2] ? "ON" : "OFF");
+            break;
+
+        case 9:
+            // HTML End
+            len = snprintf(buf, sizeof(buf), "</body></html>");
+            break;
+
+        default:
+            // Finished sending
+            tcp_arg(tpcb, NULL);
+            tcp_sent(tpcb, NULL);
+            tcp_recv(tpcb, NULL);
+            tcp_close(tpcb);
+            return;
+    }
+
+    // Write chunk to TCP buffer
+    err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
+
+    if (err == ERR_OK) {
+        step++;
+        tcp_arg(tpcb, (void *)step);
+        tcp_output(tpcb);
+    } else {
+        tcp_close(tpcb);
+    }
 }
-void sendpage(void) {
-    tcp_ack(buf);
-    tcp_ack_with_data(buf,plen);
+
+// -----------------------------------------------------------------------------
+// TCP Receive Callback: Handles incoming HTTP GET request
+// -----------------------------------------------------------------------------
+static err_t http_recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
+    if (p == NULL) {
+        // Client closed connection
+        tcp_close(tpcb);
+        return ERR_OK;
+    }
+
+    // Inform LwIP that data was processed
+    tcp_recved(tpcb, p->tot_len);
+
+    char *request = (char *)p->payload;
+
+    // Route Parsing
+    if (strstr(request, "GET /toggle/1") != NULL) {
+        device_states[0] = !device_states[0];
+        // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0); // Add physical IO toggles here
+    }
+    else if (strstr(request, "GET /toggle/2") != NULL) {
+        device_states[1] = !device_states[1];
+    }
+    else if (strstr(request, "GET /toggle/3") != NULL) {
+        device_states[2] = !device_states[2];
+    }
+
+    // Free incoming RX packet buffer
+    pbuf_free(p);
+
+    // Register callback for when remote client acknowledges sent bytes
+    tcp_sent(tpcb, http_sent_callback);
+
+    // Start transmission at Chunk 0
+    send_chunk(tpcb, 0);
+
+    return ERR_OK;
 }
 
-uint8_t sampleStr[] = {0xff,0xff,0xff,0xff,0xff, 0xff, 0x62,0x5F,0x70,0x72,0x61,0x79, 0x08, 0x00, 0x00, 0x08, 'H','e','l','l','o','.','.','.','.'};
+// -----------------------------------------------------------------------------
+// TCP Accept Callback: Handles new TCP connection from browser
+// -----------------------------------------------------------------------------
+static err_t http_accept_callback(void *arg, struct tcp_pcb *newpcb, err_t err) {
+    // Bind receive callback to client socket
+    tcp_recv(newpcb, http_recv_callback);
+    return ERR_OK;
+}
+
+// -----------------------------------------------------------------------------
+// Webserver Initialization
+// -----------------------------------------------------------------------------
+void http_server_init(void) {
+    struct tcp_pcb *pcb = tcp_new();
+    if (pcb != NULL) {
+        err_t err = tcp_bind(pcb, IP_ADDR_ANY, HTTP_SERVER_PORT);
+        if (err == ERR_OK) {
+            pcb = tcp_listen(pcb);
+            tcp_accept(pcb, http_accept_callback);
+        } else {
+            memp_free(MEMP_TCP_PCB, pcb);
+        }
+    }
+}
+#endif
+
+
+#if UDP_RX_TEST == 1
+/**
+ * @brief  lwIP Callback function triggered whenever a UDP packet is received.
+ * @note   This runs inside the lwIP stack context (during ethernetif_input / sys_check_timeouts).
+ */
+static void udp_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+                              const ip_addr_t *addr, u16_t port)
+{
+    // Prevent compiler warning for unused arg
+    LWIP_UNUSED_ARG(arg);
+
+    if (p != NULL) {
+        /* Convert sender IP address to string for printing */
+        char sender_ip_str[16];
+        ipaddr_ntoa_r(addr, sender_ip_str, sizeof(sender_ip_str));
+
+        /* Print sender details */
+        //printf("\n[UDP Received] From %s:%d | Len: %d bytes\n", sender_ip_str, port, p->tot_len);
+        memset(printdata, 0x00, sizeof(printdata));
+        sprintf(printdata, "\n[UDP Received] From %s:%d | Len: %d bytes\n", sender_ip_str, port, p->tot_len);
+        UART_SendStringIT(USART1, "Hello STM32\n");
+
+        /* Print string payload */
+        printf("Payload: ");
+
+        /*
+         * Handle pbuf payload safely:
+         * Chained pbufs (if packet > PBUF_POOL_BUFSIZE) are iterated through.
+         */
+        struct pbuf *q;
+        for (q = p; q != NULL; q = q->next) {
+            // Print payload characters directly to stdout
+            fwrite(q->payload, 1, q->len, stdout);
+        }
+        printf("\n\n");
+
+        /*
+         * CRITICAL FOR BARE-METAL (STM32F0):
+         * You MUST free the pbuf after processing, otherwise your PBUF_POOL
+         * will run out of memory after a few received packets!
+         */
+        pbuf_free(p);
+    }
+}
+
+
+err_t udp_listener_init(uint16_t port) {
+    // 1. If listener already running, clean up first
+    if (g_listener_pcb != NULL) {
+        udp_listener_deinit();
+    }
+
+    // 2. Allocate a new UDP Protocol Control Block (PCB)
+    g_listener_pcb = udp_new();
+    if (g_listener_pcb == NULL) {
+        printf("[UDP Error] Failed to allocate UDP PCB.\n");
+        return ERR_MEM;
+    }
+
+    // 3. Bind the PCB to listen on any local IP address at the specified port
+    err_t err = udp_bind(g_listener_pcb, IP_ADDR_ANY, port);
+    if (err != ERR_OK) {
+        printf("[UDP Error] Failed to bind to port %d (Error: %d)\n", port, err);
+        udp_remove(g_listener_pcb);
+        g_listener_pcb = NULL;
+        return err;
+    }
+
+    // 4. Register the asynchronous receive callback
+    udp_recv(g_listener_pcb, udp_recv_callback, NULL);
+
+    printf("[UDP Listener] Successfully listening on port %d...\n", port);
+    return ERR_OK;
+}
+
+void udp_listener_deinit(void) {
+    if (g_listener_pcb != NULL) {
+        udp_remove(g_listener_pcb);
+        g_listener_pcb = NULL;
+        printf("[UDP Listener] Stopped.\n");
+    }
+}
+#endif
+
+#if UDP_TX_TEST == 1
+/**
+ * @brief Sends a UDP message.
+ *
+ * This function creates a temporary UDP connection, sends the message,
+ * and then cleans up. It's designed for simple, one-off message sending.
+ */
+err_t udp_send_message(ip_addr_t *dest_ip, uint16_t dest_port, const char *message) {
+    err_t err;
+    struct udp_pcb *pcb;
+    struct pbuf *p;
+    size_t msg_len = strlen(message);
+
+    // 1. Create a new UDP Protocol Control Block (PCB)[reference:1][reference:2]
+    pcb = udp_new();
+    if (pcb == NULL) {
+        return ERR_MEM;
+    }
+
+    // 2. Connect the PCB to the destination. This sets the destination
+    //    address and port for the PCB[reference:3][reference:4].
+    err = udp_connect(pcb, dest_ip, dest_port);
+    if (err != ERR_OK) {
+        udp_remove(pcb);
+        return err;
+    }
+
+    // 3. Allocate a pbuf (packet buffer) to hold the message[reference:5][reference:6].
+    //    PBUF_TRANSPORT reserves space for transport layer headers (UDP/IP).
+    p = pbuf_alloc(PBUF_TRANSPORT, msg_len, PBUF_RAM);
+    if (p == NULL) {
+        udp_remove(pcb);
+        return ERR_MEM;
+    }
+
+    // 4. Copy the message into the pbuf's payload[reference:7].
+    memcpy(p->payload, message, msg_len);
+
+    // 5. Send the pbuf[reference:8][reference:9].
+    //    Note: udp_send() does NOT free the pbuf[reference:10][reference:11].
+    err = udp_send(pcb, p);
+
+    // 6. Free the pbuf and the UDP PCB[reference:12][reference:13].
+    pbuf_free(p);
+    udp_remove(pcb);
+
+    return err;
+}
+#endif
+
+void network_initialize(void)
+{
+	lwip_init();
+#if LWIP_DHCP
+	ip_addr_set_zero_ip4(&ipaddr);
+	ip_addr_set_zero_ip4(&netmask);
+	ip_addr_set_zero_ip4(&gw);
+#else
+	// 3. Configure Static IP & Netif (Match your LAN network)
+	ip4_addr_t ipaddr, netmask, gw;
+	IP4_ADDR(&ipaddr,  192, 168, 29,53);
+	IP4_ADDR(&netmask, 255, 255, 255, 0);
+	IP4_ADDR(&gw,      192, 168, 29, 1);
+#endif
+
+	// Register ENC28J60 netif driver
+	netif_add(&enc28j60_netif, &ipaddr, &netmask, &gw, NULL, ethernetif_init, ethernet_input);
+	netif_set_default(&enc28j60_netif);
+	netif_set_link_up(&enc28j60_netif);
+	netif_set_up(&enc28j60_netif);
+#if UDP_TX_TEST==1
+	 // 2. Set the destination IP address (e.g., 192.168.1.100)[reference:15]
+	 //IP4_ADDR(&server_ip, 192, 168, 29, 28);
+	IP4_ADDR(&server_ip, 255, 255, 255, 255);
+#endif
+#if UDP_RX_TEST==1
+	// 4. Start the UDP Listener API on Port 5000
+	udp_listener_init(5000);
+#endif
+#if HTTP_SERVER==1
+	http_server_init();
+#endif
+}
+
+void ethernet_Task(void)
+{
+	bool linkstat = false;
+	bool linkduplex = false;
+	uint16_t cnt = 900;
+
+
+	read_reg_data();
+
+	// 5. Bare-Metal Polling Super-Loop
+	while (1) {
+			ethernetif_input(&enc28j60_netif);
+			// 5. Crucial: Let lwIP process its internal timers and handle
+			//    incoming packets (even if you're only sending)[reference:16].
+			sys_check_timeouts();
+#if UDP_RX_TEST == 1 || HTTP_SERVER == 1
+			ethernetif_input(&enc28j60_netif);
+#endif
+
+			Delay_ms(5);
+			cnt++;
+			if((cnt % 800) == 0)
+			{
+				if(device_states[0] == 1)
+				{
+					GPIO_SetPin(GPIOC, GPIO_PIN_8);
+				}
+				else
+				{
+					GPIO_ResetPin(GPIOC, GPIO_PIN_8);
+				}
+
+				if(device_states[1] == 1)
+				{
+					GPIO_SetPin(GPIOC, GPIO_PIN_9);
+				}
+				else
+				{
+					GPIO_ResetPin(GPIOC, GPIO_PIN_9);
+				}
+
+			}
+			if((cnt % 8000) == 0)
+			{
+				linkstate = ENC28J60_IsLinkUp();
+				if(linkstate)
+					UART_SendStringIT(USART1, (const char *)">>> Linke is up\r\n");
+				else
+					UART_SendStringIT(USART1, (const char *)">>> Linke is down\r\n");
+			}
+			else if((cnt % 16000) == 0)
+			{
+#if UDP_TX_TEST==1
+				 // 4. Send a message to the server on port 8080
+				err_t result = udp_send_message(&server_ip, 5000, "Hello from lwIP!");
+
+				if (result == ERR_OK) {
+					// Message sent successfully
+				} else {
+					// Handle the error (e.g., log it)
+				}
+#endif
+			}
+			else if(cnt > 5000)
+			{
+				cnt = 0;
+//				ENC28J60_GetPHYStatus(&linkstat, &linkduplex);
+//				GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+//				memset((char *)printdata, 0x00, sizeof(printdata));
+//				sprintf((char *)printdata, "Link status:- %d, duplex:- %d\r\n", linkstat, linkduplex);
+//				UART_SendStringIT(USART1, (const char *)printdata);
+				ENC28J60_verify();
+			}
+
+		}
+}
+
+
 int main(void)
 {
-	uint16_t vnt = 800;
-    uint16_t dat_p;
 	SystemClock_Config_48MHz();
 	Delay_ms(30);
 	Example_LED_Blink();
@@ -190,74 +654,14 @@ int main(void)
 	uart1_initialize();
 	initializaTimer();
 	UART_SendStringIT(USART1, "System Starting...\n");
-    ENC28J60_Init(&encdevice2);
-	init_network(encdevice2.mac_addr,myip,mywwwport);
-
-	ENC28J60_verify();
-	//ethernet_Task();
+	network_initialize();
+	ethernet_Task();
     /* Loop forever */
     /* Main loop - toggle LED */
-	//ENC28J60_SendPacket((uint8_t *)"Hellow....", sizeof("Hellow..."));
-	//plen = sizeof(testbuff);	// test code
-while (1)
-  {
-    /* USER CODE END WHILE */
+    while (1) {
 
-    /* USER CODE BEGIN 3 */
-	//ENC28J60_SendPacket((uint8_t *)sampleStr, sizeof(sampleStr));
-	Delay_ms(5);
-
-	if(vnt++ > 1000)
-	{
-		vnt = 0;
-        linkstate = ENC28J60_IsLinkUp();
-        if(linkstate)
-            UART_SendStringIT(USART1, (const char *)">>> Linke is up\r\n");
-        else
-            UART_SendStringIT(USART1, (const char *)">>> Linke is down\r\n");
-		ENC28J60_verify();
-	}
-#if 1
-	plen = getPackatLen();
-	if(plen > 0)
-	{
-		plen = ENC28J60_ReceivePacket(buf, plen);
-			if(plen==0) continue;
-			if(eth_is_arp(buf,plen)) {
-				arp_reply(buf);
-				continue;
-			}
-			if(eth_is_ip(buf,plen)==0) continue;
-			if(buf[IP_PROTO]==IP_ICMP && buf[ICMP_TYPE]==ICMP_REQUEST) {
-				icmp_reply(buf,plen);
-				continue;
-			}
-			if(buf[IP_PROTO]==IP_TCP && buf[TCP_DST_PORT]==0 && buf[TCP_DST_PORT+1]==mywwwport) {
-				if(buf[TCP_FLAGS] & TCP_SYN) {
-					tcp_synack(buf);
-					continue;
-				}
-				if(buf[TCP_FLAGS] & TCP_ACK) {
-					init_len_info(buf);
-					dat_p = get_tcp_data_ptr();
-					if(dat_p==0) {
-						if(buf[TCP_FLAGS] & TCP_FIN) tcp_ack(buf);
-						continue;
-					}
-
-					if(strstr((char*)&(buf[dat_p]),"User Agent")) browser=0;
-					else if(strstr((char*)&(buf[dat_p]),"MSIE")) browser=1;
-					else browser=2;
-
-					if(strncmp("/page",(char*)&(buf[dat_p+4]),5)==0){
-						ptr = (char*)&(buf[dat_p+4]);
-						testpage();
-						sendpage();
-						continue;
-					}
-				}
-			}
-	}
-  }
-#endif
+    	//GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+        Delay_ms(5);
+        //UART_SendStringIT(USART1, "Hello STM32\n");
+    }
 }
