@@ -44,10 +44,10 @@ static uint8_t myip[4] = {192,168,29,52};
 static uint16_t mywwwport = 80;
 
 #define BUFFER_SIZE 1500
-uint8_t buf[BUFFER_SIZE+1],browser;
-uint16_t plen;
-char * ptr,*chr,chr2[20];
-int b1,b2,iii,ij;
+volatile uint8_t buf[BUFFER_SIZE+1],browser;
+volatile uint16_t plen;
+volatile char * ptr,*chr,chr2[20];
+volatile int b1,b2,iii,ij;
 bool linkstate;
 
 void sendpage(void);
@@ -181,7 +181,7 @@ void sendpage(void) {
 uint8_t sampleStr[] = {0xff,0xff,0xff,0xff,0xff, 0xff, 0x62,0x5F,0x70,0x72,0x61,0x79, 0x08, 0x00, 0x00, 0x08, 'H','e','l','l','o','.','.','.','.'};
 int main(void)
 {
-	uint16_t vnt = 800;
+	volatile uint16_t vnt = 800;
     uint16_t dat_p;
 	SystemClock_Config_48MHz();
 	Delay_ms(30);
@@ -205,9 +205,9 @@ while (1)
 
     /* USER CODE BEGIN 3 */
 	//ENC28J60_SendPacket((uint8_t *)sampleStr, sizeof(sampleStr));
-	Delay_ms(5);
+	Delay_ms(50);
 
-	if(vnt++ > 1000)
+	if(vnt++ > 80000)
 	{
 		vnt = 0;
         linkstate = ENC28J60_IsLinkUp();

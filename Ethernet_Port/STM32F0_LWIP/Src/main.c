@@ -49,13 +49,11 @@ static struct udp_pcb *g_listener_pcb = NULL;
 
 #if HTTP_SERVER==1
 
-#define HTTP_SERVER_PORT 8080
+#define HTTP_SERVER_PORT 80
 static uint8_t device_states[3] = {0, 0, 0};
 
 // Forward declaration
 static bool send_chunk(struct tcp_pcb *tpcb, uintptr_t step);
-
-#define SERVER_PORT 8080
 #endif
 
 ///-----------------------------------//
@@ -159,87 +157,6 @@ static err_t http_sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
 // -----------------------------------------------------------------------------
 // Chunk Streaming Engine (Keeps every write under ~120 bytes)
 // -----------------------------------------------------------------------------
-#if 0
-static void send_chunk(struct tcp_pcb *tpcb, uintptr_t step) {
-    char buf[120];
-    int len = 0;
-    err_t err = ERR_OK;
-
-    switch (step) {
-        case 0:
-            // Chunk 0: HTTP Header line
-            len = snprintf(buf, sizeof(buf), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n");
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        case 1:
-            // Chunk 1: HTML Start & Basic CSS
-            len = snprintf(buf, sizeof(buf),
-                "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-                "<style>body{font-family:sans-serif;text-align:center;margin-top:20px;}"
-                ".b{padding:12px;margin:6px;width:180px;color:#fff;border:none;border-radius:4px;font-size:16px;cursor:pointer;}"
-                );
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        case 2:
-            // Chunk 2: Device 1 Button
-            len = snprintf(buf, sizeof(buf),
-				".on{background:#2ecc71;}.off{background:#e74c3c;}</style></head><body>"
-				"<h3>Control Panel</h3>"
-                "<div><a href=\"/toggle/1\"><button class=\"b %s\">Dev 1: %s</button></a></div>",
-                device_states[0] ? "on" : "off",
-                device_states[0] ? "ON" : "OFF");
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        case 3:
-            // Chunk 3: Device 2 Button
-            len = snprintf(buf, sizeof(buf),
-                "<div><a href=\"/toggle/2\"><button class=\"b %s\">Dev 2: %s</button></a></div>",
-                device_states[1] ? "on" : "off",
-                device_states[1] ? "ON" : "OFF");
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        case 4:
-            // Chunk 4: Device 3 Button
-            len = snprintf(buf, sizeof(buf),
-                "<div><a href=\"/toggle/3\"><button class=\"b %s\">Dev 3: %s</button></a></div>",
-                device_states[2] ? "on" : "off",
-                device_states[2] ? "ON" : "OFF");
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        case 5:
-            // Chunk 5: HTML End Tags
-            len = snprintf(buf, sizeof(buf), "</body></html>");
-            err = tcp_write(tpcb, buf, len, TCP_WRITE_FLAG_COPY);
-            break;
-
-        default:
-            // All chunks transmitted -> teardown callbacks and close connection
-            tcp_arg(tpcb, NULL);
-            tcp_sent(tpcb, NULL);
-            tcp_recv(tpcb, NULL);
-            tcp_close(tpcb);
-            return;
-    }
-
-    if (err == ERR_OK) {
-        // Advance step state pointer for next tcp_sent event
-        step++;
-        tcp_arg(tpcb, (void *)step);
-
-        // Force output immediately over network
-        tcp_output(tpcb);
-    } else {
-        // Buffer full / Write error -> close connection to avoid hang
-        tcp_close(tpcb);
-    }
-}
-#endif
-
 static bool send_chunk(struct tcp_pcb *tpcb, uintptr_t step) {
     char buf[120];
     int len = 0;
@@ -255,26 +172,29 @@ static bool send_chunk(struct tcp_pcb *tpcb, uintptr_t step) {
         case 1:
             // HTML & Head opening
             len = snprintf(buf, sizeof(buf),
-                "<!DOCTYPE html><html><head><style>");
+                "<!DOCTYPE html><html><head>"
+            	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+				"<style>");
             break;
 
         case 2:
             // CSS Part 1: Body & Base Button
             len = snprintf(buf, sizeof(buf),
-                "body{font-family:sans-serif;text-align:center;}");
+                "body{font-family:Arial;text-align:center;background:#f4f4f9;}"
+            	".card{padding:20px;display:inline-block;}");
             break;
 
         case 3:
             // CSS Part 1: Body & Base Button
             len = snprintf(buf, sizeof(buf),
-                ".b{padding:12px;margin:6px;width:180px;color:#fff;border:none;border-radius:4px;}");
+                ".b{padding:50px 130px;font-size:30px;margin:10px;color:#fff;border:none;border-radius:15px;cursor:pointer}");
             break;
 
         case 4:
             // CSS Part 2: Green & Red Colors
             len = snprintf(buf, sizeof(buf),
-                ".on{background-color:#e74c3c;}"
-                ".off{background-color:#2ecc71;}");
+                ".on{background-color:green;color:yellow}"
+                ".off{background-color:grey;color:brown}");
             break;
 
         case 5:

@@ -88,9 +88,9 @@ low_level_init(struct netif *netif)
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  netif->hwaddr[0] = 0x01; netif->hwaddr[1] = 0x02;
-  netif->hwaddr[2] = 0x03; netif->hwaddr[3] = 0x04;
-  netif->hwaddr[4] = 0x05; netif->hwaddr[5] = 0x06;
+  netif->hwaddr[0] = 0x00; netif->hwaddr[1] = 0x04;
+  netif->hwaddr[2] = 0xA3; netif->hwaddr[3] = 0x11;
+  netif->hwaddr[4] = 0x22; netif->hwaddr[5] = 0x33;
 
   /* maximum transfer unit */
   netif->mtu = 1500;
