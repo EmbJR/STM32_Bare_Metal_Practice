@@ -355,7 +355,7 @@
 #define ENC28J60_RX_BUFFER_END      0x0BFF  // end of RX buffer, room for 2 packets
 #define ENC28J60_TX_BUFFER_START    0x0C00  // start of TX buffer, room for 1 packet
 #define ENC28J60_TX_BUFFER_END      0x1FB0  // end of TX buffer
-#define ENC28J60_MAX_FRAMELEN       1518
+#define ENC28J60_MAX_FRAMELEN       420
 #define ENC28J60_TX_BUFFER_SIZE     0x0600
 
 /*============================================================================

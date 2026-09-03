@@ -125,11 +125,16 @@ uint16_t network_device_read(void)
 {
 	volatile uint16_t len = 0;
 	len = getPackatLen();
-	if(len > 0)
-		{
-			ENC28J60_ReceivePacket(uip_buf, len);
-			return len;
-		}
+	if((len > 0) && (len < UIP_CONF_BUFFER_SIZE))
+	{
+		ENC28J60_ReceivePacket(uip_buf, len);
+		return len;
+	}
+	else if(len > UIP_CONF_BUFFER_SIZE)
+	{
+		ENC28J60_DiscardRxPacket();
+		return 0;
+	}
 	else
 	{
 		return 0;
