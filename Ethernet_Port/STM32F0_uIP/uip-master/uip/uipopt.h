@@ -516,6 +516,10 @@ typedef struct httpd_state uip_tcp_appstate_t
 // Declare the function signature so uIP modules can see it
 void example_app_call(void);
 
+/* Define the UDP Application Callbacks */
+#define UIP_UDP_APPCALL          udp_broadcast_appcall
+void udp_broadcast_appcall(void);
+
 typedef struct {
     uint8_t state;
     uint8_t *data_ptr;
@@ -526,6 +530,8 @@ typedef struct {
 typedef struct {
     uint8_t state;
 } uip_udp_appstate;
+
+typedef int uip_udp_appstate_t;
 
 /**
  * \var #define UIP_APPCALL

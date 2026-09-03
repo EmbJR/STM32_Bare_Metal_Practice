@@ -127,27 +127,6 @@ void initializaTimer(void)
     STM32F0Timer_Start(TIMER2);
 }
 
-//------------------------------- uIP related -------------------------------//
-#define BUF ((struct uip_eth_hdr *)&uip_buf[0])
-
-static struct uip_udp_conn *broadcast_conn;
-static volatile uint8_t send_flag = 0;
-
-/* ------------------------------------------------------------------------- */
-/* UDP Application Callback                                                  */
-/* ------------------------------------------------------------------------- */
-void udp_broadcast_appcall(void)
-{
-    // Check if uIP is polling this connection and if we requested a send
-    if (uip_poll() && send_flag)
-    {
-        send_flag = 0; // Clear the trigger flag
-
-        // Send the payload
-        uip_send("Hello From uc\n\r", 13);
-    }
-}
-
 uint16_t network_device_read(void)
 {
     volatile uint16_t len = 0;
@@ -203,24 +182,20 @@ void uip_log(char *msg)
     UART_SendStringIT(USART1, msg);
 }
 
-//----------------------------------------------------------------------------//
+#define BUF ((struct uip_eth_hdr *)&uip_buf[0])
 
-/* ------------------------------------------------------------------------- */
-/* Main Program Setup & Event Loop                                           */
-/* ------------------------------------------------------------------------- */
 int main(void)
 {
-	int i, cnt = 0;
+    int i;
     uip_ipaddr_t ipaddr;
     struct timer periodic_timer, arp_timer;
 
     SystemClock_Config_48MHz();
     Delay_ms(30);
     Example_LED_Blink();
+    /* Initialize UART for interrupt mode at 115200 baud */
     uart1_initialize();
     initializaTimer();
-    // 1. Initialize Low-level Hardware Driver & uIP Stack
-    // (Ensure SPI and ENC28J60 hardware initialization routines are executed)
     //-----------------------------------------------------//
     encdevice.mac_addr[0] = my_mac.addr[0];
     encdevice.mac_addr[1] = my_mac.addr[1];
@@ -231,6 +206,8 @@ int main(void)
 
     ENC28J60_Init(&encdevice);
     uip_setethaddr(my_mac);
+    //--------------------------------------------------//
+    UART_SendStringIT(USART1, "System Starting...\n");
 
     //------------- uip setup -------------------//
     timer_set(&periodic_timer, CLOCK_SECOND / 2);
@@ -238,27 +215,13 @@ int main(void)
 
     uip_init();
 
-    // 2. Set Local Static IP Address (e.g., 192.168.1.150)
     uip_ipaddr(ipaddr, 192, 168, 29, 111);
     uip_sethostaddr(ipaddr);
 
-    // Set Netmask (255.255.255.0)
-    uip_ipaddr(ipaddr, 255, 255, 255, 0);
-    uip_setnetmask(ipaddr);
+    // 3. Start Listening on TCP Port (e.g., Port 80 or 8080)
+    uip_listen(HTONS(8080));
+    //-------------------------------------------//
 
-    // 3. Set Broadcast IP Address (255.255.255.255)
-    uip_ipaddr(ipaddr, 255, 255, 255, 255);
-
-    // 4. Create UDP Connection to Broadcast IP on Port 5050
-    broadcast_conn = uip_udp_new(&ipaddr, HTONS(5051));
-    if (broadcast_conn != NULL)
-    {
-        // Optionally bind local port (e.g., 5050)
-        uip_udp_bind(broadcast_conn, HTONS(5051));
-    }
-    //-----------------------------------------------//
-
-    // 5. Main Loop
     while (1)
     {
         uip_len = network_device_read();
@@ -327,11 +290,16 @@ int main(void)
                 uip_arp_timer();
             }
         }
-        if(cnt++ > 50)
-        {
-            cnt = 0;
-            send_flag = 1;
-        }
         Delay_ms(50);
+    }
+
+    /* Loop forever */
+    /* Main loop - toggle LED */
+    while (1)
+    {
+
+        GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+        Delay_ms(500);
+        // UART_SendStringIT(USART1, "Hello STM32\n");
     }
 }

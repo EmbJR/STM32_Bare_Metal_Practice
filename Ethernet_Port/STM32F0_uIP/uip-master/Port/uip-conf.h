@@ -125,7 +125,10 @@ typedef unsigned short uip_stats_t;
  *
  * \hideinitializer
  */
-#define UIP_CONF_UDP             0
+/* Enable UDP Support */
+#define UIP_CONF_UDP             1
+#define UIP_CONF_BROADCAST       1
+#define UIP_CONF_UDP_CONNS       2
 
 /**
  * UDP checksums on or off
