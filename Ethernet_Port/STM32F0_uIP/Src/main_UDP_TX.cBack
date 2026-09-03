@@ -130,44 +130,21 @@ void initializaTimer(void)
 //------------------------------- uIP related -------------------------------//
 #define BUF ((struct uip_eth_hdr *)&uip_buf[0])
 
-static struct uip_udp_conn *broadcast_tx_conn;
-static struct uip_udp_conn *rx_conn;
+static struct uip_udp_conn *broadcast_conn;
 static volatile uint8_t send_flag = 0;
 
 /* ------------------------------------------------------------------------- */
-/* UDP Application Callback (Handles both Tx on 5050 and Rx on 5051)         */
+/* UDP Application Callback                                                  */
 /* ------------------------------------------------------------------------- */
-void udp_broadcast_appcall(void) {
+void udp_broadcast_appcall(void)
+{
+    // Check if uIP is polling this connection and if we requested a send
+    if (uip_poll() && send_flag)
+    {
+        send_flag = 0; // Clear the trigger flag
 
-    // --- 1. RECEIVE DATA LOGIC (Port 5051) ---
-    if (uip_udp_conn->lport == HTONS(5051)) {
-        if (uip_newdata()) {
-            // Null-terminate the incoming payload buffer safely
-            uint16_t len = uip_datalen();
-            char rx_buffer[128];
-
-            if (len >= sizeof(rx_buffer)) {
-                len = sizeof(rx_buffer) - 1;
-            }
-
-            memcpy(rx_buffer, uip_appdata, len);
-            rx_buffer[len] = '\0'; // Add null terminator for string printing
-
-            // Print received data over UART
-            UART_SendStringIT(USART1, "Received on 5051: ");
-            UART_SendStringIT(USART1, rx_buffer);
-            UART_SendStringIT(USART1, "\r\n");
-        }
-    }
-
-    // --- 2. TRANSMIT DATA LOGIC (Port 5050) ---
-    if (uip_udp_conn->lport == HTONS(5051)) {
-        if (uip_poll() && send_flag) {
-            send_flag = 0; // Reset trigger flag
-
-            // Send payload
-            uip_send("Hello From uc", 13);
-        }
+        // Send the payload
+        uip_send("Hello From uc\n\r", 13);
     }
 }
 
@@ -256,7 +233,7 @@ int main(void)
     uip_setethaddr(my_mac);
 
     //------------- uip setup -------------------//
-    timer_set(&periodic_timer, CLOCK_SECOND / 200);
+    timer_set(&periodic_timer, CLOCK_SECOND / 2);
     timer_set(&arp_timer, CLOCK_SECOND * 10);
 
     uip_init();
@@ -272,18 +249,13 @@ int main(void)
     // 3. Set Broadcast IP Address (255.255.255.255)
     uip_ipaddr(ipaddr, 255, 255, 255, 255);
 
-    broadcast_tx_conn = uip_udp_new(&ipaddr, HTONS(5051));
-	if (broadcast_tx_conn != NULL) {
-		uip_udp_bind(broadcast_tx_conn, HTONS(5051));
-	}
-
-	// 4. Set up UDP Receiver Listener Connection (Port 5051)
-	// Pass NULL for target IP to accept incoming packets from any sender IP
-	uip_ipaddr(ipaddr, 0, 0, 0, 0);
-	rx_conn = uip_udp_new(&ipaddr, HTONS(0));
-	if (rx_conn != NULL) {
-		uip_udp_bind(rx_conn, HTONS(5051)); // Listen on local port 5051
-	}
+    // 4. Create UDP Connection to Broadcast IP on Port 5050
+    broadcast_conn = uip_udp_new(&ipaddr, HTONS(5051));
+    if (broadcast_conn != NULL)
+    {
+        // Optionally bind local port (e.g., 5050)
+        uip_udp_bind(broadcast_conn, HTONS(5051));
+    }
     //-----------------------------------------------//
 
     // 5. Main Loop
@@ -355,7 +327,7 @@ int main(void)
                 uip_arp_timer();
             }
         }
-        if(cnt++ > 5)
+        if(cnt++ > 50)
         {
             cnt = 0;
             send_flag = 1;
